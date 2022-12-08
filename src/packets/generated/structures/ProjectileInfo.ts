@@ -1,0 +1,50 @@
+// Auto Generated, do not edit.
+import type { Read } from "../../stream";
+export type ProjectileInfo = {
+  Unk0: number;
+  ProjectileId: bigint;
+  Unk2: number;
+  Unk3: number;
+  Unk4_0?: number;
+  struct_321?: Buffer;
+  Unk6: number;
+  Unk7: number;
+  SkillEffect: number;
+  Tripods: Buffer;
+  Unk10: bigint;
+  Unk11: number;
+  SkillLevel: number;
+  Unk13: Buffer;
+  Unk14: bigint;
+  Unk15: number;
+  Unk16: number;
+  Unk17_0?: bigint;
+  Unk18: bigint;
+  SkillId: number;
+  OwnerId: bigint;
+};
+export function read(reader: Read) {
+  const data = {} as ProjectileInfo;
+  data.Unk0 = reader.u16();
+  data.ProjectileId = reader.u64();
+  data.Unk2 = reader.u32();
+  data.Unk3 = reader.u8();
+  if (reader.bool()) data.Unk4_0 = reader.u32();
+  if (reader.bool()) data.struct_321 = reader.bytes(reader.u16(), 11, 9);
+  data.Unk6 = reader.u32();
+  data.Unk7 = reader.u32();
+  data.SkillEffect = reader.u32();
+  data.Tripods = reader.bytes(3);
+  data.Unk10 = reader.u64();
+  data.Unk11 = reader.u32();
+  data.SkillLevel = reader.u8();
+  data.Unk13 = reader.bytes(6);
+  data.Unk14 = reader.u64();
+  data.Unk15 = reader.u8();
+  data.Unk16 = reader.u16();
+  if (reader.bool()) data.Unk17_0 = reader.u64();
+  data.Unk18 = reader.u64();
+  data.SkillId = reader.u32();
+  data.OwnerId = reader.u64();
+  return data;
+}

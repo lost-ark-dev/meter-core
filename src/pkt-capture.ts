@@ -19,8 +19,8 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
     super();
     this.device = device;
     this.c = new cap.Cap();
-    const buffer = Buffer.alloc(65535);
-    const linkType = this.c.open(device, "tcp and src port 6040", 65535, buffer);
+    const buffer = Buffer.alloc(2 ** 22);
+    const linkType = this.c.open(device, "tcp and src port 6040", buffer.length, buffer);
     const packetBuffer = new PacketBuffer();
 
     if (this.c.setMinBytes) this.c.setMinBytes(16);

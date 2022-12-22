@@ -257,24 +257,15 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;
           let sourceEntity = this.#getSourceEntity(parsedDmg.SourceId);
-          let skillName = this.#data.getSkillName(parsedDmg.SkillId);
+          const skillName = this.#data.getSkillName(parsedDmg.SkillId);
           const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
           parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
             if (
-              (event.skillDamageEvent.Modifier & 0xf) === hitflag.damage_share &&
-              parsedDmg.SkillId === 0 &&
-              parsedDmg.SkillEffectId === 0
+              ((event.skillDamageEvent.Modifier & 0xf) === hitflag.damage_share && parsedDmg.SkillId == 0,
+              parsedDmg.SkillEffectId == 0)
             )
               return;
-
-            if (
-              parsedDmg.SkillId === 0 &&
-              parsedDmg.SkillEffectId === 0 &&
-              event.skillDamageEvent.Modifier & (hitflag.dot | hitflag.dot_critical)
-            )
-              skillName = "Bleed";
-
             this.#buildLine(
               LineId.Damage,
               sourceEntity.entityId,
@@ -297,23 +288,14 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;
           let sourceEntity: Entity = this.#getSourceEntity(parsedDmg.SourceId);
-          let skillName = this.#data.getSkillName(parsedDmg.SkillId);
+          const skillName = this.#data.getSkillName(parsedDmg.SkillId);
           const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
           parsedDmg.SkillDamageEvents.forEach((event) => {
             if (
-              (event.Modifier & 0xf) === hitflag.damage_share &&
-              parsedDmg.SkillId === 0 &&
-              parsedDmg.SkillEffectId === 0
+              ((event.Modifier & 0xf) === hitflag.damage_share && parsedDmg.SkillId == 0, parsedDmg.SkillEffectId == 0)
             )
               return;
-
-            if (
-              parsedDmg.SkillId === 0 &&
-              parsedDmg.SkillEffectId === 0 &&
-              event.Modifier & (hitflag.dot | hitflag.dot_critical)
-            )
-              skillName = "Bleed";
 
             this.#buildLine(
               LineId.Damage,
@@ -336,10 +318,12 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTSkillStageNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
+          sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
           this.#buildLine(
             LineId.SkillStage,
-            parsed.SourceId,
-            this.#getEntityName(parsed.SourceId),
+            sourceEntity.entityId,
+            sourceEntity.name,
             parsed.SkillId,
             this.#data.getSkillName(parsed.SkillId),
             parsed.Stage
@@ -349,10 +333,12 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTSkillStartNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
+          sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
           this.#buildLine(
             LineId.SkillStart,
-            parsed.SourceId,
-            this.#getEntityName(parsed.SourceId),
+            sourceEntity.entityId,
+            sourceEntity.name,
             parsed.SkillId,
             this.#data.getSkillName(parsed.SkillId)
           );

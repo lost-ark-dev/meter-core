@@ -257,15 +257,24 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;
           let sourceEntity = this.#getSourceEntity(parsedDmg.SourceId);
-          const skillName = this.#data.getSkillName(parsedDmg.SkillId);
+          let skillName = this.#data.getSkillName(parsedDmg.SkillId);
           const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
           parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
             if (
-              ((event.skillDamageEvent.Modifier & 0xf) === hitflag.damage_share && parsedDmg.SkillId == 0,
-              parsedDmg.SkillEffectId == 0)
+              (event.skillDamageEvent.Modifier & 0xf) === hitflag.damage_share &&
+              parsedDmg.SkillId === 0 &&
+              parsedDmg.SkillEffectId === 0
             )
               return;
+
+            if (
+              parsedDmg.SkillId === 0 &&
+              parsedDmg.SkillEffectId === 0 &&
+              event.skillDamageEvent.Modifier & (hitflag.dot | hitflag.dot_critical)
+            )
+              skillName = "Bleed";
+
             this.#buildLine(
               LineId.Damage,
               sourceEntity.entityId,
@@ -288,14 +297,23 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;
           let sourceEntity: Entity = this.#getSourceEntity(parsedDmg.SourceId);
-          const skillName = this.#data.getSkillName(parsedDmg.SkillId);
+          let skillName = this.#data.getSkillName(parsedDmg.SkillId);
           const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
           parsedDmg.SkillDamageEvents.forEach((event) => {
             if (
-              ((event.Modifier & 0xf) === hitflag.damage_share && parsedDmg.SkillId == 0, parsedDmg.SkillEffectId == 0)
+              (event.Modifier & 0xf) === hitflag.damage_share &&
+              parsedDmg.SkillId === 0 &&
+              parsedDmg.SkillEffectId === 0
             )
               return;
+
+            if (
+              parsedDmg.SkillId === 0 &&
+              parsedDmg.SkillEffectId === 0 &&
+              event.Modifier & (hitflag.dot | hitflag.dot_critical)
+            )
+              skillName = "Bleed";
 
             this.#buildLine(
               LineId.Damage,

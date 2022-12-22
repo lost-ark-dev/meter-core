@@ -424,14 +424,26 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
   }
   #guessIsPlayer(entity: Entity, skillid: number): Entity {
     const classId = this.#data.getSkillClassId(skillid);
-    if (entity.entityType !== EntityType.Player && classId !== 0) {
-      const newEntity: Player = {
-        entityId: entity.entityId,
-        entityType: EntityType.Player,
-        name: entity.entityId.toString(16),
-        class: classId,
-        gearLevel: 0,
-      };
+    if (classId !== 0) {
+      let newEntity: Player;
+      if (entity.entityType === EntityType.Player) {
+        const player = entity as Player;
+        newEntity = {
+          entityId: player.entityId,
+          entityType: EntityType.Player,
+          name: player.name,
+          class: classId,
+          gearLevel: player.gearLevel,
+        };
+      } else {
+        newEntity = {
+          entityId: entity.entityId,
+          entityType: EntityType.Player,
+          name: entity.entityId.toString(16),
+          class: classId,
+          gearLevel: 0,
+        };
+      }
       this.#currentEncounter.entities.set(entity.entityId, newEntity);
       this.#buildLine(
         LineId.NewPC,

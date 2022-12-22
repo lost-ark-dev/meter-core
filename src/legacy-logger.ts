@@ -51,7 +51,7 @@ interface LegacyLoggerEvents {
     targetId: bigint,
     targetName: string,
     damage: number,
-    modifier: number,
+    modifier: string,
     currentHp: number,
     maxHp: number
   ) => void;
@@ -289,38 +289,34 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTRemoveObject", (pkt) => {})
       .on("PKTSkillDamageAbnormalMoveNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsedDmg = pkt.parsed;
-            let sourceEntity = this.#getSourceEntity(parsedDmg.SourceId);
-            const skillName = this.#data.getSkillName(parsedDmg.SkillId);
-            const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
-            sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
-            parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
-              if (
-                ((event.skillDamageEvent.Modifier & 0xf) === hitflag.damage_share && parsedDmg.SkillId == 0,
-                parsedDmg.SkillEffectId == 0)
-              )
-                return;
-              this.#buildLine(
-                LineId.Damage,
-                sourceEntity.entityId,
-                sourceEntity.name,
-                parsedDmg.SkillId,
-                skillName,
-                parsedDmg.SkillEffectId,
-                skillEffect,
-                event.skillDamageEvent.TargetId,
-                this.#getEntityName(event.skillDamageEvent.TargetId),
-                Number(event.skillDamageEvent.Damage),
-                event.skillDamageEvent.Modifier,
-                Number(event.skillDamageEvent.CurHp),
-                Number(event.skillDamageEvent.MaxHp)
-              );
-            });
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        if (this.#needEmit) {
+          const parsedDmg = pkt.parsed;
+          let sourceEntity = this.#getSourceEntity(parsedDmg.SourceId);
+          const skillName = this.#data.getSkillName(parsedDmg.SkillId);
+          const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
+          sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
+          parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
+            if (
+              ((event.skillDamageEvent.Modifier & 0xf) === hitflag.damage_share && parsedDmg.SkillId == 0,
+              parsedDmg.SkillEffectId == 0)
+            )
+              return;
+            this.#buildLine(
+              LineId.Damage,
+              sourceEntity.entityId,
+              sourceEntity.name,
+              parsedDmg.SkillId,
+              skillName,
+              parsedDmg.SkillEffectId,
+              skillEffect,
+              event.skillDamageEvent.TargetId,
+              this.#getEntityName(event.skillDamageEvent.TargetId),
+              Number(event.skillDamageEvent.Damage),
+              event.skillDamageEvent.Modifier.toString(16),
+              Number(event.skillDamageEvent.CurHp),
+              Number(event.skillDamageEvent.MaxHp)
+            );
+          });
         }
       })
       .on("PKTSkillDamageNotify", (pkt) => {
@@ -349,7 +345,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
                 event.TargetId,
                 this.#getEntityName(event.TargetId),
                 Number(event.Damage),
-                event.Modifier,
+                event.Modifier.toString(16),
                 Number(event.CurHp),
                 Number(event.MaxHp)
               );

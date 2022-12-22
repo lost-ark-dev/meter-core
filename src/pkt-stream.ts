@@ -21,7 +21,7 @@ export class PKTStream extends TypedEmitter<PKTStreamEvents> {
         this.emit(name as keyof PKTStreamEvents, new PKT(buf, this.#decompressor, read));
       } else this.emit("*", buf.subarray(6), opcode, buf.readUInt8(4), buf.readUInt8(5));
     } catch (e) {
-      console.log(e);
+      console.error(`[meter-core/PKTStream] ${e}`);
     }
   }
 }

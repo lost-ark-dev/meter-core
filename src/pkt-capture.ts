@@ -49,7 +49,9 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   }
 
   close() {
-    this.c.close();
+    try {
+      this.c.close();
+    } catch (e) {}
   }
 }
 
@@ -66,7 +68,14 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     for (const device of deviceList()) {
       for (const address of device.addresses) {
         if (isIPv4(address.addr!)) {
-          const cap = new PktCapture(device.name);
+          let cap;
+          try {
+            cap = new PktCapture(device.name);
+          } catch (e) {
+            console.error(`[meter-core/PktCaptureAll] ${e}`);
+            cap?.close();
+            continue;
+          }
 
           // re-emit
           cap.on("packet", (buf) => this.emit("packet", buf, device.name));

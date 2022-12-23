@@ -1,10 +1,10 @@
 import { readFileSync } from "fs";
+import { inspect } from "util";
+import { MeterData } from "./data";
 import { Decompressor } from "./decompressor";
+import { LegacyLogger } from "./legacy-logger";
 import { PktCaptureAll } from "./pkt-capture";
 import { PKTStream } from "./pkt-stream";
-import { LegacyLogger } from "./legacy-logger";
-import { MeterData } from "./data";
-import { inspect } from "util";
 
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
 const xorTable = readFileSync("./meter-data/xor.bin");

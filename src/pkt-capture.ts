@@ -1,6 +1,6 @@
-import { TypedEmitter } from "tiny-typed-emitter";
 import cap from "cap";
-import { isIPv4 } from "net";
+import { networkInterfaces } from "os";
+import { TypedEmitter } from "tiny-typed-emitter";
 
 const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
@@ -13,29 +13,27 @@ interface PktCaptureEvents {
 
 export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   c: cap.Cap;
-  device: string;
 
   constructor(device: string) {
     super();
-    this.device = device;
     this.c = new cap.Cap();
     const buffer = Buffer.alloc(65535);
     const linkType = this.c.open(device, "tcp and src port 6040", 10 * 1024 * 1024, buffer);
     const packetBuffer = new PacketBuffer();
 
-    if (this.c.setMinBytes) this.c.setMinBytes(0);
+    if (this.c.setMinBytes) this.c.setMinBytes(6); // pkt header size
 
-    this.c.on("packet", () => {
+    this.c.on("packet", (nbytes: number, truncated: boolean) => {
       if (linkType === "ETHERNET") {
-        let ret: any = Ethernet(buffer);
-        if (ret.info.type === PROTOCOL.ETHERNET.IPV4) {
-          ret = IPV4(buffer, ret.offset);
-          if (ret.info.protocol === PROTOCOL.IP.TCP) {
-            let datalen = ret.info.totallen - ret.hdrlen;
-            ret = TCP(buffer, ret.offset);
-            datalen -= ret.hdrlen;
+        const ethernet = Ethernet(buffer);
+        if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
+          const ipv4 = IPV4(buffer, ethernet.offset);
+          if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
+            let datalen = ipv4.info.totallen - ipv4.hdrlen;
+            const tcp = TCP(buffer, ipv4.offset);
+            datalen -= tcp.hdrlen;
             if (datalen) {
-              packetBuffer.write(Buffer.from(buffer.subarray(ret.offset, ret.offset + datalen)));
+              packetBuffer.write(Buffer.from(buffer.subarray(tcp.offset, tcp.offset + datalen)));
               let pkt = packetBuffer.read();
               while (pkt) {
                 this.emit("packet", pkt);
@@ -49,45 +47,36 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   }
 
   close() {
-    try {
-      this.c.close();
-    } catch (e) {}
+    this.c.close();
   }
 }
 
 interface PktCaptureAllEvents {
-  packet: (buf: Buffer, device: string) => void;
+  packet: (buf: Buffer, deviceName: string) => void;
 }
 
 export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
   caps: Map<string, PktCapture>;
 
-  constructor() {
+  constructor(allowInternal = false) {
     super();
     this.caps = new Map();
-    for (const device of deviceList()) {
-      for (const address of device.addresses) {
-        if (isIPv4(address.addr!)) {
-          let cap;
-          try {
-            cap = new PktCapture(device.name);
-          } catch (e) {
-            console.error(`[meter-core/PktCaptureAll] ${e}`);
-            cap?.close();
-            continue;
-          }
 
-          // re-emit
-          cap.on("packet", (buf) => this.emit("packet", buf, device.name));
+    for (const [deviceName, interfaceInfo] of Object.entries(networkInterfaces())) {
+      if (interfaceInfo) {
+        for (const i of interfaceInfo) {
+          if (!allowInternal && i.internal) continue;
+          if (i.family === "IPv4") {
+            const device = findDevice(i.address);
+            if (device) {
+              const cap = new PktCapture(device);
 
-          // close others
-          /* cap.once("packet", () => {
-            for (const [name, cap] of this.caps.entries()) {
-              if (name != device.name) cap.close();
+              // re-emit
+              cap.on("packet", (buf) => this.emit("packet", buf, deviceName));
+
+              this.caps.set(i.address, cap);
             }
-          }); */
-
-          this.caps.set(device.name, cap);
+          }
         }
       }
     }
@@ -153,6 +142,7 @@ class PacketBuffer {
       const size = data.readUInt16LE(0);
       if (size > data.length) {
         // Ignore fragmented packets -> will lead to data loss probably, but fix crashes
+        // yes but no
         // this.buffer = Buffer.alloc(size);
         // data.copy(this.buffer);
         // this.position = data.length;

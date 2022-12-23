@@ -31,5 +31,5 @@ export interface PKTStreamEvents {
   PKTTriggerBossBattleStatus: (pkt: PKT<types.PKTTriggerBossBattleStatus>) => void;
   PKTTriggerFinishNotify: (pkt: PKT<types.PKTTriggerFinishNotify>) => void;
   PKTTriggerStartNotify: (pkt: PKT<types.PKTTriggerStartNotify>) => void;
-  "*": (data: Buffer, opcode: number, compression: number, xor: number) => void;
+  "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }

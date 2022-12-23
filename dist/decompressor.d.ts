@@ -4,7 +4,7 @@ declare class Decompressor {
     oodle: oodle.Oodle;
     xorTable: Buffer;
     constructor(oodle_state: Buffer, xorTable: Buffer);
-    decrypt(data: Buffer, xorShift?: number, compression?: number, xor?: number): Buffer;
+    decrypt(data: Buffer, xorShift: number, compression: number, xor: boolean): Buffer;
     xor(data: Buffer, seed: number): void;
 }
 

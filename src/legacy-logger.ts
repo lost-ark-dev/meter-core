@@ -1,6 +1,6 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "./data";
-import { triggersignaltype, stattype, hitflag } from "./packets/generated/enums";
+import { hitflag, stattype, triggersignaltype } from "./packets/generated/enums";
 import type { PKTStream } from "./pkt-stream";
 
 export const enum LineId {
@@ -115,165 +115,133 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     stream
       .on("PKTAuthTokenResult", (pkt) => {})
       .on("PKTCounterAttackNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsed = pkt.parsed;
-            this.#buildLine(
-              LineId.CounterAttack,
-              parsed.SourceId,
-              this.#getEntityName(parsed.SourceId),
-              parsed.TargetId,
-              this.#getEntityName(parsed.TargetId)
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        if (this.#needEmit) {
+          const parsed = pkt.parsed;
+          this.#buildLine(
+            LineId.CounterAttack,
+            parsed.SourceId,
+            this.#getEntityName(parsed.SourceId),
+            parsed.TargetId,
+            this.#getEntityName(parsed.TargetId)
+          );
         }
       })
       .on("PKTDeathNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsed = pkt.parsed;
-            this.#buildLine(
-              LineId.Death,
-              parsed.TargetId,
-              this.#getEntityName(parsed.TargetId),
-              parsed.SourceId,
-              this.#getEntityName(parsed.SourceId)
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        if (this.#needEmit) {
+          const parsed = pkt.parsed;
+          this.#buildLine(
+            LineId.Death,
+            parsed.TargetId,
+            this.#getEntityName(parsed.TargetId),
+            parsed.SourceId,
+            this.#getEntityName(parsed.SourceId)
+          );
         }
       })
       .on("PKTInitEnv", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          this.#currentEncounter = new Encounter();
-          const player: Player = {
-            entityId: parsed.PlayerId,
-            entityType: EntityType.Player,
-            name: this.#localPlayer.name,
-            class: this.#localPlayer.class,
-            gearLevel: this.#localPlayer.gearLevel,
-          };
-          this.#currentEncounter.entities.set(player.entityId, player);
-          if (this.#needEmit) this.#buildLine(LineId.InitEnv, player.entityId);
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
-        }
+        const parsed = pkt.parsed;
+        this.#currentEncounter = new Encounter();
+        const player: Player = {
+          entityId: parsed.PlayerId,
+          entityType: EntityType.Player,
+          name: this.#localPlayer.name,
+          class: this.#localPlayer.class,
+          gearLevel: this.#localPlayer.gearLevel,
+        };
+        this.#currentEncounter.entities.set(player.entityId, player);
+        if (this.#needEmit) this.#buildLine(LineId.InitEnv, player.entityId);
       })
       .on("PKTInitPC", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel) };
-          const player: Player = {
-            entityId: parsed.PlayerId,
-            entityType: EntityType.Player,
-            name: parsed.Name,
-            class: parsed.ClassId,
-            gearLevel: this.#u32tof32(parsed.GearLevel),
-          };
-          this.#currentEncounter.entities.set(player.entityId, player);
-          if (this.#needEmit) {
-            const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
-            this.#buildLine(
-              LineId.NewPC,
-              player.entityId,
-              player.name,
-              player.class,
-              this.#data.getClassName(player.class),
-              parsed.Level,
-              player.gearLevel,
-              Number(statsMap.get(stattype.hp)) || 0,
-              Number(statsMap.get(stattype.max_hp)) || 0
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        const parsed = pkt.parsed;
+        this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel) };
+        const player: Player = {
+          entityId: parsed.PlayerId,
+          entityType: EntityType.Player,
+          name: parsed.Name,
+          class: parsed.ClassId,
+          gearLevel: this.#u32tof32(parsed.GearLevel),
+        };
+        this.#currentEncounter.entities.set(player.entityId, player);
+        if (this.#needEmit) {
+          const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
+          this.#buildLine(
+            LineId.NewPC,
+            player.entityId,
+            player.name,
+            player.class,
+            this.#data.getClassName(player.class),
+            parsed.Level,
+            player.gearLevel,
+            Number(statsMap.get(stattype.hp)) || 0,
+            Number(statsMap.get(stattype.max_hp)) || 0
+          );
         }
       })
       .on("PKTNewNpc", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          const npc: Npc = {
-            entityId: parsed.NpcStruct.ObjectId,
-            entityType: EntityType.Npc,
-            name: this.#data.getNpcName(parsed.NpcStruct.TypeId),
-            typeId: parsed.NpcStruct.TypeId,
-          };
-          this.#currentEncounter.entities.set(npc.entityId, npc);
-          if (this.#needEmit) {
-            const statsMap = this.#getStatPairMap(pkt.parsed.NpcStruct.statPair);
-            this.#buildLine(
-              LineId.NewNpc,
-              npc.entityId,
-              npc.typeId,
-              npc.name,
-              Number(statsMap.get(stattype.hp)) || 0,
-              Number(statsMap.get(stattype.max_hp)) || 0
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        const parsed = pkt.parsed;
+        const npc: Npc = {
+          entityId: parsed.NpcStruct.ObjectId,
+          entityType: EntityType.Npc,
+          name: this.#data.getNpcName(parsed.NpcStruct.TypeId),
+          typeId: parsed.NpcStruct.TypeId,
+        };
+        this.#currentEncounter.entities.set(npc.entityId, npc);
+        if (this.#needEmit) {
+          const statsMap = this.#getStatPairMap(pkt.parsed.NpcStruct.statPair);
+          this.#buildLine(
+            LineId.NewNpc,
+            npc.entityId,
+            npc.typeId,
+            npc.name,
+            Number(statsMap.get(stattype.hp)) || 0,
+            Number(statsMap.get(stattype.max_hp)) || 0
+          );
         }
       })
       .on("PKTNewNpcSummon", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          const summon: Summon = {
-            entityId: parsed.NpcData.ObjectId,
-            entityType: EntityType.Summon,
-            name: parsed.NpcData.ObjectId.toString(16),
-            ownerId: parsed.OwnerId,
-          };
-          this.#currentEncounter.entities.set(summon.entityId, summon);
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
-        }
+        const parsed = pkt.parsed;
+        const summon: Summon = {
+          entityId: parsed.NpcData.ObjectId,
+          entityType: EntityType.Summon,
+          name: parsed.NpcData.ObjectId.toString(16),
+          ownerId: parsed.OwnerId,
+        };
+        this.#currentEncounter.entities.set(summon.entityId, summon);
       })
       .on("PKTNewPC", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          const player: Player = {
-            entityId: parsed.PCStruct.PlayerId,
-            entityType: EntityType.Player,
-            name: parsed.PCStruct.Name,
-            class: parsed.PCStruct.ClassId,
-            gearLevel: this.#u32tof32(parsed.PCStruct.GearLevel),
-          };
-          this.#currentEncounter.entities.set(player.entityId, player);
-          if (this.#needEmit) {
-            const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
-            this.#buildLine(
-              LineId.NewPC,
-              player.entityId,
-              player.name,
-              player.class,
-              this.#data.getClassName(player.class),
-              parsed.PCStruct.Level,
-              player.gearLevel,
-              Number(statsMap.get(stattype.hp)) || 0,
-              Number(statsMap.get(stattype.max_hp)) || 0
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        const parsed = pkt.parsed;
+        const player: Player = {
+          entityId: parsed.PCStruct.PlayerId,
+          entityType: EntityType.Player,
+          name: parsed.PCStruct.Name,
+          class: parsed.PCStruct.ClassId,
+          gearLevel: this.#u32tof32(parsed.PCStruct.GearLevel),
+        };
+        this.#currentEncounter.entities.set(player.entityId, player);
+        if (this.#needEmit) {
+          const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
+          this.#buildLine(
+            LineId.NewPC,
+            player.entityId,
+            player.name,
+            player.class,
+            this.#data.getClassName(player.class),
+            parsed.PCStruct.Level,
+            player.gearLevel,
+            Number(statsMap.get(stattype.hp)) || 0,
+            Number(statsMap.get(stattype.max_hp)) || 0
+          );
         }
       })
       .on("PKTNewProjectile", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          const projectile: Projectile = {
-            entityId: parsed.projectileInfo.ProjectileId,
-            entityType: EntityType.Projectile,
-            name: parsed.projectileInfo.ProjectileId.toString(16),
-            ownerId: parsed.projectileInfo.OwnerId,
-          };
-          this.#currentEncounter.entities.set(projectile.entityId, projectile);
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
-        }
+        const parsed = pkt.parsed;
+        const projectile: Projectile = {
+          entityId: parsed.projectileInfo.ProjectileId,
+          entityType: EntityType.Projectile,
+          name: parsed.projectileInfo.ProjectileId.toString(16),
+          ownerId: parsed.projectileInfo.OwnerId,
+        };
+        this.#currentEncounter.entities.set(projectile.entityId, projectile);
       })
       .on("PKTParalyzationStateNotify", (pkt) => {})
       .on("PKTPartyInfo", (pkt) => {})
@@ -328,103 +296,87 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         }
       })
       .on("PKTSkillDamageNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsedDmg = pkt.parsed;
-            let sourceEntity: Entity = this.#getSourceEntity(parsedDmg.SourceId);
-            let skillName = this.#data.getSkillName(parsedDmg.SkillId);
-            const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
-            sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
-            parsedDmg.SkillDamageEvents.forEach((event) => {
-              if (
-                (event.Modifier & 0xf) === hitflag.damage_share &&
-                parsedDmg.SkillId === 0 &&
-                parsedDmg.SkillEffectId === 0
-              )
-                return;
+        if (this.#needEmit) {
+          const parsedDmg = pkt.parsed;
+          let sourceEntity: Entity = this.#getSourceEntity(parsedDmg.SourceId);
+          let skillName = this.#data.getSkillName(parsedDmg.SkillId);
+          const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
+          sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
+          parsedDmg.SkillDamageEvents.forEach((event) => {
+            if (
+              (event.Modifier & 0xf) === hitflag.damage_share &&
+              parsedDmg.SkillId === 0 &&
+              parsedDmg.SkillEffectId === 0
+            )
+              return;
 
-              if (
-                parsedDmg.SkillId === 0 &&
-                parsedDmg.SkillEffectId === 0 &&
-                event.Modifier & (hitflag.dot | hitflag.dot_critical)
-              )
-                skillName = "Bleed";
+            if (
+              parsedDmg.SkillId === 0 &&
+              parsedDmg.SkillEffectId === 0 &&
+              event.Modifier & (hitflag.dot | hitflag.dot_critical)
+            )
+              skillName = "Bleed";
 
-              this.#buildLine(
-                LineId.Damage,
-                sourceEntity.entityId,
-                sourceEntity.name,
-                parsedDmg.SkillId,
-                skillName,
-                parsedDmg.SkillEffectId,
-                skillEffect,
-                event.TargetId,
-                this.#getEntityName(event.TargetId),
-                Number(event.Damage),
-                event.Modifier.toString(16),
-                Number(event.CurHp),
-                Number(event.MaxHp)
-              );
-            });
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+            this.#buildLine(
+              LineId.Damage,
+              sourceEntity.entityId,
+              sourceEntity.name,
+              parsedDmg.SkillId,
+              skillName,
+              parsedDmg.SkillEffectId,
+              skillEffect,
+              event.TargetId,
+              this.#getEntityName(event.TargetId),
+              Number(event.Damage),
+              event.Modifier.toString(16),
+              Number(event.CurHp),
+              Number(event.MaxHp)
+            );
+          });
         }
       })
       .on("PKTSkillStageNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsed = pkt.parsed;
-            let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
-            sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
-            this.#buildLine(
-              LineId.SkillStage,
-              sourceEntity.entityId,
-              sourceEntity.name,
-              parsed.SkillId,
-              this.#data.getSkillName(parsed.SkillId),
-              parsed.Stage
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        if (this.#needEmit) {
+          const parsed = pkt.parsed;
+          let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
+          sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
+          this.#buildLine(
+            LineId.SkillStage,
+            sourceEntity.entityId,
+            sourceEntity.name,
+            parsed.SkillId,
+            this.#data.getSkillName(parsed.SkillId),
+            parsed.Stage
+          );
         }
       })
       .on("PKTSkillStartNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsed = pkt.parsed;
-            let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
-            sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
-            this.#buildLine(
-              LineId.SkillStart,
-              sourceEntity.entityId,
-              sourceEntity.name,
-              parsed.SkillId,
-              this.#data.getSkillName(parsed.SkillId)
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        if (this.#needEmit) {
+          const parsed = pkt.parsed;
+          let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
+          sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
+          this.#buildLine(
+            LineId.SkillStart,
+            sourceEntity.entityId,
+            sourceEntity.name,
+            parsed.SkillId,
+            this.#data.getSkillName(parsed.SkillId)
+          );
         }
       })
       .on("PKTStatChangeOriginNotify", (pkt) => {
-        try {
-          if (this.#needEmit) {
-            const parsed = pkt.parsed;
-            // TODO: check healAmount, currentHp + fix def
-            const currentStatsMap = this.#getStatPairMap(pkt.parsed.StatPairList);
-            const changedStatsMap = this.#getStatPairMap(pkt.parsed.Unk1);
-            this.#buildLine(
-              LineId.Heal,
-              parsed.ObjectId,
-              this.#getEntityName(parsed.ObjectId),
-              Number(changedStatsMap.get(stattype.hp)) || 0,
-              Number(currentStatsMap.get(stattype.hp)) || 0
-            );
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        if (this.#needEmit) {
+          const parsed = pkt.parsed;
+          // TODO: check healAmount, currentHp + fix def
+          const currentStatsMap = this.#getStatPairMap(pkt.parsed.StatPairList);
+          const changedStatsMap = this.#getStatPairMap(pkt.parsed.Unk1);
+          this.#buildLine(
+            LineId.Heal,
+            parsed.ObjectId,
+            this.#getEntityName(parsed.ObjectId),
+            Number(changedStatsMap.get(stattype.hp)) || 0,
+            Number(currentStatsMap.get(stattype.hp)) || 0
+          );
         }
       })
       .on("PKTStatusEffectAddNotify", (pkt) => {})
@@ -434,30 +386,26 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTTriggerFinishNotify", (pkt) => {})
       .on("PKTTriggerStartNotify", (pkt) => {
-        try {
-          const parsed = pkt.parsed;
-          switch (parsed.TriggerSignalType) {
-            case triggersignaltype.dungeon_phase1_clear:
-            case triggersignaltype.dungeon_phase2_clear:
-            case triggersignaltype.dungeon_phase3_clear:
-            case triggersignaltype.dungeon_phase4_clear:
-            case triggersignaltype.dungeon_phase5_clear:
-            case triggersignaltype.dungeon_phase6_clear:
-              this.#wasKill = true;
-              this.#wasWipe = false;
-              break;
-            case triggersignaltype.dungeon_phase1_fail:
-            case triggersignaltype.dungeon_phase2_fail:
-            case triggersignaltype.dungeon_phase3_fail:
-            case triggersignaltype.dungeon_phase4_fail:
-            case triggersignaltype.dungeon_phase5_fail:
-            case triggersignaltype.dungeon_phase6_fail:
-              this.#wasKill = false;
-              this.#wasWipe = true;
-              break;
-          }
-        } catch (e) {
-          console.error(`[meter-core/LegacyLogger] ${e}`);
+        const parsed = pkt.parsed;
+        switch (parsed.TriggerSignalType) {
+          case triggersignaltype.dungeon_phase1_clear:
+          case triggersignaltype.dungeon_phase2_clear:
+          case triggersignaltype.dungeon_phase3_clear:
+          case triggersignaltype.dungeon_phase4_clear:
+          case triggersignaltype.dungeon_phase5_clear:
+          case triggersignaltype.dungeon_phase6_clear:
+            this.#wasKill = true;
+            this.#wasWipe = false;
+            break;
+          case triggersignaltype.dungeon_phase1_fail:
+          case triggersignaltype.dungeon_phase2_fail:
+          case triggersignaltype.dungeon_phase3_fail:
+          case triggersignaltype.dungeon_phase4_fail:
+          case triggersignaltype.dungeon_phase5_fail:
+          case triggersignaltype.dungeon_phase6_fail:
+            this.#wasKill = false;
+            this.#wasWipe = true;
+            break;
         }
       });
   }
@@ -475,6 +423,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
   get #needEmit() {
     return this.emitText || this.emitLines;
   }
+
   #getSourceEntity(id: bigint): Entity {
     let entity = this.#currentEncounter.entities.get(id);
     if (entity?.entityType === EntityType.Projectile) {
@@ -483,17 +432,16 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       id = (entity as Summon).ownerId;
     }
     entity = this.#currentEncounter.entities.get(id);
-    if (!entity) {
-      const newEntity = {
-        entityId: id,
-        entityType: EntityType.Npc,
-        name: id.toString(16),
-      };
-      this.#currentEncounter.entities.set(id, newEntity);
-      return newEntity;
-    }
-    return entity;
+    if (entity) return entity;
+    const newEntity = {
+      entityId: id,
+      entityType: EntityType.Npc,
+      name: id.toString(16),
+    };
+    this.#currentEncounter.entities.set(id, newEntity);
+    return newEntity;
   }
+
   #guessIsPlayer(entity: Entity, skillid: number): Entity {
     const classId = this.#data.getSkillClassId(skillid);
     if (classId !== 0) {
@@ -533,9 +481,11 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     }
     return entity;
   }
+
   #getEntityName(id: bigint) {
     return this.#currentEncounter.entities.get(id)?.name || id.toString(16);
   }
+
   #getStatPairMap(statpair: { Unk0_0_1: number; readNBytesInt64: bigint }[]) {
     //TODO: use a "Common" packet for statpair parsing
     const map = new Map<stattype, bigint>();
@@ -544,6 +494,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     });
     return map;
   }
+
   #u32tof32(v: number) {
     //TODO: remove when we fixed float types in the dump
     const buf = Buffer.alloc(4);

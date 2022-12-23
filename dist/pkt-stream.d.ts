@@ -33,17 +33,20 @@ interface PKTStreamEvents {
     PKTTriggerBossBattleStatus: (pkt: PKT<PKTTriggerBossBattleStatus>) => void;
     PKTTriggerFinishNotify: (pkt: PKT<PKTTriggerFinishNotify>) => void;
     PKTTriggerStartNotify: (pkt: PKT<PKTTriggerStartNotify>) => void;
-    "*": (data: Buffer, opcode: number, compression: number, xor: number) => void;
+    "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }
 
 declare class PKTStream extends TypedEmitter<PKTStreamEvents> {
     #private;
     constructor(decompressor: Decompressor);
-    read(buf: Buffer): void;
+    /**
+     * @returns `false` if packet is malformed
+     */
+    read(buf: Buffer): false | void;
 }
 declare class PKT<T> {
     #private;
-    constructor(data: Buffer, decompressor: Decompressor, read: (buf: Buffer) => T);
+    constructor(data: Buffer, opcode: number, compression: number, xor: boolean, decompressor: Decompressor, read: (buf: Buffer) => T);
     get parsed(): T;
 }
 

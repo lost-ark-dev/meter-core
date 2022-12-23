@@ -484,6 +484,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       let newEntity: Player;
       if (entity.entityType === EntityType.Player) {
         const player = entity as Player;
+        if (player.class == classId) return player;
         newEntity = {
           entityId: player.entityId,
           entityType: EntityType.Player,
@@ -495,7 +496,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         newEntity = {
           entityId: entity.entityId,
           entityType: EntityType.Player,
-          name: entity.entityId.toString(16),
+          name: entity.name,
           class: classId,
           gearLevel: 0,
         };

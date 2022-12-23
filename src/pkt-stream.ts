@@ -29,9 +29,10 @@ export class PKTStream extends TypedEmitter<PKTStreamEvents> {
         const [name, read] = pkt;
         this.emit(
           name as keyof PKTStreamEvents,
-          new PKT(data, opcode, compression, Boolean(xor), this.#decompressor, read)
+          new PKT(Buffer.from(data), opcode, compression, Boolean(xor), this.#decompressor, read)
         );
-      } else this.emit("*", data, opcode, compression, Boolean(xor));
+      }
+      this.emit("*", Buffer.from(data), opcode, compression, Boolean(xor));
     } catch (e) {
       return false;
     }
@@ -66,8 +67,14 @@ export class PKT<T> {
   #cached?: T;
 
   get parsed() {
-    if (!this.#cached)
-      this.#cached = this.#read(this.#decompressor.decrypt(this.#data, this.#opcode, this.#compression, this.#xor));
+    if (!this.#cached) {
+      try {
+        this.#cached = this.#read(this.#decompressor.decrypt(this.#data, this.#opcode, this.#compression, this.#xor));
+      } catch (e) {
+        this.#decompressor.logerror(e);
+        return undefined;
+      }
+    }
     return this.#cached;
   }
 }

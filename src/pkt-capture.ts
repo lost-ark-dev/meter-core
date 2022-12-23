@@ -150,7 +150,7 @@ class PacketBuffer {
       }
 
       // otherwise, just push it and chop off the front, then keep going
-      this.out.push(data.subarray(0, size));
+      this.out.push(Buffer.from(data.subarray(0, size)));
       data = data.subarray(size);
     }
   }

@@ -47,7 +47,7 @@ declare class PKTStream extends TypedEmitter<PKTStreamEvents> {
 declare class PKT<T> {
     #private;
     constructor(data: Buffer, opcode: number, compression: number, xor: boolean, decompressor: Decompressor, read: (buf: Buffer) => T);
-    get parsed(): T;
+    get parsed(): T | undefined;
 }
 
 export { PKT, PKTStream };

@@ -3,7 +3,8 @@ import oodle from 'oodle';
 declare class Decompressor {
     oodle: oodle.Oodle;
     xorTable: Buffer;
-    constructor(oodle_state: Buffer, xorTable: Buffer);
+    logerror: (message: any, ...optionalParams: any[]) => void;
+    constructor(oodle_state: Buffer, xorTable: Buffer, logerror: (message: any, ...optionalParams: any[]) => void);
     decrypt(data: Buffer, xorShift: number, compression: number, xor: boolean): Buffer;
     xor(data: Buffer, seed: number): void;
 }

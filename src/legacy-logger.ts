@@ -117,6 +117,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTCounterAttackNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          if (!parsed) return;
           this.#buildLine(
             LineId.CounterAttack,
             parsed.SourceId,
@@ -129,6 +130,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTDeathNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          if (!parsed) return;
           this.#buildLine(
             LineId.Death,
             parsed.TargetId,
@@ -140,6 +142,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTInitEnv", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         this.#currentEncounter = new Encounter();
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -153,6 +156,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTInitPC", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel) };
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -179,6 +183,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTNewNpc", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         const npc: Npc = {
           entityId: parsed.NpcStruct.ObjectId,
           entityType: EntityType.Npc,
@@ -200,6 +205,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTNewNpcSummon", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         const summon: Summon = {
           entityId: parsed.NpcData.ObjectId,
           entityType: EntityType.Summon,
@@ -210,6 +216,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTNewPC", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         const player: Player = {
           entityId: parsed.PCStruct.PlayerId,
           entityType: EntityType.Player,
@@ -235,6 +242,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTNewProjectile", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         const projectile: Projectile = {
           entityId: parsed.projectileInfo.ProjectileId,
           entityType: EntityType.Projectile,
@@ -259,6 +267,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTSkillDamageAbnormalMoveNotify", (pkt) => {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;
+          if (!parsedDmg) return;
           let sourceEntity = this.#getSourceEntity(parsedDmg.SourceId);
           let skillName = this.#data.getSkillName(parsedDmg.SkillId);
           const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
@@ -298,6 +307,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTSkillDamageNotify", (pkt) => {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;
+          if (!parsedDmg) return;
           let sourceEntity: Entity = this.#getSourceEntity(parsedDmg.SourceId);
           let skillName = this.#data.getSkillName(parsedDmg.SkillId);
           const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
@@ -338,6 +348,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTSkillStageNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          if (!parsed) return;
           let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
           this.#buildLine(
@@ -353,6 +364,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTSkillStartNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          if (!parsed) return;
           let sourceEntity: Entity = this.#getSourceEntity(parsed.SourceId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsed.SkillId);
           this.#buildLine(
@@ -367,6 +379,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTStatChangeOriginNotify", (pkt) => {
         if (this.#needEmit) {
           const parsed = pkt.parsed;
+          if (!parsed) return;
           // TODO: check healAmount, currentHp + fix def
           const currentStatsMap = this.#getStatPairMap(pkt.parsed.StatPairList);
           const changedStatsMap = this.#getStatPairMap(pkt.parsed.Unk1);
@@ -387,6 +400,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTTriggerFinishNotify", (pkt) => {})
       .on("PKTTriggerStartNotify", (pkt) => {
         const parsed = pkt.parsed;
+        if (!parsed) return;
         switch (parsed.TriggerSignalType) {
           case triggersignaltype.dungeon_phase1_clear:
           case triggersignaltype.dungeon_phase2_clear:

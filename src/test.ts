@@ -9,7 +9,7 @@ import { PKTStream } from "./pkt-stream";
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
 const xorTable = readFileSync("./meter-data/xor.bin");
 
-const compressor = new Decompressor(oodle_state, xorTable);
+const compressor = new Decompressor(oodle_state, xorTable, console.error);
 const stream = new PKTStream(compressor);
 
 const capture = new PktCaptureAll();
@@ -29,7 +29,11 @@ legacyLogger.on("line", (line) => {
 });
 
 stream.on("*", (data, opcode, compression, xor) => {
-  compressor.decrypt(data, opcode, compression, xor);
+  try {
+    compressor.decrypt(data, opcode, compression, xor);
+  } catch (e) {
+    compressor.logerror(e);
+  }
 });
 
 inspect.defaultOptions.depth = null;

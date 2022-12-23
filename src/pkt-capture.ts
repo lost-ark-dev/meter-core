@@ -19,11 +19,11 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
     super();
     this.device = device;
     this.c = new cap.Cap();
-    const buffer = Buffer.alloc(2 ** 22);
-    const linkType = this.c.open(device, "tcp and src port 6040", buffer.length, buffer);
+    const buffer = Buffer.alloc(65535);
+    const linkType = this.c.open(device, "tcp and src port 6040", 10 * 1024 * 1024, buffer);
     const packetBuffer = new PacketBuffer();
 
-    if (this.c.setMinBytes) this.c.setMinBytes(16);
+    if (this.c.setMinBytes) this.c.setMinBytes(0);
 
     this.c.on("packet", () => {
       if (linkType === "ETHERNET") {
@@ -152,9 +152,10 @@ class PacketBuffer {
       // data we have, we should save it in the buffer
       const size = data.readUInt16LE(0);
       if (size > data.length) {
-        this.buffer = Buffer.alloc(size);
-        data.copy(this.buffer);
-        this.position = data.length;
+        // Ignore fragmented packets -> will lead to data loss probably, but fix crashes
+        // this.buffer = Buffer.alloc(size);
+        // data.copy(this.buffer);
+        // this.position = data.length;
         break;
       }
 

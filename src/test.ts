@@ -28,6 +28,10 @@ legacyLogger.on("line", (line) => {
   console.log(line);
 });
 
+stream.on("*", (data, opcode, compression, xor) => {
+  compressor.decrypt(data, opcode, compression, xor);
+});
+
 inspect.defaultOptions.depth = null;
 
 console.log("Logging");

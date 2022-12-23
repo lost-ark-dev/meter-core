@@ -12,6 +12,7 @@ export class Decompressor {
   }
 
   decrypt(data: Buffer, xorShift = 0, compression = 0, xor = 0) {
+    if (xor > 1) throw new Error(`Weird xor?: ${xor}`);
     if (xor) this.xor(data, xorShift);
     switch (compression) {
       case 0: {

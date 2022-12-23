@@ -5,7 +5,7 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,ts}\"",
     "build": "tsup",
-    "build:test": "tsup src/test.ts --clean --no-config --format esm"
+    "build:test": "tsup src/test.ts --clean --no-config"
   },
   "dependencies": {
     "cap": "^0.2.1",

@@ -12,7 +12,7 @@ const xorTable = readFileSync("./meter-data/xor.bin");
 const compressor = new Decompressor(oodle_state, xorTable, console.error);
 const stream = new PKTStream(compressor);
 
-const capture = new PktCaptureAll();
+const capture = new PktCaptureAll(console.error);
 capture.on("packet", (buf) => stream.read(buf));
 
 const meterData = new MeterData();

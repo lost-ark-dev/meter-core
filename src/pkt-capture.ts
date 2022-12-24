@@ -1,4 +1,5 @@
 import cap from "cap";
+import { isIPv4 } from "net";
 import { networkInterfaces } from "os";
 import { TypedEmitter } from "tiny-typed-emitter";
 
@@ -58,24 +59,28 @@ interface PktCaptureAllEvents {
 export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
   caps: Map<string, PktCapture>;
 
-  constructor(allowInternal = false) {
+  constructor(logerror: (message: any, ...optionalParams: any[]) => void) {
     super();
     this.caps = new Map();
+    for (const device of deviceList()) {
+      for (const address of device.addresses) {
+        if (isIPv4(address.addr!)) {
+          try {
+            const cap = new PktCapture(device.name);
 
-    for (const [deviceName, interfaceInfo] of Object.entries(networkInterfaces())) {
-      if (interfaceInfo) {
-        for (const i of interfaceInfo) {
-          if (!allowInternal && i.internal) continue;
-          if (i.family === "IPv4") {
-            const device = findDevice(i.address);
-            if (device) {
-              const cap = new PktCapture(device);
+            // re-emit
+            cap.on("packet", (buf) => this.emit("packet", buf, device.name));
 
-              // re-emit
-              cap.on("packet", (buf) => this.emit("packet", buf, deviceName));
-
-              this.caps.set(i.address, cap);
+            // close others
+            /* cap.once("packet", () => {
+            for (const [name, cap] of this.caps.entries()) {
+              if (name != device.name) cap.close();
             }
+          }); */
+
+            this.caps.set(device.name, cap);
+          } catch (e) {
+            logerror(`[meter-core/PktCaptureAll] ${e}`);
           }
         }
       }

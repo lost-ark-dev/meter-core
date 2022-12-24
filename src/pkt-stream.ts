@@ -29,10 +29,10 @@ export class PKTStream extends TypedEmitter<PKTStreamEvents> {
         const [name, read] = pkt;
         this.emit(
           name as keyof PKTStreamEvents,
-          new PKT(Buffer.from(data), opcode, compression, Boolean(xor), this.#decompressor, read)
+          new PKT(data, opcode, compression, Boolean(xor), this.#decompressor, read)
         );
       }
-      this.emit("*", Buffer.from(data), opcode, compression, Boolean(xor));
+      this.emit("*", data, opcode, compression, Boolean(xor));
     } catch (e) {
       return false;
     }

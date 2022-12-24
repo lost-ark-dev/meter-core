@@ -33,7 +33,7 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
             const tcp = TCP(this.buffer, ipv4.offset);
             datalen -= tcp.hdrlen;
             if (datalen) {
-              packetBuffer.write(Buffer.from(this.buffer.subarray(tcp.offset, tcp.offset + datalen)));
+              packetBuffer.write(this.buffer.subarray(tcp.offset, tcp.offset + datalen));
               let pkt = packetBuffer.read();
               while (pkt) {
                 this.emit("packet", pkt);
@@ -150,7 +150,7 @@ class PacketBuffer {
       }
 
       // otherwise, just push it and chop off the front, then keep going
-      this.out.push(Buffer.from(data.subarray(0, size)));
+      this.out.push(data.subarray(0, size));
       data = data.subarray(size);
     }
   }

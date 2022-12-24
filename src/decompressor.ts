@@ -16,29 +16,36 @@ export class Decompressor {
 
   decrypt(data: Buffer, xorShift: number, compression: number, xor: boolean) {
     if (xor) this.xor(data, xorShift);
+    let out: Buffer;
     switch (compression) {
       case 0: {
         // no compression
-        return data.subarray(16);
+        out = data;
+        break;
       }
       case 1: {
         // lz4
-        return lz4UncompressSync(data).subarray(16);
+        out = lz4UncompressSync(data);
+        break;
       }
       case 2: {
         // snappy
-        return snappyUncompress(data).subarray(16);
+        out = snappyUncompress(data);
+        break;
       }
       case 3: {
         // oodle
         const length = data.readUInt32LE(0);
-        const out = Buffer.alloc(length);
-        data = this.oodle.decode(data.subarray(4), out);
-        return data.subarray(16);
+        if (data.length < 4)
+          throw new Error(`Invalid oodle packet: size=${data.length}, comp=${compression}, opcode=${xorShift}`);
+        out = this.oodle.decode(data.subarray(4), length);
+        break;
       }
       default:
         throw new Error(`Unknown compression: ${compression}`);
     }
+    if (out.length < 16) throw new Error(`Invalid packet: size=${out.length}, comp=${compression}, opcode=${xorShift}`);
+    return out.subarray(16);
   }
 
   xor(data: Buffer, seed: number) {

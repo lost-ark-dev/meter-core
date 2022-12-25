@@ -147,9 +147,9 @@ class PacketBuffer {
       const size = data.readUInt16LE(0);
       if (size > data.length) {
         // TODO: tcp reconstruct
-        this.buffer = Buffer.alloc(size);
-        data.copy(this.buffer);
-        this.position = data.length;
+        // this.buffer = Buffer.alloc(size);
+        // data.copy(this.buffer);
+        // this.position = data.length;
         break;
       }
 

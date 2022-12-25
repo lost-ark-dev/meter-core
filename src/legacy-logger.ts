@@ -153,35 +153,36 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           gearLevel: this.#localPlayer.gearLevel,
         };
         this.#currentEncounter.entities.set(player.entityId, player);
+        // console.log("PKTInitEnv", this.#localPlayer);
         if (this.#needEmit) this.#buildLine(LineId.InitEnv, player.entityId);
       })
       .on("PKTInitPC", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
         this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel) };
-        if (!this.#currentEncounter.entities.get(parsed.PlayerId)) {
-          const player: Player = {
-            entityId: parsed.PlayerId,
-            entityType: EntityType.Player,
-            name: parsed.Name,
-            class: parsed.ClassId,
-            gearLevel: this.#u32tof32(parsed.GearLevel),
-          };
-          this.#currentEncounter.entities.set(player.entityId, player);
-          if (this.#needEmit) {
-            const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
-            this.#buildLine(
-              LineId.NewPC,
-              player.entityId,
-              player.name,
-              player.class,
-              this.#data.getClassName(player.class),
-              parsed.Level,
-              player.gearLevel,
-              Number(statsMap.get(stattype.hp)) || 0,
-              Number(statsMap.get(stattype.max_hp)) || 0
-            );
-          }
+        this.#currentEncounter = new Encounter();
+        const player: Player = {
+          entityId: parsed.PlayerId,
+          entityType: EntityType.Player,
+          name: parsed.Name,
+          class: parsed.ClassId,
+          gearLevel: this.#u32tof32(parsed.GearLevel),
+        };
+        // console.log("PKTInitPC", this.#localPlayer);
+        this.#currentEncounter.entities.set(player.entityId, player);
+        if (this.#needEmit) {
+          const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
+          this.#buildLine(
+            LineId.NewPC,
+            player.entityId,
+            player.name,
+            player.class,
+            this.#data.getClassName(player.class),
+            parsed.Level,
+            player.gearLevel,
+            Number(statsMap.get(stattype.hp)) || 0,
+            Number(statsMap.get(stattype.max_hp)) || 0
+          );
         }
       })
       .on("PKTNewNpc", (pkt) => {
@@ -220,29 +221,27 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTNewPC", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        if (!this.#currentEncounter.entities.get(parsed.PCStruct.PlayerId)) {
-          const player: Player = {
-            entityId: parsed.PCStruct.PlayerId,
-            entityType: EntityType.Player,
-            name: parsed.PCStruct.Name,
-            class: parsed.PCStruct.ClassId,
-            gearLevel: this.#u32tof32(parsed.PCStruct.GearLevel),
-          };
-          this.#currentEncounter.entities.set(player.entityId, player);
-          if (this.#needEmit) {
-            const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
-            this.#buildLine(
-              LineId.NewPC,
-              player.entityId,
-              player.name,
-              player.class,
-              this.#data.getClassName(player.class),
-              parsed.PCStruct.Level,
-              player.gearLevel,
-              Number(statsMap.get(stattype.hp)) || 0,
-              Number(statsMap.get(stattype.max_hp)) || 0
-            );
-          }
+        const player: Player = {
+          entityId: parsed.PCStruct.PlayerId,
+          entityType: EntityType.Player,
+          name: parsed.PCStruct.Name,
+          class: parsed.PCStruct.ClassId,
+          gearLevel: this.#u32tof32(parsed.PCStruct.GearLevel),
+        };
+        this.#currentEncounter.entities.set(player.entityId, player);
+        if (this.#needEmit) {
+          const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
+          this.#buildLine(
+            LineId.NewPC,
+            player.entityId,
+            player.name,
+            player.class,
+            this.#data.getClassName(player.class),
+            parsed.PCStruct.Level,
+            player.gearLevel,
+            Number(statsMap.get(stattype.hp)) || 0,
+            Number(statsMap.get(stattype.max_hp)) || 0
+          );
         }
       })
       .on("PKTNewProjectile", (pkt) => {

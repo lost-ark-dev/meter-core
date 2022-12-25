@@ -8,8 +8,8 @@ interface PktCaptureEvents {
     packet: (buf: Buffer) => void;
 }
 declare class PktCapture extends TypedEmitter<PktCaptureEvents> {
+    #private;
     c: cap.Cap;
-    buffer: Buffer;
     constructor(device: string);
     close(): void;
 }
@@ -18,7 +18,7 @@ interface PktCaptureAllEvents {
 }
 declare class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     caps: Map<string, PktCapture>;
-    constructor(logerror: (message: any, ...optionalParams: any[]) => void);
+    constructor(logErrorFunc: (arg?: any, ...args: any[]) => void);
     close(): void;
 }
 

@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "./data";
 import { hitflag, stattype, triggersignaltype } from "./packets/generated/enums";
@@ -158,27 +159,29 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel) };
-        const player: Player = {
-          entityId: parsed.PlayerId,
-          entityType: EntityType.Player,
-          name: parsed.Name,
-          class: parsed.ClassId,
-          gearLevel: this.#u32tof32(parsed.GearLevel),
-        };
-        this.#currentEncounter.entities.set(player.entityId, player);
-        if (this.#needEmit) {
-          const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
-          this.#buildLine(
-            LineId.NewPC,
-            player.entityId,
-            player.name,
-            player.class,
-            this.#data.getClassName(player.class),
-            parsed.Level,
-            player.gearLevel,
-            Number(statsMap.get(stattype.hp)) || 0,
-            Number(statsMap.get(stattype.max_hp)) || 0
-          );
+        if (!this.#currentEncounter.entities.get(parsed.PlayerId)) {
+          const player: Player = {
+            entityId: parsed.PlayerId,
+            entityType: EntityType.Player,
+            name: parsed.Name,
+            class: parsed.ClassId,
+            gearLevel: this.#u32tof32(parsed.GearLevel),
+          };
+          this.#currentEncounter.entities.set(player.entityId, player);
+          if (this.#needEmit) {
+            const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
+            this.#buildLine(
+              LineId.NewPC,
+              player.entityId,
+              player.name,
+              player.class,
+              this.#data.getClassName(player.class),
+              parsed.Level,
+              player.gearLevel,
+              Number(statsMap.get(stattype.hp)) || 0,
+              Number(statsMap.get(stattype.max_hp)) || 0
+            );
+          }
         }
       })
       .on("PKTNewNpc", (pkt) => {
@@ -217,27 +220,29 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTNewPC", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        const player: Player = {
-          entityId: parsed.PCStruct.PlayerId,
-          entityType: EntityType.Player,
-          name: parsed.PCStruct.Name,
-          class: parsed.PCStruct.ClassId,
-          gearLevel: this.#u32tof32(parsed.PCStruct.GearLevel),
-        };
-        this.#currentEncounter.entities.set(player.entityId, player);
-        if (this.#needEmit) {
-          const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
-          this.#buildLine(
-            LineId.NewPC,
-            player.entityId,
-            player.name,
-            player.class,
-            this.#data.getClassName(player.class),
-            parsed.PCStruct.Level,
-            player.gearLevel,
-            Number(statsMap.get(stattype.hp)) || 0,
-            Number(statsMap.get(stattype.max_hp)) || 0
-          );
+        if (!this.#currentEncounter.entities.get(parsed.PCStruct.PlayerId)) {
+          const player: Player = {
+            entityId: parsed.PCStruct.PlayerId,
+            entityType: EntityType.Player,
+            name: parsed.PCStruct.Name,
+            class: parsed.PCStruct.ClassId,
+            gearLevel: this.#u32tof32(parsed.PCStruct.GearLevel),
+          };
+          this.#currentEncounter.entities.set(player.entityId, player);
+          if (this.#needEmit) {
+            const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
+            this.#buildLine(
+              LineId.NewPC,
+              player.entityId,
+              player.name,
+              player.class,
+              this.#data.getClassName(player.class),
+              parsed.PCStruct.Level,
+              player.gearLevel,
+              Number(statsMap.get(stattype.hp)) || 0,
+              Number(statsMap.get(stattype.max_hp)) || 0
+            );
+          }
         }
       })
       .on("PKTNewProjectile", (pkt) => {
@@ -286,6 +291,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.skillDamageEvent.Modifier & (hitflag.dot | hitflag.dot_critical)
             )
               skillName = "Bleed";
+
             this.#buildLine(
               LineId.Damage,
               sourceEntity.entityId,
@@ -426,9 +432,10 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
 
   #buildLine<U extends keyof LegacyLoggerEvents>(id: U, ...args: Parameters<LegacyLoggerEvents[U]>) {
     if (this.emitText) {
-      const line = `${id}|${new Date().toISOString()}|${args
+      let line = `${id}|${new Date().toISOString()}|${args
         .map((v) => (typeof v === "bigint" ? v.toString(16) : v))
         .join("|")}`;
+      line = [line, createHash("md5").update(line).digest("hex")].join("|");
       this.emit("line", line);
     }
     if (this.emitLines) this.emit(id, ...args);

@@ -1,6 +1,5 @@
 import cap from "cap";
 import { isIPv4 } from "net";
-import { networkInterfaces } from "os";
 import { TypedEmitter } from "tiny-typed-emitter";
 
 const { findDevice, deviceList } = cap.Cap;
@@ -14,27 +13,28 @@ interface PktCaptureEvents {
 
 export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   c: cap.Cap;
-  buffer: Buffer;
+  #buffer: Buffer;
+
   constructor(device: string) {
     super();
     this.c = new cap.Cap();
-    this.buffer = Buffer.alloc(65535);
-    const linkType = this.c.open(device, "tcp and src port 6040", 10 * 1024 * 1024, this.buffer);
+    this.#buffer = Buffer.alloc(65535);
+    const linkType = this.c.open(device, "tcp and src port 6040", 10 * 1024 * 1024, this.#buffer);
     const packetBuffer = new PacketBuffer();
 
-    if (this.c.setMinBytes) this.c.setMinBytes(6); // pkt header size
+    if (this.c.setMinBytes) this.c.setMinBytes(54); // Ethernet + IPV4 + TCP
 
     this.c.on("packet", (nbytes: number, truncated: boolean) => {
       if (linkType === "ETHERNET") {
-        const ethernet = Ethernet(this.buffer);
+        const ethernet = Ethernet(this.#buffer);
         if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
-          const ipv4 = IPV4(this.buffer, ethernet.offset);
+          const ipv4 = IPV4(this.#buffer, ethernet.offset);
           if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
             let datalen = ipv4.info.totallen - ipv4.hdrlen;
-            const tcp = TCP(this.buffer, ipv4.offset);
+            const tcp = TCP(this.#buffer, ipv4.offset);
             datalen -= tcp.hdrlen;
             if (datalen) {
-              packetBuffer.write(this.buffer.subarray(tcp.offset, tcp.offset + datalen));
+              packetBuffer.write(this.#buffer.subarray(tcp.offset, tcp.offset + datalen));
               let pkt = packetBuffer.read();
               while (pkt) {
                 this.emit("packet", pkt);
@@ -59,7 +59,7 @@ interface PktCaptureAllEvents {
 export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
   caps: Map<string, PktCapture>;
 
-  constructor(logerror: (message: any, ...optionalParams: any[]) => void) {
+  constructor(logErrorFunc: (arg?: any, ...args: any[]) => void) {
     super();
     this.caps = new Map();
     for (const device of deviceList()) {
@@ -73,14 +73,14 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
 
             // close others
             /* cap.once("packet", () => {
-            for (const [name, cap] of this.caps.entries()) {
-              if (name != device.name) cap.close();
-            }
-          }); */
+              for (const [name, cap] of this.caps.entries()) {
+                if (name != device.name) cap.close();
+              }
+            }); */
 
             this.caps.set(device.name, cap);
           } catch (e) {
-            logerror(`[meter-core/PktCaptureAll] ${e}`);
+            logErrorFunc(`[meter-core/PktCaptureAll] ${e}`);
           }
         }
       }
@@ -146,11 +146,10 @@ class PacketBuffer {
       // data we have, we should save it in the buffer
       const size = data.readUInt16LE(0);
       if (size > data.length) {
-        // Ignore fragmented packets -> will lead to data loss probably, but fix crashes
-        // yes but no
-        // this.buffer = Buffer.alloc(size);
-        // data.copy(this.buffer);
-        // this.position = data.length;
+        // TODO: tcp reconstruct
+        this.buffer = Buffer.alloc(size);
+        data.copy(this.buffer);
+        this.position = data.length;
         break;
       }
 

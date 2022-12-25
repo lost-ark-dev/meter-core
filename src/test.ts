@@ -32,7 +32,7 @@ stream.on("*", (data, opcode, compression, xor) => {
   try {
     compressor.decrypt(data, opcode, compression, xor);
   } catch (e) {
-    compressor.logerror(e);
+    compressor.logErrorFunc(e);
   }
 });
 

@@ -5,13 +5,13 @@ import { uncompress as snappyUncompress } from "snappyjs";
 export class Decompressor {
   oodle: oodle.Oodle;
   xorTable: Buffer;
-  logerror: (message: any, ...optionalParams: any[]) => void;
+  logErrorFunc: (arg?: any, ...args: any[]) => void;
 
-  constructor(oodle_state: Buffer, xorTable: Buffer, logerror: (message: any, ...optionalParams: any[]) => void) {
+  constructor(oodle_state: Buffer, xorTable: Buffer, logErrorFunc: (arg?: any, ...args: any[]) => void) {
     this.oodle = new oodle.Oodle(oodle_state);
     if (xorTable.length != 256) throw new Error("Invalid xorTable length");
     this.xorTable = xorTable;
-    this.logerror = logerror;
+    this.logErrorFunc = logErrorFunc;
   }
 
   decrypt(data: Buffer, xorShift: number, compression: number, xor: boolean) {
@@ -35,10 +35,9 @@ export class Decompressor {
       }
       case 3: {
         // oodle
-        const length = data.readUInt32LE(0);
         if (data.length < 4)
           throw new Error(`Invalid oodle packet: size=${data.length}, comp=${compression}, opcode=${xorShift}`);
-        out = this.oodle.decode(data.subarray(4), length);
+        out = this.oodle.decode(data.subarray(4), data.readUInt32LE(0));
         break;
       }
       default:

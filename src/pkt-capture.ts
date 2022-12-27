@@ -66,7 +66,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     this.caps = new Map();
     for (const device of deviceList()) {
       for (const address of device.addresses) {
-        if (isIPv4(address.addr!) && address.addr === "192.168.0.51") {
+        if (isIPv4(address.addr!)) {
           try {
             const cap = new PktCapture(address.addr!, device.name);
 

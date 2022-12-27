@@ -123,7 +123,7 @@ export class TCPSession extends EventEmitter {
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
 
     if (this.state === "NONE") {
-      if (this.device_addr === ip.info.srcaddr && this.listening_port !== tcp.info.srcport) {
+      if (this.device_addr === ip.info.srcaddr || this.listening_port !== tcp.info.srcport) {
         this.src = src;
         this.dst = dst;
       } else {

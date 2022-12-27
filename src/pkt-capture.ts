@@ -1,6 +1,7 @@
 import cap from "cap";
 import { isIPv4 } from "net";
 import { TypedEmitter } from "tiny-typed-emitter";
+import { TCPTracker, TCPSession } from "./tcp_tracker";
 
 const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
@@ -14,15 +15,14 @@ interface PktCaptureEvents {
 export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   c: cap.Cap;
   #buffer: Buffer;
-
-  constructor(device: string) {
+  constructor(addr: string, device: string) {
     super();
     this.c = new cap.Cap();
     this.#buffer = Buffer.alloc(65535);
-    const linkType = this.c.open(device, "tcp and src port 6040", 10 * 1024 * 1024, this.#buffer);
+    const linkType = this.c.open(device, "tcp and (src port 6040 or dst port 6040)", 10 * 1024 * 1024, this.#buffer);
     const packetBuffer = new PacketBuffer();
-
-    if (this.c.setMinBytes) this.c.setMinBytes(54); // Ethernet + IPV4 + TCP
+    const tcpTracker = new TCPTracker(addr, 6040);
+    if (this.c.setMinBytes) this.c.setMinBytes(54); // pkt header size
 
     this.c.on("packet", (nbytes: number, truncated: boolean) => {
       if (linkType === "ETHERNET") {
@@ -30,20 +30,22 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
         if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
           const ipv4 = IPV4(this.#buffer, ethernet.offset);
           if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
-            let datalen = ipv4.info.totallen - ipv4.hdrlen;
             const tcp = TCP(this.#buffer, ipv4.offset);
-            datalen -= tcp.hdrlen;
-            if (datalen) {
-              packetBuffer.write(this.#buffer.subarray(tcp.offset, tcp.offset + datalen));
-              let pkt = packetBuffer.read();
-              while (pkt) {
-                this.emit("packet", pkt);
-                pkt = packetBuffer.read();
-              }
-            }
+            tcpTracker.track_packet(this.#buffer, ipv4, tcp);
           }
         }
       }
+    });
+    tcpTracker.on("session", (session: TCPSession) => {
+      //console.log(`New session ${session.src}->${session.dst}`);
+      session.on("payload_recv", (data: Buffer) => {
+        packetBuffer.write(data);
+        let pkt = packetBuffer.read();
+        while (pkt) {
+          this.emit("packet", pkt);
+          pkt = packetBuffer.read();
+        }
+      });
     });
   }
 
@@ -64,9 +66,9 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     this.caps = new Map();
     for (const device of deviceList()) {
       for (const address of device.addresses) {
-        if (isIPv4(address.addr!)) {
+        if (isIPv4(address.addr!) && address.addr === "192.168.0.51") {
           try {
-            const cap = new PktCapture(device.name);
+            const cap = new PktCapture(address.addr!, device.name);
 
             // re-emit
             cap.on("packet", (buf) => this.emit("packet", buf, device.name));
@@ -146,10 +148,9 @@ class PacketBuffer {
       // data we have, we should save it in the buffer
       const size = data.readUInt16LE(0);
       if (size > data.length) {
-        // TODO: tcp reconstruct
-        // this.buffer = Buffer.alloc(size);
-        // data.copy(this.buffer);
-        // this.position = data.length;
+        this.buffer = Buffer.alloc(size);
+        data.copy(this.buffer);
+        this.position = data.length;
         break;
       }
 

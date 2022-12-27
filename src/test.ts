@@ -13,7 +13,14 @@ const compressor = new Decompressor(oodle_state, xorTable, console.error);
 const stream = new PKTStream(compressor);
 
 const capture = new PktCaptureAll(console.error);
-capture.on("packet", (buf) => stream.read(buf));
+capture.on("packet", (buf) => {
+  try {
+    const badPkt = stream.read(buf);
+    if (badPkt === false) console.error(`bad pkt ${buf.toString("hex")}`);
+  } catch (e) {
+    console.error(e);
+  }
+});
 
 const meterData = new MeterData();
 meterData.processEnumData(JSON.parse(readFileSync("meter-data/databases/Enums.json", "utf-8")));
@@ -27,7 +34,7 @@ const legacyLogger = new LegacyLogger(stream, meterData);
 legacyLogger.on("line", (line) => {
   console.log(line);
 });
-
+/*
 stream.on("*", (data, opcode, compression, xor) => {
   try {
     compressor.decrypt(data, opcode, compression, xor);
@@ -35,7 +42,7 @@ stream.on("*", (data, opcode, compression, xor) => {
     compressor.logErrorFunc(e);
   }
 });
-
+*/
 inspect.defaultOptions.depth = null;
 
 console.log("Logging");

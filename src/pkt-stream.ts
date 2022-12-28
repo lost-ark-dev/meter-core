@@ -71,7 +71,7 @@ export class PKT<T> {
       try {
         this.#cached = this.#read(this.#decompressor.decrypt(this.#data, this.#opcode, this.#compression, this.#xor));
       } catch (e) {
-        this.#decompressor.logErrorFunc(e);
+        console.error(`[meter-core/pkt-stream] - ${e}`);
         return undefined;
       }
     }

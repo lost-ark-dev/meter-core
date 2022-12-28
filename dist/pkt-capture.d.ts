@@ -18,7 +18,7 @@ interface PktCaptureAllEvents {
 }
 declare class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     caps: Map<string, PktCapture>;
-    constructor(logErrorFunc: (arg?: any, ...args: any[]) => void);
+    constructor();
     close(): void;
 }
 

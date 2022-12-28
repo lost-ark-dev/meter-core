@@ -75,6 +75,11 @@ export class TCPTracker extends EventEmitter {
       this.sessions[key] = session;
       session.on("end", () => {
         delete this.sessions[key];
+        console.info(
+          `[meter-core/tcp-tracker] - Remove session ${session?.src}->${session?.dst} (Total: ${
+            Object.keys(this.sessions).length
+          })`
+        );
       });
     }
 
@@ -138,7 +143,7 @@ export class TCPSession extends EventEmitter {
         this.state = "ESTAB"; // I mean, probably established, right? Unless it isn't.
       }
     } else if (tcp.info.flags & TCPFlags.syn && !(tcp.info.flags & TCPFlags.ack)) {
-      this.emit("syn retry", this);
+      //this.emit("syn retry", this);
     } else {
       // not a SYN, so run the state machine
       this[this.state](buffer, ip, tcp);
@@ -152,7 +157,7 @@ export class TCPSession extends EventEmitter {
       this.state = "SYN_RCVD";
     } else if (tcp.info.flags & TCPFlags.rst) {
       this.state = "CLOSED";
-      this.emit("reset", this, "recv"); // TODO - check which direction did the reset, probably recv
+      //this.emit("reset", this, "recv"); // TODO - check which direction did the reset, probably recv
       //    } else {
       //        console.log("Didn't get SYN-ACK packet from dst while handshaking: " + util.inspect(tcp, false, 4));
     }
@@ -163,7 +168,7 @@ export class TCPSession extends EventEmitter {
     if (src === this.src && tcp.info.flags & TCPFlags.ack) {
       // TODO - make sure SYN flag isn't set, also match src and dst
       this.recv_seqno = tcp.info.ackno ?? 0;
-      this.emit("start", this);
+      //this.emit("start", this);
       this.state = "ESTAB";
       //    } else {
       //        console.log("Didn't get ACK packet from src while handshaking: " + util.inspect(tcp, false, 4));
@@ -215,7 +220,7 @@ export class TCPSession extends EventEmitter {
         this.state = "CLOSE_WAIT";
       }
     } else {
-      console.error("non-matching packet in session: ip=" + ip + "tcp=" + tcp);
+      console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
     }
   }
   // TODO - need to track half-closed data
@@ -322,7 +327,7 @@ export class TCPSession extends EventEmitter {
     //TODO: use a mask (or anything) to be sure we got all the portions of the payload
     //We apply the mask to remove unknown portions (probably can be fixed by implementing sack)
     if (flush_mask.includes(0)) {
-      console.error(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
+      console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
       return null;
     }
     return flush_payload;

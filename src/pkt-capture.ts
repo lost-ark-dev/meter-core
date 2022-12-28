@@ -37,7 +37,11 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
       }
     });
     tcpTracker.on("session", (session: TCPSession) => {
-      //console.log(`New session ${session.src}->${session.dst}`);
+      console.info(
+        `[meter-core/pkt-capture] - New session ${session.src}->${session.dst} (Total: ${
+          Object.keys(tcpTracker.sessions).length
+        })`
+      );
       session.on("payload_recv", (data: Buffer) => {
         packetBuffer.write(data);
         let pkt = packetBuffer.read();
@@ -61,7 +65,7 @@ interface PktCaptureAllEvents {
 export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
   caps: Map<string, PktCapture>;
 
-  constructor(logErrorFunc: (arg?: any, ...args: any[]) => void) {
+  constructor() {
     super();
     this.caps = new Map();
     for (const device of deviceList()) {
@@ -82,7 +86,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
 
             this.caps.set(device.name, cap);
           } catch (e) {
-            logErrorFunc(`[meter-core/PktCaptureAll] ${e}`);
+            console.error(`[meter-core/PktCaptureAll] ${e}`);
           }
         }
       }

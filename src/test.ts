@@ -9,10 +9,10 @@ import { PKTStream } from "./pkt-stream";
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
 const xorTable = readFileSync("./meter-data/xor.bin");
 
-const compressor = new Decompressor(oodle_state, xorTable, console.error);
+const compressor = new Decompressor(oodle_state, xorTable);
 const stream = new PKTStream(compressor);
 
-const capture = new PktCaptureAll(console.error);
+const capture = new PktCaptureAll();
 capture.on("packet", (buf) => {
   try {
     const badPkt = stream.read(buf);

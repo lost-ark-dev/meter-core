@@ -284,8 +284,8 @@ export class TCPSession extends EventEmitter {
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {
-        pkt = this.packetBuffer.read();
         this.emit("payload_recv", pkt);
+        pkt = this.packetBuffer.read();
       }
     } else if (direction === "send") {
       //Update seqno when unknown

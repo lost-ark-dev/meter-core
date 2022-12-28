@@ -15,13 +15,13 @@ interface PktCaptureEvents {
 export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   c: cap.Cap;
   #buffer: Buffer;
-  constructor(addr: string, device: string) {
+  constructor(device: string) {
     super();
     this.c = new cap.Cap();
     this.#buffer = Buffer.alloc(65535);
     const linkType = this.c.open(device, "tcp and (src port 6040 or dst port 6040)", 10 * 1024 * 1024, this.#buffer);
     const packetBuffer = new PacketBuffer();
-    const tcpTracker = new TCPTracker(addr, 6040);
+    const tcpTracker = new TCPTracker(6040);
     if (this.c.setMinBytes) this.c.setMinBytes(54); // pkt header size
 
     this.c.on("packet", (nbytes: number, truncated: boolean) => {
@@ -72,7 +72,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
       for (const address of device.addresses) {
         if (isIPv4(address.addr!)) {
           try {
-            const cap = new PktCapture(address.addr!, device.name);
+            const cap = new PktCapture(device.name);
 
             // re-emit
             cap.on("packet", (buf) => this.emit("packet", buf, device.name));

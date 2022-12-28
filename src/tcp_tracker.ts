@@ -1,6 +1,4 @@
-import { debug } from "console";
 import { EventEmitter } from "stream";
-import { isSet } from "util/types";
 type IPv4 = {
   info: {
     hdrlen: number;
@@ -48,12 +46,10 @@ enum TCPFlags {
 type Direction = "send" | "recv";
 export class TCPTracker extends EventEmitter {
   sessions: { [key: string]: TCPSession };
-  device_addr: string;
   listening_port: number;
-  constructor(device_addr: string, listening_port: number) {
+  constructor(listening_port: number) {
     super();
     this.sessions = {};
-    this.device_addr = device_addr;
     this.listening_port = listening_port;
     EventEmitter.call(this);
   }
@@ -71,7 +67,7 @@ export class TCPTracker extends EventEmitter {
     let session = this.sessions[key];
     if (!session) {
       is_new = true;
-      session = new TCPSession(this.device_addr, this.listening_port);
+      session = new TCPSession(this.listening_port);
       this.sessions[key] = session;
       session.on("end", () => {
         delete this.sessions[key];
@@ -106,12 +102,12 @@ export class TCPSession extends EventEmitter {
 
   recv_seqno: number; // Current seq number flushed
   recv_buffers: TCPSegment[];
-  device_addr: string;
   listening_port: number;
 
-  constructor(device_addr: string, listening_port: number) {
+  is_ignored: boolean;
+
+  constructor(listening_port: number) {
     super();
-    this.device_addr = device_addr;
     this.listening_port = listening_port;
 
     this.state = "NONE";
@@ -120,6 +116,7 @@ export class TCPSession extends EventEmitter {
 
     this.recv_seqno = 0;
     this.recv_buffers = [];
+    this.is_ignored = false;
 
     EventEmitter.call(this);
   }
@@ -128,12 +125,17 @@ export class TCPSession extends EventEmitter {
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
 
     if (this.state === "NONE") {
-      if (this.device_addr === ip.info.srcaddr || this.listening_port !== tcp.info.srcport) {
+      //Detect connection direction & filter out outgoing connections from listening port (local:6040->remote:????)
+      if (isLocalIp(ip.info.srcaddr) && this.listening_port === tcp.info.dstport) {
+        //local:????->xx.xx.xx.xx:6040
         this.src = src;
         this.dst = dst;
-      } else {
+      } else if (this.listening_port === tcp.info.srcport && isLocalIp(ip.info.srcaddr)) {
+        //xx.xx.xx.xx:6040->local:????
         this.src = dst;
         this.dst = src;
+      } else {
+        this.is_ignored = true; //We set to ignore this session, but we still want to track for connection start/end
       }
       if (tcp.info.flags & TCPFlags.syn && !(tcp.info.flags & TCPFlags.ack)) {
         // initial SYN, best case
@@ -181,6 +183,8 @@ export class TCPSession extends EventEmitter {
   // }
   // TODO - check for tcp.flags.rst and emit reset event
   ESTAB(buffer: Buffer, ip: IPv4, tcp: TCP) {
+    if (this.is_ignored) return; //Ignore data transfert
+
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
     let is_sack = false;
@@ -371,4 +375,36 @@ function is_sack_in_header(buffer: Buffer, ip: IPv4, tcp: TCP) {
     }
   }
   return false;
+}
+
+//from: https://github.com/DylanPiercey/is-local-ip/blob/master/index.js
+//We don't use pkg as it's overkill & doesn't have typings as well
+const RANGES = [
+  // 10.0.0.0 - 10.255.255.255
+  /^(::f{4}:)?10\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
+  // 127.0.0.0 - 127.255.255.255
+  /^(::f{4}:)?127\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
+  // 169.254.1.0 - 169.254.254.255
+  /^(::f{4}:)?169\.254\.([1-9]|1?\d\d|2[0-4]\d|25[0-4])\.\d{1,3}/,
+  // 172.16.0.0 - 172.31.255.255
+  /^(::f{4}:)?(172\.1[6-9]|172\.2\d|172\.3[0-1])\.\d{1,3}\.\d{1,3}/,
+  // 192.168.0.0 - 192.168.255.255
+  /^(::f{4}:)?192\.168\.\d{1,3}\.\d{1,3}/,
+  // fc00::/7
+  /^f[c-d][0-9a-f]{2}(::1$|:[0-9a-f]{1,4}){1,7}/,
+  // fe80::/10
+  /^fe[89ab][0-9a-f](::1$|:[0-9a-f]{1,4}){1,7}/,
+];
+
+/**
+ * Tests that an ip address is one that is reserved for local area, or internal networks.
+ */
+function isLocalIp(address: string) {
+  return (
+    address === "::" ||
+    address === "::1" ||
+    RANGES.some(function (it) {
+      return it.test(address);
+    })
+  );
 }

@@ -105,6 +105,7 @@ export class TCPSession extends EventEmitter {
   listening_port: number;
 
   is_ignored: boolean;
+  packetBuffer: PacketBuffer;
 
   constructor(listening_port: number) {
     super();
@@ -117,6 +118,7 @@ export class TCPSession extends EventEmitter {
     this.recv_seqno = 0;
     this.recv_buffers = [];
     this.is_ignored = false;
+    this.packetBuffer = new PacketBuffer();
 
     EventEmitter.call(this);
   }
@@ -276,7 +278,12 @@ export class TCPSession extends EventEmitter {
         //can't flush payload, missing some of it, dropping
         return;
       }
-      this.emit("payload_recv", flush_payload);
+      this.packetBuffer.write(flush_payload);
+      let pkt = this.packetBuffer.read();
+      while (pkt) {
+        pkt = this.packetBuffer.read();
+        this.emit("payload_recv", pkt);
+      }
     } else if (direction === "send") {
       //Update seqno when unknown
       if (this.send_seqno === 0) this.send_seqno = ackno;
@@ -287,7 +294,8 @@ export class TCPSession extends EventEmitter {
         //can't flush payload, missing some of it, dropping
         return;
       }
-      this.emit("payload_send", flush_payload);
+      //We ignore data sent
+      //this.emit("payload_send", flush_payload);
     }
   }
   get_flush(buffers: TCPSegment[], seqno: number, ackno: number): Buffer | null {

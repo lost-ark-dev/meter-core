@@ -52,6 +52,11 @@ export class PacketBuffer {
       // otherwise, read the size value, and if it's bigger than the size of the
       // data we have, we should save it in the buffer
       const size = data.readUInt16LE(0);
+      if (size === 0) {
+        //In case we got malformed data, drop it: prevents infinite loop (will mostly get triggered if you listen another connection than the game)
+        this.buffer = null;
+        return;
+      }
       if (size > data.length) {
         this.buffer = Buffer.alloc(size);
         data.copy(this.buffer);

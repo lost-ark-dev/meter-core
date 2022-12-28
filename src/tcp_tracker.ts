@@ -1,4 +1,5 @@
 import { EventEmitter } from "stream";
+import { PacketBuffer } from "./pkt-buffer";
 type IPv4 = {
   info: {
     hdrlen: number;

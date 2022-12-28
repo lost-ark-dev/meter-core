@@ -20,7 +20,6 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
     this.c = new cap.Cap();
     this.#buffer = Buffer.alloc(65535);
     const linkType = this.c.open(device, "tcp and (src port 6040 or dst port 6040)", 10 * 1024 * 1024, this.#buffer);
-    const packetBuffer = new PacketBuffer();
     const tcpTracker = new TCPTracker(6040);
     if (this.c.setMinBytes) this.c.setMinBytes(54); // pkt header size
 

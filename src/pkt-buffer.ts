@@ -1,4 +1,4 @@
-class PacketBuffer {
+export class PacketBuffer {
   buffer: Buffer | null;
   position: number;
   out: Buffer[];

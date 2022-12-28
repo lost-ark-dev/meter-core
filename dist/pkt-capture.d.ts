@@ -10,7 +10,7 @@ interface PktCaptureEvents {
 declare class PktCapture extends TypedEmitter<PktCaptureEvents> {
     #private;
     c: cap.Cap;
-    constructor(addr: string, device: string);
+    constructor(device: string);
     close(): void;
 }
 interface PktCaptureAllEvents {

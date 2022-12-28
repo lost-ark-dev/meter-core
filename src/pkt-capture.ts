@@ -37,9 +37,9 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
     });
     tcpTracker.on("session", (session: TCPSession) => {
       console.info(
-        `[meter-core/pkt-capture] - New session ${session.src}->${session.dst} (Total: ${
-          Object.keys(tcpTracker.sessions).length
-        })`
+        `[meter-core/pkt-capture] - New session ${session.src}->${session.dst} ${
+          session.is_ignored ? "(ingored) " : ""
+        }(Total: ${Object.keys(tcpTracker.sessions).length})`
       );
       session.on("payload_recv", (data: Buffer) => {
         this.emit("packet", data);

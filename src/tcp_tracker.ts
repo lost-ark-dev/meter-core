@@ -138,6 +138,8 @@ export class TCPSession extends EventEmitter {
         this.src = dst;
         this.dst = src;
       } else {
+        this.src = src;
+        this.dst = dst;
         this.is_ignored = true; //We set to ignore this session, but we still want to track for connection start/end
       }
       if (tcp.info.flags & TCPFlags.syn && !(tcp.info.flags & TCPFlags.ack)) {

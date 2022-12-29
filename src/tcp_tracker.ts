@@ -133,7 +133,7 @@ export class TCPSession extends EventEmitter {
         //local:????->xx.xx.xx.xx:6040
         this.src = src;
         this.dst = dst;
-      } else if (this.listening_port === tcp.info.srcport && isLocalIp(ip.info.srcaddr)) {
+      } else if (this.listening_port === tcp.info.srcport && isLocalIp(ip.info.dstaddr)) {
         //xx.xx.xx.xx:6040->local:????
         this.src = dst;
         this.dst = src;
@@ -213,6 +213,8 @@ export class TCPSession extends EventEmitter {
       // console.log("sending ACK for packet we didn't see received: " + tcp.info.ackno ?? 0);
       if (tcp.info.flags & TCPFlags.fin) {
         this.state = "FIN_WAIT";
+      } else if (tcp.info.flags & TCPFlags.rst) {
+        this.emit("end", this);
       }
     } else if (src === this.dst) {
       if (tcpDataLength > 0) {
@@ -227,6 +229,8 @@ export class TCPSession extends EventEmitter {
       }
       if (tcp.info.flags & TCPFlags.fin) {
         this.state = "CLOSE_WAIT";
+      } else if (tcp.info.flags & TCPFlags.rst) {
+        this.emit("end", this);
       }
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);

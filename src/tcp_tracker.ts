@@ -149,8 +149,8 @@ export class TCPSession extends EventEmitter {
         // joining session already in progress
         this.state = "ESTAB"; // I mean, probably established, right? Unless it isn't.
       }
-    } else if (tcp.info.flags & TCPFlags.syn && !(tcp.info.flags & TCPFlags.ack)) {
-      //this.emit("syn retry", this);
+    } else if (tcp.info.flags & TCPFlags.rst) {
+      this.emit("end", this);
     } else {
       // not a SYN, so run the state machine
       this[this.state](buffer, ip, tcp);
@@ -195,7 +195,8 @@ export class TCPSession extends EventEmitter {
     let is_sack = false;
     try {
       is_sack = is_sack_in_header(buffer, ip, tcp);
-    } catch {
+    } catch (e) {
+      console.error(e);
       return;
     }
     if (src === this.src) {
@@ -213,8 +214,6 @@ export class TCPSession extends EventEmitter {
       // console.log("sending ACK for packet we didn't see received: " + tcp.info.ackno ?? 0);
       if (tcp.info.flags & TCPFlags.fin) {
         this.state = "FIN_WAIT";
-      } else if (tcp.info.flags & TCPFlags.rst) {
-        this.emit("end", this);
       }
     } else if (src === this.dst) {
       if (tcpDataLength > 0) {
@@ -229,8 +228,6 @@ export class TCPSession extends EventEmitter {
       }
       if (tcp.info.flags & TCPFlags.fin) {
         this.state = "CLOSE_WAIT";
-      } else if (tcp.info.flags & TCPFlags.rst) {
-        this.emit("end", this);
       }
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
@@ -355,7 +352,7 @@ export class TCPSession extends EventEmitter {
 function is_sack_in_header(buffer: Buffer, ip: IPv4, tcp: TCP) {
   if (tcp.hdrlen == 20) return false;
   //Parse TCP Options (//TODO: move to cap/decoders ?)
-  let options_offset = ip.offset + ip.hdrlen + 20;
+  let options_offset = ip.offset + 20;
   const options_len = tcp.hdrlen - 20;
   const end_offset = options_offset + options_len;
   while (options_offset < end_offset) {
@@ -386,7 +383,9 @@ function is_sack_in_header(buffer: Buffer, ip: IPv4, tcp: TCP) {
         options_offset += buffer[options_offset + 1] ?? 1;
         break;
       default:
-        throw new Error(`Unknown TCPOption ${buffer[options_offset]}, packet is probably malformed, should drop.`); //unknown option drop packet
+        throw new Error(
+          `[meter-core/tcp-tracker] - Unknown TCPOption ${buffer[options_offset]}, packet is probably malformed, should drop.`
+        ); //unknown option drop packet
     }
   }
   return false;

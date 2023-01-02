@@ -1,7 +1,7 @@
 import cap from "cap";
 import { isIPv4 } from "net";
 import { TypedEmitter } from "tiny-typed-emitter";
-import { TCPTracker, TCPSession } from "./tcp_tracker";
+import { TCPTracker, TCPSession, ListenOptions } from "./tcp_tracker";
 
 const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
@@ -15,12 +15,17 @@ interface PktCaptureEvents {
 export class PktCapture extends TypedEmitter<PktCaptureEvents> {
   c: cap.Cap;
   #buffer: Buffer;
-  constructor(device: string) {
+  constructor(device: string, listen_options: ListenOptions) {
     super();
     this.c = new cap.Cap();
     this.#buffer = Buffer.alloc(65535);
-    const linkType = this.c.open(device, "tcp and (src port 6040 or dst port 6040)", 10 * 1024 * 1024, this.#buffer);
-    const tcpTracker = new TCPTracker(6040);
+    const linkType = this.c.open(
+      device,
+      `tcp and (src port ${listen_options.port} or dst port ${listen_options.port})`,
+      10 * 1024 * 1024,
+      this.#buffer
+    );
+    const tcpTracker = new TCPTracker(listen_options);
     if (this.c.setMinBytes) this.c.setMinBytes(54); // pkt header size
 
     this.c.on("packet", (nbytes: number, truncated: boolean) => {
@@ -64,9 +69,13 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     this.caps = new Map();
     for (const device of deviceList()) {
       for (const address of device.addresses) {
-        if (isIPv4(address.addr!)) {
+        if (address.addr && address.netmask && isIPv4(address.addr)) {
           try {
-            const cap = new PktCapture(device.name);
+            const cap = new PktCapture(device.name, {
+              ip: address.addr,
+              mask: address.netmask,
+              port: 6040,
+            });
 
             // re-emit
             cap.on("packet", (buf) => this.emit("packet", buf, device.name));
@@ -79,6 +88,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
             }); */
 
             this.caps.set(device.name, cap);
+            break; //We only want to listen on 1 address of the interface
           } catch (e) {
             console.error(`[meter-core/PktCaptureAll] ${e}`);
           }

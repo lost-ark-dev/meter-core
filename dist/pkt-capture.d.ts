@@ -1,6 +1,12 @@
 import cap from 'cap';
 import { TypedEmitter } from 'tiny-typed-emitter';
 
+type ListenOptions = {
+    ip: string;
+    mask: string;
+    port: number;
+};
+
 declare const findDevice: typeof cap.Cap.findDevice;
 declare const deviceList: typeof cap.Cap.deviceList;
 
@@ -10,7 +16,7 @@ interface PktCaptureEvents {
 declare class PktCapture extends TypedEmitter<PktCaptureEvents> {
     #private;
     c: cap.Cap;
-    constructor(device: string);
+    constructor(device: string, listen_options: ListenOptions);
     close(): void;
 }
 interface PktCaptureAllEvents {

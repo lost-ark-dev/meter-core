@@ -29,15 +29,23 @@ export class PktCapture extends TypedEmitter<PktCaptureEvents> {
     if (this.c.setMinBytes) this.c.setMinBytes(54); // pkt header size
 
     this.c.on("packet", (nbytes: number, truncated: boolean) => {
+      let offset;
       if (linkType === "ETHERNET") {
         const ethernet = Ethernet(this.#buffer);
-        if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
-          const ipv4 = IPV4(this.#buffer, ethernet.offset);
-          if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
-            const tcp = TCP(this.#buffer, ipv4.offset);
-            tcpTracker.track_packet(this.#buffer, ipv4, tcp);
-          }
-        }
+        if (ethernet.info.type !== PROTOCOL.ETHERNET.IPV4) return;
+        offset = ethernet.offset;
+      } else if (linkType === "NULL" && listen_options.ip === "127.0.0.1") {
+        //if you don't have 127.0.0.1 as loopback & use VPN: fk u
+        const type = this.#buffer.readUInt32LE();
+        //IP header loopback
+        if (type !== 2) return;
+        offset = 4;
+      } else return;
+
+      const ipv4 = IPV4(this.#buffer, offset);
+      if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
+        const tcp = TCP(this.#buffer, ipv4.offset);
+        tcpTracker.track_packet(this.#buffer, ipv4, tcp);
       }
     });
     tcpTracker.on("session", (session: TCPSession) => {

@@ -5,8 +5,10 @@ export default defineConfig({
     "src/data.ts",
     "src/decompressor.ts",
     "src/legacy-logger.ts",
+    "src/packet_buffer.ts",
     "src/pkt-capture.ts",
     "src/pkt-stream.ts",
+    "src/tcp_tracker.ts",
     "src/packets/generated/codes.ts",
     "src/packets/generated/enums.ts",
     "src/packets/generated/mapping.ts",
@@ -17,5 +19,4 @@ export default defineConfig({
   format: ["esm", "cjs"],
   dts: true,
   clean: true,
-  minify: true,
 });

@@ -1,34 +1,4 @@
-"use strict";
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
 // src/packets/generated/enums.ts
-var enums_exports = {};
-__export(enums_exports, {
-  hitflag: () => hitflag,
-  hitoption: () => hitoption,
-  itemcategory: () => itemcategory,
-  npcgrade: () => npcgrade,
-  npctype: () => npctype,
-  stattype: () => stattype,
-  triggersignaltype: () => triggersignaltype
-});
-module.exports = __toCommonJS(enums_exports);
 var triggersignaltype = /* @__PURE__ */ ((triggersignaltype2) => {
   triggersignaltype2[triggersignaltype2["none"] = 0] = "none";
   triggersignaltype2[triggersignaltype2["out"] = 1] = "out";
@@ -674,13 +644,13 @@ var itemcategory = /* @__PURE__ */ ((itemcategory2) => {
   itemcategory2[itemcategory2["astra_equip_desire"] = 100104] = "astra_equip_desire";
   return itemcategory2;
 })(itemcategory || {});
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+
+export {
+  triggersignaltype,
   hitflag,
   hitoption,
-  itemcategory,
+  stattype,
   npcgrade,
   npctype,
-  stattype,
-  triggersignaltype
-});
+  itemcategory
+};

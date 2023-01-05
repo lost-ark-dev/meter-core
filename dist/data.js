@@ -1,1 +1,109 @@
-"use strict";var r=Object.defineProperty;var f=Object.getOwnPropertyDescriptor;var u=Object.getOwnPropertyNames;var m=Object.prototype.hasOwnProperty;var o=(n,t)=>{for(var e in t)r(n,e,{get:t[e],enumerable:!0})},g=(n,t,e,s)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of u(t))!m.call(n,i)&&i!==e&&r(n,i,{get:()=>t[i],enumerable:!(s=f(t,i))||s.enumerable});return n};var p=n=>g(r({},"__esModule",{value:!0}),n);var k={};o(k,{MeterData:()=>l});module.exports=p(k);var l=class{enums;npc;PCData;skill;skillBuff;skillEffect;constructor(){this.enums=new Map,this.npc=new Map,this.PCData=new Map,this.skill=new Map,this.skillBuff=new Map,this.skillEffect=new Map}processEnumData(t){for(let[e,s]of Object.entries(t)){let i=new Map;for(let[a,c]of Object.entries(s))i.set(a,c);this.enums.set(e,i)}}processNpcData(t){for(let e of Object.values(t))this.npc.set(e.id,e)}processPCData(t){for(let[e,s]of Object.entries(t))this.PCData.set(parseInt(e),s)}processSkillData(t){for(let e of Object.values(t))this.skill.set(e.id,e)}processSkillBuffData(t){for(let e of Object.values(t))this.skillBuff.set(e.id,e)}processSkillBuffEffectData(t){for(let e of Object.values(t))this.skillEffect.set(e.id,e)}getNpcName(t){return this.npc.get(t)?.name||""}getClassName(t){return this.PCData.get(t)||""}getSkillName(t){return this.skill.get(t)?.name||""}getSkillClassId(t){return this.skill.get(t)?.classid||0}getSkillEffectComment(t){return this.skillEffect.get(t)?.comment||""}isBattleItem(t,e){let s=this.skillEffect.get(t)?.itemcategory;switch(e){case"attack":return s==="useup_battle_item_common_attack";case"buff":return s==="useup_battle_item_common_buff";case"function":return s==="useup_battle_item_common_function";default:return typeof s=="string"}}getBattleItemName(t){return this.skillEffect.get(t)?.itemname||""}};0&&(module.exports={MeterData});
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/data.ts
+var data_exports = {};
+__export(data_exports, {
+  MeterData: () => MeterData
+});
+module.exports = __toCommonJS(data_exports);
+var MeterData = class {
+  enums;
+  npc;
+  PCData;
+  skill;
+  skillBuff;
+  skillEffect;
+  constructor() {
+    this.enums = /* @__PURE__ */ new Map();
+    this.npc = /* @__PURE__ */ new Map();
+    this.PCData = /* @__PURE__ */ new Map();
+    this.skill = /* @__PURE__ */ new Map();
+    this.skillBuff = /* @__PURE__ */ new Map();
+    this.skillEffect = /* @__PURE__ */ new Map();
+  }
+  processEnumData(data) {
+    for (const [ename, edata] of Object.entries(data)) {
+      const en = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(edata))
+        en.set(k, v);
+      this.enums.set(ename, en);
+    }
+  }
+  processNpcData(data) {
+    for (const npc of Object.values(data)) {
+      this.npc.set(npc.id, npc);
+    }
+  }
+  processPCData(data) {
+    for (const [k, v] of Object.entries(data)) {
+      this.PCData.set(parseInt(k), v);
+    }
+  }
+  processSkillData(data) {
+    for (const skill of Object.values(data)) {
+      this.skill.set(skill.id, skill);
+    }
+  }
+  processSkillBuffData(data) {
+    for (const skillBuff of Object.values(data)) {
+      this.skillBuff.set(skillBuff.id, skillBuff);
+    }
+  }
+  processSkillBuffEffectData(data) {
+    for (const skillEffect of Object.values(data)) {
+      this.skillEffect.set(skillEffect.id, skillEffect);
+    }
+  }
+  getNpcName(id) {
+    return this.npc.get(id)?.name || "";
+  }
+  getClassName(id) {
+    return this.PCData.get(id) || "";
+  }
+  getSkillName(id) {
+    return this.skill.get(id)?.name || "";
+  }
+  getSkillClassId(id) {
+    return this.skill.get(id)?.classid || 0;
+  }
+  getSkillEffectComment(id) {
+    return this.skillEffect.get(id)?.comment || "";
+  }
+  isBattleItem(id, type) {
+    const itemcategory = this.skillEffect.get(id)?.itemcategory;
+    switch (type) {
+      case "attack":
+        return itemcategory === "useup_battle_item_common_attack";
+      case "buff":
+        return itemcategory === "useup_battle_item_common_buff";
+      case "function":
+        return itemcategory === "useup_battle_item_common_function";
+      default:
+        return typeof itemcategory === "string";
+    }
+  }
+  getBattleItemName(id) {
+    return this.skillEffect.get(id)?.itemname || "";
+  }
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  MeterData
+});

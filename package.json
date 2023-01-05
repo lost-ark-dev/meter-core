@@ -2,6 +2,14 @@
   "name": "meter-core",
   "version": "0.0.0",
   "private": true,
+  "type": "commonjs",
+  "exports": {
+    "./*": {
+      "require": "./dist/*.js",
+      "import": "./dist/*.mjs",
+      "types": "./dist/*.d.ts"
+    }
+  },
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,ts}\"",
     "build": "tsup",
@@ -11,6 +19,7 @@
     "cap": "^0.2.1",
     "lz4-napi": "^2.2.0",
     "oodle": "github:Mathicha/oodle",
+    "raw-socket-sniffer": "file:../../raw-socket-sniffer",
     "snappyjs": "^0.7.0",
     "tiny-typed-emitter": "^2.1.0"
   },

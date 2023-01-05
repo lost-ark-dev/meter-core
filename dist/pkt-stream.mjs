@@ -1,1 +1,74 @@
-import{a as i}from"./chunk-MLEMKYRO.mjs";import"./chunk-RYE4PZCG.mjs";import"./chunk-EFM4SUD6.mjs";import"./chunk-RVEUDURD.mjs";import"./chunk-REJVTTFE.mjs";import"./chunk-K76F7N5Y.mjs";import{TypedEmitter as h}from"tiny-typed-emitter";var c=class extends h{#e;constructor(e){super(),this.#e=e}read(e){try{if(e.length<6)return!1;let r=e.readUInt8(5);if(r>2)return!1;let t=e.readUInt8(4);if(t>3)return!1;let o=e.subarray(6),s=e.readUInt16LE(2),n=i.get(s);if(n){let[p,f]=n;this.emit(p,new a(o,s,t,Boolean(r),this.#e,f))}this.emit("*",o,s,t,Boolean(r))}catch{return!1}}},a=class{#e;#t;#s;#o;#n;#a;constructor(e,r,t,o,s,n){this.#e=e,this.#t=r,this.#s=t,this.#o=o,this.#n=s,this.#a=n}#r;get parsed(){if(!this.#r)try{this.#r=this.#a(this.#n.decrypt(this.#e,this.#t,this.#s,this.#o))}catch(e){console.error(`[meter-core/pkt-stream] - ${e}`);return}return this.#r}};export{a as PKT,c as PKTStream};
+import {
+  mapping
+} from "./chunk-RGXG326V.mjs";
+import "./chunk-RYE4PZCG.mjs";
+import "./chunk-EFM4SUD6.mjs";
+import "./chunk-RVEUDURD.mjs";
+import "./chunk-E2XSE3GG.mjs";
+
+// src/pkt-stream.ts
+import { TypedEmitter } from "tiny-typed-emitter";
+var PKTStream = class extends TypedEmitter {
+  #decompressor;
+  constructor(decompressor) {
+    super();
+    this.#decompressor = decompressor;
+  }
+  read(buf) {
+    try {
+      if (buf.length < 6)
+        return false;
+      const xor = buf.readUInt8(5);
+      if (xor > 2)
+        return false;
+      const compression = buf.readUInt8(4);
+      if (compression > 3)
+        return false;
+      const data = buf.subarray(6);
+      const opcode = buf.readUInt16LE(2);
+      const pkt = mapping.get(opcode);
+      if (pkt) {
+        const [name, read] = pkt;
+        this.emit(
+          name,
+          new PKT(data, opcode, compression, Boolean(xor), this.#decompressor, read)
+        );
+      }
+      this.emit("*", data, opcode, compression, Boolean(xor));
+    } catch (e) {
+      return false;
+    }
+  }
+};
+var PKT = class {
+  #data;
+  #opcode;
+  #compression;
+  #xor;
+  #decompressor;
+  #read;
+  constructor(data, opcode, compression, xor, decompressor, read) {
+    this.#data = data;
+    this.#opcode = opcode;
+    this.#compression = compression;
+    this.#xor = xor;
+    this.#decompressor = decompressor;
+    this.#read = read;
+  }
+  #cached;
+  get parsed() {
+    if (!this.#cached) {
+      try {
+        this.#cached = this.#read(this.#decompressor.decrypt(this.#data, this.#opcode, this.#compression, this.#xor));
+      } catch (e) {
+        console.error(`[meter-core/pkt-stream] - ${e}`);
+        return void 0;
+      }
+    }
+    return this.#cached;
+  }
+};
+export {
+  PKT,
+  PKTStream
+};

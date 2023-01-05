@@ -1,1 +1,148 @@
-import{a as g}from"./chunk-K76F7N5Y.mjs";import m from"cap";import{isIPv4 as C}from"net";import{TypedEmitter as B}from"tiny-typed-emitter";import{EventEmitter as l}from"stream";var a=class{buffer;position;out;constructor(){this.buffer=null,this.position=0,this.out=[]}write(e){for(;e.length>0;){if(this.buffer){if(this.buffer.length<2){let r=this.buffer[0],i=(e[0]<<8)+r;this.buffer=Buffer.alloc(i),this.buffer[0]=r,this.position=1}let s=Math.min(e.length,this.buffer.length-this.position);e.copy(this.buffer,this.position,0,s),this.position+=s,this.position===this.buffer.length&&(this.out.push(this.buffer),this.buffer=null,this.position=0),e=e.subarray(s);continue}if(e.length<2){this.buffer=Buffer.from(e),this.position=e.length;break}let t=e.readUInt16LE(0);if(t===0){this.buffer=null;return}if(t>e.length){this.buffer=Buffer.alloc(t),e.copy(this.buffer),this.position=e.length;break}this.out.push(e.subarray(0,t)),e=e.subarray(t)}}read(){return this.out.shift()}};var q=g("http");var d=class extends l{sessions;listen_options;constructor(e){super(),this.sessions={},this.listen_options=e,l.call(this)}track_packet(e,t,s){let r=t.info.srcaddr+":"+s.info.srcport,i=t.info.dstaddr+":"+s.info.dstport,o;r<i?o=r+"-"+i:o=i+"-"+r;let f=!1,n=this.sessions[o];n||(f=!0,n=new b(this.listen_options),this.sessions[o]=n,n.on("end",()=>{delete this.sessions[o],console.info(`[meter-core/tcp-tracker] - Remove session ${n?.src}->${n?.dst} (Total: ${Object.keys(this.sessions).length})`)})),n.track(e,t,s),f&&this.emit("session",n)}},b=class extends l{state;src;dst;send_seqno;send_buffers;recv_seqno;recv_buffers;listen_options;is_ignored;packetBuffer;constructor(e){super(),this.listen_options=e,this.state="NONE",this.send_seqno=0,this.send_buffers=[],this.recv_seqno=0,this.recv_buffers=[],this.is_ignored=!1,this.packetBuffer=new a,l.call(this)}track(e,t,s){let r=t.info.srcaddr+":"+s.info.srcport,i=t.info.dstaddr+":"+s.info.dstport;if(this.state==="NONE"){let o=k(t.info.srcaddr,this.listen_options),f=k(t.info.dstaddr,this.listen_options);o&&this.listen_options.port===s.info.dstport?(this.src=r,this.dst=i):this.listen_options.port===s.info.srcport&&f?(this.src=i,this.dst=r):!o&&!f?this.listen_options.port===s.info.dstport?(this.src=r,this.dst=i):this.listen_options.port===s.info.srcport?(this.src=i,this.dst=r):(this.src=r,this.dst=i,this.is_ignored=!0):(this.src=r,this.dst=i,this.is_ignored=!0),s.info.flags&2&&!(s.info.flags&16)?this.state="SYN_SENT":this.state="ESTAB"}else s.info.flags&4?this.emit("end",this):this[this.state](e,t,s)}SYN_SENT(e,t,s){t.info.srcaddr+":"+s.info.srcport===this.dst&&s.info.flags&18?(this.send_seqno=s.info.ackno??0,this.state="SYN_RCVD"):s.info.flags&4&&(this.state="CLOSED")}SYN_RCVD(e,t,s){t.info.srcaddr+":"+s.info.srcport===this.src&&s.info.flags&16&&(this.recv_seqno=s.info.ackno??0,this.state="ESTAB")}ESTAB(e,t,s){if(this.is_ignored)return;let r=t.info.srcaddr+":"+s.info.srcport,i=t.info.totallen-t.hdrlen-s.hdrlen,o=!1;try{o=T(e,t,s)}catch(f){console.error(f);return}r===this.src?(i>0&&this.send_buffers.push({seqno:s.info.seqno,payload:Buffer.from(e.subarray(s.offset,s.offset+i))}),s.info.ackno&&!o&&this.flush_buffers(s.info.ackno??0,"recv"),s.info.flags&1&&(this.state="FIN_WAIT")):r===this.dst?(i>0&&this.recv_buffers.push({seqno:s.info.seqno,payload:Buffer.from(e.subarray(s.offset,s.offset+i))}),s.info.ackno&&!o&&this.flush_buffers(s.info.ackno??0,"send"),s.info.flags&1&&(this.state="CLOSE_WAIT")):console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip="+t+"tcp="+s)}FIN_WAIT(e,t,s){t.info.srcaddr+":"+s.info.srcport===this.dst&&s.info.flags&1&&(this.state="CLOSING")}CLOSE_WAIT(e,t,s){t.info.srcaddr+":"+s.info.srcport===this.src&&s.info.flags&1&&(this.state="LAST_ACK")}LAST_ACK(e,t,s){t.info.srcaddr+":"+s.info.srcport===this.dst&&(this.state="CLOSED",this.emit("end",this))}CLOSING(e,t,s){t.info.srcaddr+":"+s.info.srcport===this.src&&(this.state="CLOSED",this.emit("end",this))}CLOSED(e,t,s){}flush_buffers(e,t){if(t==="recv"){this.recv_seqno===0&&(this.recv_seqno=e);let s=this.get_flush(this.recv_buffers,this.recv_seqno,e);if(this.recv_seqno=e,!s)return;this.packetBuffer.write(s);let r=this.packetBuffer.read();for(;r;)this.emit("payload_recv",r),r=this.packetBuffer.read()}else if(t==="send"){this.send_seqno===0&&(this.send_seqno=e);let s=this.get_flush(this.send_buffers,this.send_seqno,e);if(this.send_seqno=e,!s)return}}get_flush(e,t,s){let r=s-t;if(r<=0)return null;let i=Buffer.alloc(r),o=Buffer.alloc(r),f=e.filter(n=>{if(n.seqno>s)return!0;n.seqno<t&&(n.payload=n.payload.subarray(t-n.seqno),n.seqno=t);let u=n.seqno-t,h=s-n.seqno;return n.payload.copy(i,u,0,h),o.fill(1,u,u+h),h<n.payload.length?(n.payload=n.payload.subarray(h),n.seqno+=h,!0):!1});return e.length=0,e.push(...f),o.includes(0)?(console.warn(`[meter-core/tcp_tracker] - Dropped ${r} bytes`),null):i}};function T(c,e,t){if(t.hdrlen==20)return!1;let s=e.offset+20,r=t.hdrlen-20,i=s+r;for(;s<i;)switch(c[s]){case 0:s=i;break;case 1:s+=1;break;case 2:s+=4;break;case 3:s+=3;break;case 4:s+=2;break;case 5:return!0;case 8:s+=10;break;case 254:case 255:s+=c[s+1]??1;break;default:throw new Error(`[meter-core/tcp-tracker] - Unknown TCPOption ${c[s]}, packet is probably malformed, should drop.`)}return!1}function p(c){var e=c.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);return e&&e.length===5?(+e[1]<<24)+(+e[2]<<16)+(+e[3]<<8)+ +e[4]:null}function k(c,e){let t=p(c),s=p(e.ip),r=p(e.mask);return!t||!s||!r?!1:(t&r)===(s&r)}var{findDevice:Y,deviceList:E}=m.Cap,{Ethernet:I,PROTOCOL:y,IPV4:P,TCP:S}=m.decoders;var _=class extends B{c;#s;constructor(e,t){super(),this.c=new m.Cap,this.#s=Buffer.alloc(65535);let s=this.c.open(e,`tcp and (src port ${t.port} or dst port ${t.port})`,10*1024*1024,this.#s),r=new d(t);this.c.setMinBytes&&this.c.setMinBytes(54),this.c.on("packet",(i,o)=>{let f;if(s==="ETHERNET"){let u=I(this.#s);if(u.info.type!==y.ETHERNET.IPV4)return;f=u.offset}else if(s==="NULL"&&t.ip==="127.0.0.1"){if(this.#s.readUInt32LE()!==2)return;f=4}else return;let n=P(this.#s,f);if(n.info.protocol===y.IP.TCP){let u=S(this.#s,n.offset);r.track_packet(this.#s,n,u)}}),r.on("session",i=>{console.info(`[meter-core/pkt-capture] - New session ${i.src}->${i.dst} ${i.is_ignored?"(ingored) ":""}(Total: ${Object.keys(r.sessions).length})`),i.on("payload_recv",o=>{this.emit("packet",o)})})}close(){this.c.close()}},v=class extends B{caps;constructor(){super(),this.caps=new Map;for(let e of E())for(let t of e.addresses)if(t.addr&&t.netmask&&C(t.addr))try{let s=new _(e.name,{ip:t.addr,mask:t.netmask,port:6040});s.on("packet",r=>this.emit("packet",r,e.name)),this.caps.set(e.name,s);break}catch(s){console.error(`[meter-core/PktCaptureAll] ${s}`)}}close(){for(let e of this.caps.values())e.close()}};export{_ as PktCapture,v as PktCaptureAll,E as deviceList,Y as findDevice};
+import {
+  TCPTracker
+} from "./chunk-2CE3SCRG.mjs";
+
+// src/pkt-capture.ts
+import cap from "cap";
+import { isIPv4 } from "net";
+import { TypedEmitter } from "tiny-typed-emitter";
+import { RawSocket } from "raw-socket-sniffer";
+import { networkInterfaces } from "os";
+var { findDevice, deviceList } = cap.Cap;
+var { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
+var PktCapture = class extends TypedEmitter {
+  tcpTracker;
+  device;
+  port;
+  constructor(device, listen_options) {
+    super();
+    this.device = device;
+    this.port = listen_options.port;
+    this.tcpTracker = new TCPTracker(listen_options);
+    this.tcpTracker.on("session", (session) => {
+      console.info(
+        `[meter-core/pkt-capture] - New session ${session.src}->${session.dst} ${session.is_ignored ? "(ingored) " : ""}(Total: ${Object.keys(this.tcpTracker.sessions).length})`
+      );
+      session.on("payload_recv", (data) => {
+        this.emit("packet", data);
+      });
+    });
+  }
+  dispatchPacket(packet) {
+    const ethernet = Ethernet(packet);
+    if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
+      const ipv4 = IPV4(packet, ethernet.offset);
+      if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
+        const tcp = TCP(packet, ipv4.offset);
+        this.tcpTracker.track_packet(packet, ipv4, tcp);
+      }
+    }
+  }
+};
+var PcapCapture = class extends PktCapture {
+  c;
+  #buffer;
+  constructor(device, listen_options) {
+    super(device, listen_options);
+    this.c = new cap.Cap();
+    this.#buffer = Buffer.alloc(65535);
+  }
+  listen() {
+    const linkType = this.c.open(
+      this.device,
+      `tcp and (src port ${this.port} or dst port ${this.port})`,
+      10 * 1024 * 1024,
+      this.#buffer
+    );
+    if (this.c.setMinBytes)
+      this.c.setMinBytes(54);
+    this.c.on("packet", (nbytes, truncated) => {
+      if (linkType === "ETHERNET") {
+        this.dispatchPacket(this.#buffer);
+      } else if (linkType === "NULL" && this.device === "\\Device\\NPF_Loopback") {
+        const type = this.#buffer.readUInt32LE();
+        if (type !== 2)
+          return;
+        this.dispatchPacket(this.#buffer.subarray(4));
+      }
+    });
+  }
+  close() {
+    this.c.close();
+  }
+};
+var RawSocketCapture = class extends PktCapture {
+  rs;
+  constructor(ip, listen_options) {
+    super(ip, listen_options);
+    this.rs = new RawSocket(ip, listen_options.port);
+  }
+  listen() {
+    this.rs.on("data", this.dispatchPacket.bind(this));
+    this.rs.listen();
+  }
+  close() {
+  }
+};
+var PktCaptureMode = /* @__PURE__ */ ((PktCaptureMode2) => {
+  PktCaptureMode2[PktCaptureMode2["MODE_PCAP"] = 0] = "MODE_PCAP";
+  PktCaptureMode2[PktCaptureMode2["MODE_RAW_SOCKET"] = 1] = "MODE_RAW_SOCKET";
+  return PktCaptureMode2;
+})(PktCaptureMode || {});
+var PktCaptureAll = class extends TypedEmitter {
+  captures;
+  constructor(mode) {
+    super();
+    this.captures = /* @__PURE__ */ new Map();
+    if (mode === 0 /* MODE_PCAP */) {
+      for (const device of deviceList()) {
+        for (const address of device.addresses) {
+          if (address.addr && address.netmask && isIPv4(address.addr)) {
+            try {
+              const pcapc = new PcapCapture(device.name, {
+                ip: address.addr,
+                mask: address.netmask,
+                port: 6040
+              });
+              pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
+              this.captures.set(device.name, pcapc);
+              pcapc.listen();
+            } catch (e) {
+              console.error(`[meter-core/PktCaptureAll] ${e}`);
+            }
+          }
+        }
+      }
+    } else if (mode === 1 /* MODE_RAW_SOCKET */) {
+      for (const addresses of Object.values(networkInterfaces())) {
+        for (const device of addresses ?? []) {
+          if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
+            try {
+              const rsc = new RawSocketCapture(device.address, {
+                ip: device.address,
+                mask: device.netmask,
+                port: 443
+              });
+              rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
+              this.captures.set(device.address, rsc);
+              rsc.listen();
+            } catch (e) {
+              console.error(`[meter-core/PktCaptureAll] ${e}`);
+            }
+          }
+        }
+      }
+    } else {
+    }
+  }
+  close() {
+    for (const cap2 of this.captures.values())
+      cap2.close();
+  }
+};
+export {
+  PktCaptureAll,
+  PktCaptureMode,
+  deviceList,
+  findDevice
+};

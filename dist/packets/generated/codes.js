@@ -1,1 +1,172 @@
-"use strict";var f=Object.defineProperty;var Q=Object.getOwnPropertyDescriptor;var X=Object.getOwnPropertyNames;var $=Object.prototype.hasOwnProperty;var tt=(o,n)=>{for(var i in n)f(o,i,{get:n[i],enumerable:!0})},nt=(o,n,i,p)=>{if(n&&typeof n=="object"||typeof n=="function")for(let u of X(n))!$.call(o,u)&&u!==i&&f(o,u,{get:()=>n[u],enumerable:!(p=Q(n,u))||p.enumerable});return o};var et=o=>nt(f({},"__esModule",{value:!0}),o);var Ut={};tt(Ut,{PKTAuthTokenResult:()=>U,PKTCounterAttackNotify:()=>l,PKTDeathNotify:()=>y,PKTInitEnv:()=>g,PKTInitPC:()=>_,PKTNewNpc:()=>N,PKTNewNpcSummon:()=>R,PKTNewPC:()=>D,PKTNewProjectile:()=>B,PKTParalyzationStateNotify:()=>K,PKTPartyInfo:()=>E,PKTPartyLeaveResult:()=>v,PKTPartyStatusEffectAddNotify:()=>h,PKTPartyStatusEffectRemoveNotify:()=>A,PKTPartyStatusEffectResultNotify:()=>w,PKTRaidBossKillNotify:()=>C,PKTRaidResult:()=>L,PKTRemoveObject:()=>F,PKTSkillDamageAbnormalMoveNotify:()=>j,PKTSkillDamageNotify:()=>M,PKTSkillStageNotify:()=>V,PKTSkillStartNotify:()=>H,PKTStatChangeOriginNotify:()=>Y,PKTStatusEffectAddNotify:()=>z,PKTStatusEffectRemoveNotify:()=>G,PKTStatusEffectSyncDataNotify:()=>W,PKTTriggerBossBattleStatus:()=>Z,PKTTriggerFinishNotify:()=>q,PKTTriggerStartNotify:()=>J});module.exports=et(Ut);var U=44294;var l=23544;var y=21940;var g=12201;var _=44217;var N=31638;var R=57156;var D=13099;var B=1296;var K=1696;var E=20135;var v=12275;var h=8895;var A=13843;var w=601;var C=20140;var L=17609;var F=39958;var j=29416;var M=1847;var V=6028;var H=45202;var Y=36460;var z=4713;var G=55030;var W=35589;var Z=35800;var q=53300;var J=50016;0&&(module.exports={PKTAuthTokenResult,PKTCounterAttackNotify,PKTDeathNotify,PKTInitEnv,PKTInitPC,PKTNewNpc,PKTNewNpcSummon,PKTNewPC,PKTNewProjectile,PKTParalyzationStateNotify,PKTPartyInfo,PKTPartyLeaveResult,PKTPartyStatusEffectAddNotify,PKTPartyStatusEffectRemoveNotify,PKTPartyStatusEffectResultNotify,PKTRaidBossKillNotify,PKTRaidResult,PKTRemoveObject,PKTSkillDamageAbnormalMoveNotify,PKTSkillDamageNotify,PKTSkillStageNotify,PKTSkillStartNotify,PKTStatChangeOriginNotify,PKTStatusEffectAddNotify,PKTStatusEffectRemoveNotify,PKTStatusEffectSyncDataNotify,PKTTriggerBossBattleStatus,PKTTriggerFinishNotify,PKTTriggerStartNotify});
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/packets/generated/codes.ts
+var codes_exports = {};
+__export(codes_exports, {
+  PKTAuthTokenResult: () => opcode,
+  PKTCounterAttackNotify: () => opcode2,
+  PKTDeathNotify: () => opcode3,
+  PKTInitEnv: () => opcode4,
+  PKTInitPC: () => opcode5,
+  PKTNewNpc: () => opcode6,
+  PKTNewNpcSummon: () => opcode7,
+  PKTNewPC: () => opcode8,
+  PKTNewProjectile: () => opcode9,
+  PKTParalyzationStateNotify: () => opcode10,
+  PKTPartyInfo: () => opcode11,
+  PKTPartyLeaveResult: () => opcode12,
+  PKTPartyStatusEffectAddNotify: () => opcode13,
+  PKTPartyStatusEffectRemoveNotify: () => opcode14,
+  PKTPartyStatusEffectResultNotify: () => opcode15,
+  PKTRaidBossKillNotify: () => opcode16,
+  PKTRaidResult: () => opcode17,
+  PKTRemoveObject: () => opcode18,
+  PKTSkillDamageAbnormalMoveNotify: () => opcode19,
+  PKTSkillDamageNotify: () => opcode20,
+  PKTSkillStageNotify: () => opcode21,
+  PKTSkillStartNotify: () => opcode22,
+  PKTStatChangeOriginNotify: () => opcode23,
+  PKTStatusEffectAddNotify: () => opcode24,
+  PKTStatusEffectRemoveNotify: () => opcode25,
+  PKTStatusEffectSyncDataNotify: () => opcode26,
+  PKTTriggerBossBattleStatus: () => opcode27,
+  PKTTriggerFinishNotify: () => opcode28,
+  PKTTriggerStartNotify: () => opcode29
+});
+module.exports = __toCommonJS(codes_exports);
+
+// src/packets/generated/definitions/PKTAuthTokenResult.ts
+var opcode = 44294;
+
+// src/packets/generated/definitions/PKTCounterAttackNotify.ts
+var opcode2 = 23544;
+
+// src/packets/generated/definitions/PKTDeathNotify.ts
+var opcode3 = 21940;
+
+// src/packets/generated/definitions/PKTInitEnv.ts
+var opcode4 = 12201;
+
+// src/packets/generated/definitions/PKTInitPC.ts
+var opcode5 = 44217;
+
+// src/packets/generated/definitions/PKTNewNpc.ts
+var opcode6 = 31638;
+
+// src/packets/generated/definitions/PKTNewNpcSummon.ts
+var opcode7 = 57156;
+
+// src/packets/generated/definitions/PKTNewPC.ts
+var opcode8 = 13099;
+
+// src/packets/generated/definitions/PKTNewProjectile.ts
+var opcode9 = 1296;
+
+// src/packets/generated/definitions/PKTParalyzationStateNotify.ts
+var opcode10 = 1696;
+
+// src/packets/generated/definitions/PKTPartyInfo.ts
+var opcode11 = 20135;
+
+// src/packets/generated/definitions/PKTPartyLeaveResult.ts
+var opcode12 = 12275;
+
+// src/packets/generated/definitions/PKTPartyStatusEffectAddNotify.ts
+var opcode13 = 8895;
+
+// src/packets/generated/definitions/PKTPartyStatusEffectRemoveNotify.ts
+var opcode14 = 13843;
+
+// src/packets/generated/definitions/PKTPartyStatusEffectResultNotify.ts
+var opcode15 = 601;
+
+// src/packets/generated/definitions/PKTRaidBossKillNotify.ts
+var opcode16 = 20140;
+
+// src/packets/generated/definitions/PKTRaidResult.ts
+var opcode17 = 17609;
+
+// src/packets/generated/definitions/PKTRemoveObject.ts
+var opcode18 = 39958;
+
+// src/packets/generated/definitions/PKTSkillDamageAbnormalMoveNotify.ts
+var opcode19 = 29416;
+
+// src/packets/generated/definitions/PKTSkillDamageNotify.ts
+var opcode20 = 1847;
+
+// src/packets/generated/definitions/PKTSkillStageNotify.ts
+var opcode21 = 6028;
+
+// src/packets/generated/definitions/PKTSkillStartNotify.ts
+var opcode22 = 45202;
+
+// src/packets/generated/definitions/PKTStatChangeOriginNotify.ts
+var opcode23 = 36460;
+
+// src/packets/generated/definitions/PKTStatusEffectAddNotify.ts
+var opcode24 = 4713;
+
+// src/packets/generated/definitions/PKTStatusEffectRemoveNotify.ts
+var opcode25 = 55030;
+
+// src/packets/generated/definitions/PKTStatusEffectSyncDataNotify.ts
+var opcode26 = 35589;
+
+// src/packets/generated/definitions/PKTTriggerBossBattleStatus.ts
+var opcode27 = 35800;
+
+// src/packets/generated/definitions/PKTTriggerFinishNotify.ts
+var opcode28 = 53300;
+
+// src/packets/generated/definitions/PKTTriggerStartNotify.ts
+var opcode29 = 50016;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  PKTAuthTokenResult,
+  PKTCounterAttackNotify,
+  PKTDeathNotify,
+  PKTInitEnv,
+  PKTInitPC,
+  PKTNewNpc,
+  PKTNewNpcSummon,
+  PKTNewPC,
+  PKTNewProjectile,
+  PKTParalyzationStateNotify,
+  PKTPartyInfo,
+  PKTPartyLeaveResult,
+  PKTPartyStatusEffectAddNotify,
+  PKTPartyStatusEffectRemoveNotify,
+  PKTPartyStatusEffectResultNotify,
+  PKTRaidBossKillNotify,
+  PKTRaidResult,
+  PKTRemoveObject,
+  PKTSkillDamageAbnormalMoveNotify,
+  PKTSkillDamageNotify,
+  PKTSkillStageNotify,
+  PKTSkillStartNotify,
+  PKTStatChangeOriginNotify,
+  PKTStatusEffectAddNotify,
+  PKTStatusEffectRemoveNotify,
+  PKTStatusEffectSyncDataNotify,
+  PKTTriggerBossBattleStatus,
+  PKTTriggerFinishNotify,
+  PKTTriggerStartNotify
+});

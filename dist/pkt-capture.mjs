@@ -9,7 +9,6 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import { RawSocket } from "raw-socket-sniffer";
 import { networkInterfaces } from "os";
 import { execSync } from "child_process";
-import isAdmin from "is-admin";
 var { findDevice, deviceList } = cap.Cap;
 var { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
 var PktCapture = class extends TypedEmitter {
@@ -96,57 +95,55 @@ var PktCaptureAll = class extends TypedEmitter {
   constructor(mode) {
     super();
     this.captures = /* @__PURE__ */ new Map();
-    adminRelauncher(mode).then((isAdmin2) => {
-      if (!isAdmin2) {
-        console.warn(
-          "[meter-core/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
-        );
-        mode = 0 /* MODE_PCAP */;
-      }
-      if (isAdmin2 && mode === 1 /* MODE_RAW_SOCKET */) {
-        updateFirewall();
-      }
-      if (mode === 0 /* MODE_PCAP */) {
-        for (const device of deviceList()) {
-          for (const address of device.addresses) {
-            if (address.addr && address.netmask && isIPv4(address.addr)) {
-              try {
-                const pcapc = new PcapCapture(device.name, {
-                  ip: address.addr,
-                  mask: address.netmask,
-                  port: 6040
-                });
-                pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
-                this.captures.set(device.name, pcapc);
-                pcapc.listen();
-              } catch (e) {
-                console.error(`[meter-core/PktCaptureAll] ${e}`);
-              }
+    if (!adminRelauncher(mode)) {
+      console.warn(
+        "[meter-core/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
+      );
+      mode = 0 /* MODE_PCAP */;
+    }
+    if (mode === 1 /* MODE_RAW_SOCKET */) {
+      updateFirewall();
+    }
+    if (mode === 0 /* MODE_PCAP */) {
+      for (const device of deviceList()) {
+        for (const address of device.addresses) {
+          if (address.addr && address.netmask && isIPv4(address.addr)) {
+            try {
+              const pcapc = new PcapCapture(device.name, {
+                ip: address.addr,
+                mask: address.netmask,
+                port: 6040
+              });
+              pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
+              this.captures.set(device.name, pcapc);
+              pcapc.listen();
+            } catch (e) {
+              console.error(`[meter-core/PktCaptureAll] ${e}`);
             }
           }
         }
-      } else if (mode === 1 /* MODE_RAW_SOCKET */) {
-        for (const addresses of Object.values(networkInterfaces())) {
-          for (const device of addresses ?? []) {
-            if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
-              try {
-                const rsc = new RawSocketCapture(device.address, {
-                  ip: device.address,
-                  mask: device.netmask,
-                  port: 6040
-                });
-                rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
-                this.captures.set(device.address, rsc);
-                rsc.listen();
-              } catch (e) {
-                console.error(`[meter-core/PktCaptureAll] ${e}`);
-              }
+      }
+    } else if (mode === 1 /* MODE_RAW_SOCKET */) {
+      for (const addresses of Object.values(networkInterfaces())) {
+        for (const device of addresses ?? []) {
+          if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
+            try {
+              const rsc = new RawSocketCapture(device.address, {
+                ip: device.address,
+                mask: device.netmask,
+                port: 6040
+              });
+              rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
+              this.captures.set(device.address, rsc);
+              rsc.listen();
+            } catch (e) {
+              console.error(`[meter-core/PktCaptureAll] ${e}`);
             }
           }
         }
-      } else {
       }
-    });
+    } else {
+    }
   }
   close() {
     for (const cap2 of this.captures.values())
@@ -159,15 +156,28 @@ function updateFirewall() {
     stdio: "inherit"
   });
 }
-async function adminRelauncher(mode) {
+function getArgList(args) {
+  const filtered = args.filter((a) => a !== "");
+  if (filtered.length === 0)
+    return "'-relaunch'";
+  return "'" + filtered.join("','") + "','-relaunch'";
+}
+function isAdmin() {
+  try {
+    execSync(`fsutil dirty query ${process.env["systemdrive"] ?? "c:"}`);
+  } catch {
+    return false;
+  }
+  return true;
+}
+function adminRelauncher(mode) {
   if (mode !== 1 /* MODE_RAW_SOCKET */)
     return false;
-  const admin = await isAdmin();
-  if (admin)
-    return true;
   if (process.argv.includes("-relaunch"))
-    return false;
-  const command = `cmd /c "powershell -Command Start-Process -FilePath '${process.argv[0]}' -Verb RunAs -ArgumentList '${process.argv.splice(1).join("','")}','-relaunch'"`;
+    return true;
+  if (isAdmin())
+    return true;
+  const command = `cmd /c "powershell -Command Start-Process -FilePath '${process.argv[0]}' -Verb RunAs -ArgumentList ${getArgList(process.argv.splice(1))}"`;
   try {
     execSync(command, {
       stdio: "inherit"
@@ -181,6 +191,7 @@ async function adminRelauncher(mode) {
 export {
   PktCaptureAll,
   PktCaptureMode,
+  adminRelauncher,
   deviceList,
   findDevice
 };

@@ -38,5 +38,10 @@ declare class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
     constructor(mode: PktCaptureMode);
     close(): void;
 }
+/**
+ *
+ * @returns False if we have to fall back to pcap, process exit if not, True if already in admin state
+ */
+declare function adminRelauncher(mode: PktCaptureMode): boolean;
 
-export { PktCaptureAll, PktCaptureMode, deviceList, findDevice };
+export { PktCaptureAll, PktCaptureMode, adminRelauncher, deviceList, findDevice };

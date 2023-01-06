@@ -4,8 +4,7 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import { TCPTracker, TCPSession, ListenOptions } from "./tcp_tracker";
 import { RawSocket } from "raw-socket-sniffer";
 import { networkInterfaces } from "os";
-import { execSync, spawnSync } from "child_process";
-import isAdmin from "is-admin"; //Important note, as we need tsup to compile to cjs for electron, we stick to v3.0.0 as v4+ use ESM
+import { execSync } from "child_process";
 
 const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
@@ -117,63 +116,61 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
   constructor(mode: PktCaptureMode) {
     super();
     this.captures = new Map();
-    adminRelauncher(mode).then((isAdmin) => {
-      if (!isAdmin) {
-        console.warn(
-          "[meter-core/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
-        );
-        mode = PktCaptureMode.MODE_PCAP;
-      }
-      if (isAdmin && mode === PktCaptureMode.MODE_RAW_SOCKET) {
-        //Already as admin, add firewell rule
-        updateFirewall();
-      }
+    if (!adminRelauncher(mode)) {
+      console.warn(
+        "[meter-core/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
+      );
+      mode = PktCaptureMode.MODE_PCAP;
+    }
+    if (mode === PktCaptureMode.MODE_RAW_SOCKET) {
+      //Already as admin, add firewell rule
+      updateFirewall();
+    }
 
-      if (mode === PktCaptureMode.MODE_PCAP) {
-        for (const device of deviceList()) {
-          for (const address of device.addresses) {
-            if (address.addr && address.netmask && isIPv4(address.addr!)) {
-              try {
-                const pcapc = new PcapCapture(device.name, {
-                  ip: address.addr,
-                  mask: address.netmask,
-                  port: 6040,
-                });
-                // re-emit
-                pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
-                this.captures.set(device.name, pcapc);
-                pcapc.listen();
-              } catch (e) {
-                console.error(`[meter-core/PktCaptureAll] ${e}`);
-              }
+    if (mode === PktCaptureMode.MODE_PCAP) {
+      for (const device of deviceList()) {
+        for (const address of device.addresses) {
+          if (address.addr && address.netmask && isIPv4(address.addr!)) {
+            try {
+              const pcapc = new PcapCapture(device.name, {
+                ip: address.addr,
+                mask: address.netmask,
+                port: 6040,
+              });
+              // re-emit
+              pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
+              this.captures.set(device.name, pcapc);
+              pcapc.listen();
+            } catch (e) {
+              console.error(`[meter-core/PktCaptureAll] ${e}`);
             }
           }
         }
-      } else if (mode === PktCaptureMode.MODE_RAW_SOCKET) {
-        // [Warning] require privileges
-        for (const addresses of Object.values(networkInterfaces())) {
-          for (const device of addresses ?? []) {
-            if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
-              try {
-                const rsc = new RawSocketCapture(device.address, {
-                  ip: device.address,
-                  mask: device.netmask,
-                  port: 6040,
-                });
-                // re-emit
-                rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
-                this.captures.set(device.address, rsc);
-                rsc.listen();
-              } catch (e) {
-                console.error(`[meter-core/PktCaptureAll] ${e}`);
-              }
-            }
-          }
-        }
-      } else {
-        //Unknown PktCaptureMode, ignoring
       }
-    });
+    } else if (mode === PktCaptureMode.MODE_RAW_SOCKET) {
+      // [Warning] require privileges
+      for (const addresses of Object.values(networkInterfaces())) {
+        for (const device of addresses ?? []) {
+          if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
+            try {
+              const rsc = new RawSocketCapture(device.address, {
+                ip: device.address,
+                mask: device.netmask,
+                port: 6040,
+              });
+              // re-emit
+              rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
+              this.captures.set(device.address, rsc);
+              rsc.listen();
+            } catch (e) {
+              console.error(`[meter-core/PktCaptureAll] ${e}`);
+            }
+          }
+        }
+      }
+    } else {
+      //Unknown PktCaptureMode, ignoring
+    }
   }
 
   close() {
@@ -188,20 +185,34 @@ function updateFirewall(): void {
   });
 }
 
+function getArgList(args: string[]): string {
+  const filtered = args.filter((a) => a !== "");
+  if (filtered.length === 0) return "'-relaunch'";
+  return "'" + filtered.join("','") + "','-relaunch'";
+}
+function isAdmin(): boolean {
+  //Made sync from https://github.com/sindresorhus/is-admin/blob/main/index.js
+  try {
+    execSync(`fsutil dirty query ${process.env["systemdrive"] ?? "c:"}`);
+  } catch {
+    return false;
+  }
+  return true;
+}
 /**
  *
  * @returns False if we have to fall back to pcap, process exit if not, True if already in admin state
  */
-async function adminRelauncher(mode: PktCaptureMode): Promise<boolean> {
+export function adminRelauncher(mode: PktCaptureMode): boolean {
   if (mode !== PktCaptureMode.MODE_RAW_SOCKET) return false;
   //Check if we started our process with the -relaunch paramater (which means that it failed, and we want to fall back to pcap instead)
-  const admin = await isAdmin();
-  if (admin) return true;
-  if (process.argv.includes("-relaunch")) return false;
+
+  if (process.argv.includes("-relaunch")) return true; // We assume that we already relaunched successfully earlier, so we don't need to check admin again
+  if (isAdmin()) return true;
   //TODO: maybe implement another way with Elevate.exe that is shipped with electron (for ppl that doesn't have powershell installed)
   const command = `cmd /c "powershell -Command Start-Process -FilePath '${
     process.argv[0]
-  }' -Verb RunAs -ArgumentList '${process.argv.splice(1).join("','")}','-relaunch'"`;
+  }' -Verb RunAs -ArgumentList ${getArgList(process.argv.splice(1))}"`;
 
   try {
     execSync(command, {

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "cap": "^0.2.1",
+    "is-admin": "^3.0.0",
     "lz4-napi": "^2.2.0",
     "oodle": "github:Mathicha/oodle",
     "raw-socket-sniffer": "github:Herysia/raw-socket-sniffer",

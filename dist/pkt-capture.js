@@ -397,6 +397,8 @@ function isDeviceIp(ip, listen_options) {
 // src/pkt-capture.ts
 var import_raw_socket_sniffer = require("raw-socket-sniffer");
 var import_os = require("os");
+var import_child_process = require("child_process");
+var import_is_admin = __toESM(require("is-admin"));
 var { findDevice, deviceList } = import_cap.default.Cap;
 var { Ethernet, PROTOCOL, IPV4, TCP } = import_cap.default.decoders;
 var PktCapture = class extends import_tiny_typed_emitter.TypedEmitter {
@@ -483,52 +485,88 @@ var PktCaptureAll = class extends import_tiny_typed_emitter.TypedEmitter {
   constructor(mode) {
     super();
     this.captures = /* @__PURE__ */ new Map();
-    if (mode === 0 /* MODE_PCAP */) {
-      for (const device of deviceList()) {
-        for (const address of device.addresses) {
-          if (address.addr && address.netmask && (0, import_net.isIPv4)(address.addr)) {
-            try {
-              const pcapc = new PcapCapture(device.name, {
-                ip: address.addr,
-                mask: address.netmask,
-                port: 6040
-              });
-              pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
-              this.captures.set(device.name, pcapc);
-              pcapc.listen();
-            } catch (e) {
-              console.error(`[meter-core/PktCaptureAll] ${e}`);
+    adminRelauncher(mode).then((isAdmin2) => {
+      if (!isAdmin2) {
+        console.warn(
+          "[meter-core/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
+        );
+        mode = 0 /* MODE_PCAP */;
+      }
+      if (isAdmin2 && mode === 1 /* MODE_RAW_SOCKET */) {
+        updateFirewall();
+      }
+      if (mode === 0 /* MODE_PCAP */) {
+        for (const device of deviceList()) {
+          for (const address of device.addresses) {
+            if (address.addr && address.netmask && (0, import_net.isIPv4)(address.addr)) {
+              try {
+                const pcapc = new PcapCapture(device.name, {
+                  ip: address.addr,
+                  mask: address.netmask,
+                  port: 6040
+                });
+                pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
+                this.captures.set(device.name, pcapc);
+                pcapc.listen();
+              } catch (e) {
+                console.error(`[meter-core/PktCaptureAll] ${e}`);
+              }
             }
           }
         }
-      }
-    } else if (mode === 1 /* MODE_RAW_SOCKET */) {
-      for (const addresses of Object.values((0, import_os.networkInterfaces)())) {
-        for (const device of addresses ?? []) {
-          if ((0, import_net.isIPv4)(device.address) && device.family === "IPv4" && device.internal === false) {
-            try {
-              const rsc = new RawSocketCapture(device.address, {
-                ip: device.address,
-                mask: device.netmask,
-                port: 6040
-              });
-              rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
-              this.captures.set(device.address, rsc);
-              rsc.listen();
-            } catch (e) {
-              console.error(`[meter-core/PktCaptureAll] ${e}`);
+      } else if (mode === 1 /* MODE_RAW_SOCKET */) {
+        for (const addresses of Object.values((0, import_os.networkInterfaces)())) {
+          for (const device of addresses ?? []) {
+            if ((0, import_net.isIPv4)(device.address) && device.family === "IPv4" && device.internal === false) {
+              try {
+                const rsc = new RawSocketCapture(device.address, {
+                  ip: device.address,
+                  mask: device.netmask,
+                  port: 6040
+                });
+                rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
+                this.captures.set(device.address, rsc);
+                rsc.listen();
+              } catch (e) {
+                console.error(`[meter-core/PktCaptureAll] ${e}`);
+              }
             }
           }
         }
+      } else {
       }
-    } else {
-    }
+    });
   }
   close() {
     for (const cap2 of this.captures.values())
       cap2.close();
   }
 };
+function updateFirewall() {
+  const command = `netsh advfirewall firewall delete rule name="lost-ark-dev" & netsh advfirewall firewall add rule name="lost-ark-dev" dir=in action=allow program="${process.argv[0]}"`;
+  (0, import_child_process.execSync)(command, {
+    stdio: "inherit"
+  });
+}
+async function adminRelauncher(mode) {
+  if (mode !== 1 /* MODE_RAW_SOCKET */)
+    return false;
+  const admin = await (0, import_is_admin.default)();
+  if (admin)
+    return true;
+  if (process.argv.includes("-relaunch"))
+    return false;
+  const command = `cmd /c "powershell -Command Start-Process -FilePath '${process.argv[0]}' -Verb RunAs -ArgumentList '${process.argv.splice(1).join("','")}','-relaunch'"`;
+  try {
+    (0, import_child_process.execSync)(command, {
+      stdio: "inherit"
+    });
+  } catch (e) {
+    console.info(`[meter-core/pkt-capture] - ${e}`);
+    return false;
+  }
+  process.exit(0);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PktCaptureAll,

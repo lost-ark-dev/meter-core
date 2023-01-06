@@ -1,6 +1,5 @@
 import { EventEmitter } from "stream";
 import { PacketBuffer } from "./pkt-buffer";
-const http = require("http");
 type IPv4 = {
   info: {
     hdrlen: number;

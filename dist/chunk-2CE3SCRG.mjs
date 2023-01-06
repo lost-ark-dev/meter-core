@@ -1,43 +1,5 @@
-"use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/pkt-capture.ts
-var pkt_capture_exports = {};
-__export(pkt_capture_exports, {
-  PktCaptureAll: () => PktCaptureAll,
-  PktCaptureMode: () => PktCaptureMode,
-  deviceList: () => deviceList,
-  findDevice: () => findDevice
-});
-module.exports = __toCommonJS(pkt_capture_exports);
-var import_cap = __toESM(require("cap"));
-var import_net = require("net");
-var import_tiny_typed_emitter = require("tiny-typed-emitter");
-
 // src/tcp_tracker.ts
-var import_stream = require("stream");
+import { EventEmitter } from "stream";
 
 // src/pkt-buffer.ts
 var PacketBuffer = class {
@@ -96,14 +58,14 @@ var PacketBuffer = class {
 };
 
 // src/tcp_tracker.ts
-var TCPTracker = class extends import_stream.EventEmitter {
+var TCPTracker = class extends EventEmitter {
   sessions;
   listen_options;
   constructor(listen_options) {
     super();
     this.sessions = {};
     this.listen_options = listen_options;
-    import_stream.EventEmitter.call(this);
+    EventEmitter.call(this);
   }
   track_packet(buffer, ip, tcp) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
@@ -133,7 +95,7 @@ var TCPTracker = class extends import_stream.EventEmitter {
     }
   }
 };
-var TCPSession = class extends import_stream.EventEmitter {
+var TCPSession = class extends EventEmitter {
   state;
   src;
   dst;
@@ -154,7 +116,7 @@ var TCPSession = class extends import_stream.EventEmitter {
     this.recv_buffers = [];
     this.is_ignored = false;
     this.packetBuffer = new PacketBuffer();
-    import_stream.EventEmitter.call(this);
+    EventEmitter.call(this);
   }
   track(buffer, ip, tcp) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
@@ -394,145 +356,7 @@ function isDeviceIp(ip, listen_options) {
   return (testIp & mask) === (listen_ip & mask);
 }
 
-// src/pkt-capture.ts
-var import_raw_socket_sniffer = require("raw-socket-sniffer");
-var import_os = require("os");
-var { findDevice, deviceList } = import_cap.default.Cap;
-var { Ethernet, PROTOCOL, IPV4, TCP } = import_cap.default.decoders;
-var PktCapture = class extends import_tiny_typed_emitter.TypedEmitter {
-  tcpTracker;
-  device;
-  port;
-  constructor(device, listen_options) {
-    super();
-    this.device = device;
-    this.port = listen_options.port;
-    this.tcpTracker = new TCPTracker(listen_options);
-    this.tcpTracker.on("session", (session) => {
-      console.info(
-        `[meter-core/pkt-capture] - New session ${session.src}->${session.dst} ${session.is_ignored ? "(ingored) " : ""}(Total: ${Object.keys(this.tcpTracker.sessions).length})`
-      );
-      session.on("payload_recv", (data) => {
-        this.emit("packet", data);
-      });
-    });
-  }
-  dispatchPacket(packet) {
-    const ethernet = Ethernet(packet);
-    if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
-      const ipv4 = IPV4(packet, ethernet.offset);
-      if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
-        const tcp = TCP(packet, ipv4.offset);
-        this.tcpTracker.track_packet(packet, ipv4, tcp);
-      }
-    }
-  }
+export {
+  TCPTracker,
+  TCPSession
 };
-var PcapCapture = class extends PktCapture {
-  c;
-  #buffer;
-  constructor(device, listen_options) {
-    super(device, listen_options);
-    this.c = new import_cap.default.Cap();
-    this.#buffer = Buffer.alloc(65535);
-  }
-  listen() {
-    const linkType = this.c.open(
-      this.device,
-      `tcp and (src port ${this.port} or dst port ${this.port})`,
-      10 * 1024 * 1024,
-      this.#buffer
-    );
-    if (this.c.setMinBytes)
-      this.c.setMinBytes(54);
-    this.c.on("packet", (nbytes, truncated) => {
-      if (linkType === "ETHERNET") {
-        this.dispatchPacket(this.#buffer);
-      } else if (linkType === "NULL" && this.device === "\\Device\\NPF_Loopback") {
-        const type = this.#buffer.readUInt32LE();
-        if (type !== 2)
-          return;
-        this.dispatchPacket(this.#buffer.subarray(4));
-      }
-    });
-  }
-  close() {
-    this.c.close();
-  }
-};
-var RawSocketCapture = class extends PktCapture {
-  rs;
-  constructor(ip, listen_options) {
-    super(ip, listen_options);
-    this.rs = new import_raw_socket_sniffer.RawSocket(ip, listen_options.port);
-  }
-  listen() {
-    this.rs.on("data", this.dispatchPacket.bind(this));
-    this.rs.listen();
-  }
-  close() {
-  }
-};
-var PktCaptureMode = /* @__PURE__ */ ((PktCaptureMode2) => {
-  PktCaptureMode2[PktCaptureMode2["MODE_PCAP"] = 0] = "MODE_PCAP";
-  PktCaptureMode2[PktCaptureMode2["MODE_RAW_SOCKET"] = 1] = "MODE_RAW_SOCKET";
-  return PktCaptureMode2;
-})(PktCaptureMode || {});
-var PktCaptureAll = class extends import_tiny_typed_emitter.TypedEmitter {
-  captures;
-  constructor(mode) {
-    super();
-    this.captures = /* @__PURE__ */ new Map();
-    if (mode === 0 /* MODE_PCAP */) {
-      for (const device of deviceList()) {
-        for (const address of device.addresses) {
-          if (address.addr && address.netmask && (0, import_net.isIPv4)(address.addr)) {
-            try {
-              const pcapc = new PcapCapture(device.name, {
-                ip: address.addr,
-                mask: address.netmask,
-                port: 6040
-              });
-              pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
-              this.captures.set(device.name, pcapc);
-              pcapc.listen();
-            } catch (e) {
-              console.error(`[meter-core/PktCaptureAll] ${e}`);
-            }
-          }
-        }
-      }
-    } else if (mode === 1 /* MODE_RAW_SOCKET */) {
-      for (const addresses of Object.values((0, import_os.networkInterfaces)())) {
-        for (const device of addresses ?? []) {
-          if ((0, import_net.isIPv4)(device.address) && device.family === "IPv4" && device.internal === false) {
-            try {
-              const rsc = new RawSocketCapture(device.address, {
-                ip: device.address,
-                mask: device.netmask,
-                port: 443
-              });
-              rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
-              this.captures.set(device.address, rsc);
-              rsc.listen();
-            } catch (e) {
-              console.error(`[meter-core/PktCaptureAll] ${e}`);
-            }
-          }
-        }
-      }
-    } else {
-    }
-  }
-  close() {
-    for (const cap2 of this.captures.values())
-      cap2.close();
-  }
-};
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  PktCaptureAll,
-  PktCaptureMode,
-  deviceList,
-  findDevice
-});

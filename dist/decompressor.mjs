@@ -1,1 +1,51 @@
-import"./chunk-K76F7N5Y.mjs";import{uncompressSync as t}from"lz4-napi";import c from"oodle";import{uncompress as f}from"snappyjs";var l=class{oodle;xorTable;constructor(e,r){if(this.oodle=new c.Oodle(e),r.length!=256)throw new Error("Invalid xorTable length");this.xorTable=r}decrypt(e,r,o,s){s&&this.xor(e,r);let n;switch(o){case 0:{n=e;break}case 1:{n=t(e);break}case 2:{n=f(e);break}case 3:{if(e.length<4)throw new Error(`Invalid oodle packet: size=${e.length}, comp=${o}, opcode=${r}`);n=this.oodle.decode(e.subarray(4),e.readUInt32LE(0));break}default:throw new Error(`Unknown compression: ${o}`)}if(n.length<16)throw new Error(`Invalid packet: size=${n.length}, comp=${o}, opcode=${r}`);return n.subarray(16)}xor(e,r){for(let o=0;o<e.length;o++)e[o]^=this.xorTable[r++%256]}};export{l as Decompressor};
+// src/decompressor.ts
+import { uncompressSync as lz4UncompressSync } from "lz4-napi";
+import oodle from "oodle";
+import { uncompress as snappyUncompress } from "snappyjs";
+var Decompressor = class {
+  oodle;
+  xorTable;
+  constructor(oodle_state, xorTable) {
+    this.oodle = new oodle.Oodle(oodle_state);
+    if (xorTable.length != 256)
+      throw new Error("Invalid xorTable length");
+    this.xorTable = xorTable;
+  }
+  decrypt(data, xorShift, compression, xor) {
+    if (xor)
+      this.xor(data, xorShift);
+    let out;
+    switch (compression) {
+      case 0: {
+        out = data;
+        break;
+      }
+      case 1: {
+        out = lz4UncompressSync(data);
+        break;
+      }
+      case 2: {
+        out = snappyUncompress(data);
+        break;
+      }
+      case 3: {
+        if (data.length < 4)
+          throw new Error(`Invalid oodle packet: size=${data.length}, comp=${compression}, opcode=${xorShift}`);
+        out = this.oodle.decode(data.subarray(4), data.readUInt32LE(0));
+        break;
+      }
+      default:
+        throw new Error(`Unknown compression: ${compression}`);
+    }
+    if (out.length < 16)
+      throw new Error(`Invalid packet: size=${out.length}, comp=${compression}, opcode=${xorShift}`);
+    return out.subarray(16);
+  }
+  xor(data, seed) {
+    for (let i = 0; i < data.length; i++)
+      data[i] ^= this.xorTable[seed++ % 256];
+  }
+};
+export {
+  Decompressor
+};

@@ -121,7 +121,7 @@ var PktCaptureAll = class extends TypedEmitter {
               const rsc = new RawSocketCapture(device.address, {
                 ip: device.address,
                 mask: device.netmask,
-                port: 443
+                port: 6040
               });
               rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
               this.captures.set(device.address, rsc);

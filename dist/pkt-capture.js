@@ -562,7 +562,7 @@ function isAdmin() {
 }
 function adminRelauncher(mode) {
   if (mode !== 1 /* MODE_RAW_SOCKET */)
-    return false;
+    return true;
   if (process.argv.includes("-relaunch"))
     return true;
   if (isAdmin())

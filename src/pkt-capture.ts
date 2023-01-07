@@ -204,7 +204,7 @@ function isAdmin(): boolean {
  * @returns False if we have to fall back to pcap, process exit if not, True if already in admin state
  */
 export function adminRelauncher(mode: PktCaptureMode): boolean {
-  if (mode !== PktCaptureMode.MODE_RAW_SOCKET) return false;
+  if (mode !== PktCaptureMode.MODE_RAW_SOCKET) return true;
   //Check if we started our process with the -relaunch paramater (which means that it failed, and we want to fall back to pcap instead)
 
   if (process.argv.includes("-relaunch")) return true; // We assume that we already relaunched successfully earlier, so we don't need to check admin again

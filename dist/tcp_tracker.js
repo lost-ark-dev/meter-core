@@ -336,7 +336,6 @@ var TCPSession = class extends import_stream2.EventEmitter {
     if (flush_mask.includes(0)) {
       buffers.length = 0;
       buffers.push(...newBuffers);
-      console.log("retry", buffers.length);
       console.log(flush_mask.toString("hex"));
       if (buffers.length >= 10) {
         console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
@@ -360,7 +359,6 @@ var TCPSession = class extends import_stream2.EventEmitter {
           len = 0;
         }
       }
-      console.log("retry", buffers.length);
       return null;
     } else {
       buffers.length = 0;

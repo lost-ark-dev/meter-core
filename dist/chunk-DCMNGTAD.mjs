@@ -1,6 +1,6 @@
 import {
   IPTracker
-} from "./chunk-DCKLAKMO.mjs";
+} from "./chunk-J367NFGR.mjs";
 
 // src/tcp_tracker.ts
 import { EventEmitter } from "stream";
@@ -106,6 +106,7 @@ var TCPSession = class extends EventEmitter {
   send_seqno;
   send_buffers;
   recv_seqno;
+  recv_last_ackno;
   recv_buffers;
   listen_options;
   is_ignored;
@@ -119,6 +120,7 @@ var TCPSession = class extends EventEmitter {
     this.send_seqno = 0;
     this.send_buffers = [];
     this.recv_seqno = 0;
+    this.recv_last_ackno = 0;
     this.recv_buffers = [];
     this.is_ignored = false;
     this.packetBuffer = new PacketBuffer();
@@ -157,11 +159,7 @@ var TCPSession = class extends EventEmitter {
         this.dst = dst;
         this.is_ignored = true;
       }
-      if (tcp.info.flags & 2 /* syn */ && !(tcp.info.flags & 16 /* ack */)) {
-        this.state = "SYN_SENT";
-      } else {
-        this.state = "ESTAB";
-      }
+      this.state = "ESTAB";
     } else if (tcp.info.flags & 4 /* rst */) {
       this.emit("end", this);
     } else {
@@ -192,13 +190,13 @@ var TCPSession = class extends EventEmitter {
       if (tcp.info.flags & 1 /* fin */) {
         this.state = "FIN_WAIT";
       } else {
-        this.recv_ip_tracker.track(buffer, ip, tcp);
+        this.handle_recv_segment(buffer, ip, tcp);
       }
     } else if (src === this.dst) {
       if (tcp.info.flags & 1 /* fin */) {
         this.state = "CLOSE_WAIT";
       } else {
-        this.send_ip_tracker.track(buffer, ip, tcp);
+        this.handle_send_segment(buffer, ip, tcp);
       }
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
@@ -234,13 +232,17 @@ var TCPSession = class extends EventEmitter {
   }
   flush_buffers(ackno, direction) {
     if (direction === "recv") {
-      if (this.recv_seqno === 0)
+      if (this.recv_seqno === 0) {
         this.recv_seqno = ackno;
-      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, ackno);
+        this.recv_last_ackno = ackno;
+      }
+      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, this.recv_last_ackno);
       if (!flush_payload) {
+        this.recv_last_ackno = ackno;
         return;
       }
-      this.recv_seqno = ackno;
+      this.recv_seqno = this.recv_last_ackno;
+      this.recv_last_ackno = ackno;
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {
@@ -275,12 +277,33 @@ var TCPSession = class extends EventEmitter {
       return false;
     });
     if (flush_mask.includes(0)) {
+      buffers.length = 0;
+      buffers.push(...newBuffers);
+      console.log("retry", buffers.length);
+      console.log(flush_mask.toString("hex"));
       if (buffers.length >= 10) {
-        buffers.length = 0;
-        buffers.push(...newBuffers);
         console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
         return Buffer.alloc(0);
+      } else {
+        let i = 0;
+        let start_seqno = seqno;
+        let len = 0;
+        for (i; i <= flush_mask.length; i++) {
+          if (flush_mask[i]) {
+            len++;
+            continue;
+          }
+          if (len > 0) {
+            buffers.push({
+              seqno: start_seqno,
+              payload: Buffer.from(flush_payload.subarray(i - len, i))
+            });
+          }
+          start_seqno = seqno + i;
+          len = 0;
+        }
       }
+      console.log("retry", buffers.length);
       return null;
     } else {
       buffers.length = 0;

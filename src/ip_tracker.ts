@@ -9,6 +9,13 @@ type SegmentInfo = {
   tcp: TCP;
 };
 
+/*
+TCP reordering might be usefull to use later,
+but currently it breaks how we decide to push packets.
+
+If we find a gap (or unordered packet), but not the other direction,
+we may receive an ack in the other direction that'll get us to drop our packets
+*/
 export class IPTracker extends EventEmitter {
   next_id = -1;
   stored: { [key: number]: SegmentInfo } = {};
@@ -21,21 +28,18 @@ export class IPTracker extends EventEmitter {
     if (Math.abs(this.next_id - ip.info.id) >= 10) {
       this.increment_id();
     }
-    if (ip.info.id === this.next_id) {
-      //We got the next segment, dispatch instantly
-      this.emit("segment", packet, ip, tcp);
-      //we just got a new segment, try to push every other segments stored
-      this.increment_id();
+    this.stored[ip.info.id] = { packet, ip, tcp }; // We may delete old ip if we get the same id, but it should be better like that if it happens
+
+    if (this.next_id in this.stored) {
       let segment = this.stored[this.next_id];
       while (segment !== undefined) {
         this.emit("segment", segment.packet, segment.ip, segment.tcp);
+        delete this.stored[this.next_id];
         this.increment_id();
         segment = this.stored[this.next_id];
       }
-    } else {
-      //We got the wrong id, store it
-      this.stored[ip.info.id] = { packet, ip, tcp }; // We may delete old ip if we get the same id, but it should be better like that if it happens
     }
+    console.log(ip.info.id, this.next_id, ip.info.id === this.next_id, Object.keys(this.stored));
   }
   increment_id() {
     this.next_id = (this.next_id + 1) % MAX_ID;

@@ -4,6 +4,7 @@ export default defineConfig({
   entry: [
     "src/data.ts",
     "src/decompressor.ts",
+    "src/ip_tracker.ts",
     "src/legacy-logger.ts",
     "src/packet_buffer.ts",
     "src/pkt-capture.ts",

@@ -24,7 +24,44 @@ __export(tcp_tracker_exports, {
   TCPTracker: () => TCPTracker
 });
 module.exports = __toCommonJS(tcp_tracker_exports);
+var import_stream2 = require("stream");
+
+// src/ip_tracker.ts
 var import_stream = require("stream");
+var MAX_ID = 65536;
+var IPTracker = class extends import_stream.EventEmitter {
+  next_id = -1;
+  stored = {};
+  track(packet, ip, tcp) {
+    if (this.next_id === -1) {
+      this.set_current_id(ip.info.id);
+    }
+    if (Math.abs(this.next_id - ip.info.id) >= 10) {
+      this.increment_id();
+    }
+    if (ip.info.id === this.next_id) {
+      this.emit("segment", packet, ip, tcp);
+      this.increment_id();
+      let segment = this.stored[this.next_id];
+      while (segment !== void 0) {
+        this.emit("segment", segment.packet, segment.ip, segment.tcp);
+        this.increment_id();
+        segment = this.stored[this.next_id];
+      }
+    } else {
+      this.stored[ip.info.id] = { packet, ip, tcp };
+    }
+  }
+  increment_id() {
+    this.next_id = (this.next_id + 1) % MAX_ID;
+  }
+  set_current_id(current_id) {
+    this.next_id = current_id % MAX_ID;
+  }
+  set_next_id(current_id) {
+    this.next_id = (current_id + 1) % MAX_ID;
+  }
+};
 
 // src/pkt-buffer.ts
 var PacketBuffer = class {
@@ -83,14 +120,14 @@ var PacketBuffer = class {
 };
 
 // src/tcp_tracker.ts
-var TCPTracker = class extends import_stream.EventEmitter {
+var TCPTracker = class extends import_stream2.EventEmitter {
   sessions;
   listen_options;
   constructor(listen_options) {
     super();
     this.sessions = {};
     this.listen_options = listen_options;
-    import_stream.EventEmitter.call(this);
+    import_stream2.EventEmitter.call(this);
   }
   track_packet(buffer, ip, tcp) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
@@ -120,7 +157,7 @@ var TCPTracker = class extends import_stream.EventEmitter {
     }
   }
 };
-var TCPSession = class extends import_stream.EventEmitter {
+var TCPSession = class extends import_stream2.EventEmitter {
   state;
   src;
   dst;
@@ -131,6 +168,8 @@ var TCPSession = class extends import_stream.EventEmitter {
   listen_options;
   is_ignored;
   packetBuffer;
+  send_ip_tracker;
+  recv_ip_tracker;
   constructor(listen_options) {
     super();
     this.listen_options = listen_options;
@@ -141,7 +180,11 @@ var TCPSession = class extends import_stream.EventEmitter {
     this.recv_buffers = [];
     this.is_ignored = false;
     this.packetBuffer = new PacketBuffer();
-    import_stream.EventEmitter.call(this);
+    this.send_ip_tracker = new IPTracker();
+    this.recv_ip_tracker = new IPTracker();
+    this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
+    this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
+    import_stream2.EventEmitter.call(this);
   }
   track(buffer, ip, tcp) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
@@ -203,39 +246,17 @@ var TCPSession = class extends import_stream.EventEmitter {
     if (this.is_ignored)
       return;
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
-    let is_sack = false;
-    try {
-      is_sack = is_sack_in_header(buffer, ip, tcp);
-    } catch (e) {
-      console.error(e);
-      return;
-    }
     if (src === this.src) {
-      if (tcpDataLength > 0) {
-        this.send_buffers.push({
-          seqno: tcp.info.seqno,
-          payload: Buffer.from(buffer.subarray(tcp.offset, tcp.offset + tcpDataLength))
-        });
-      }
-      if (tcp.info.ackno && !is_sack) {
-        this.flush_buffers(tcp.info.ackno ?? 0, "recv");
-      }
       if (tcp.info.flags & 1 /* fin */) {
         this.state = "FIN_WAIT";
+      } else {
+        this.recv_ip_tracker.track(buffer, ip, tcp);
       }
     } else if (src === this.dst) {
-      if (tcpDataLength > 0) {
-        this.recv_buffers.push({
-          seqno: tcp.info.seqno,
-          payload: Buffer.from(buffer.subarray(tcp.offset, tcp.offset + tcpDataLength))
-        });
-      }
-      if (tcp.info.ackno && !is_sack) {
-        this.flush_buffers(tcp.info.ackno ?? 0, "send");
-      }
       if (tcp.info.flags & 1 /* fin */) {
         this.state = "CLOSE_WAIT";
+      } else {
+        this.send_ip_tracker.track(buffer, ip, tcp);
       }
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
@@ -273,11 +294,11 @@ var TCPSession = class extends import_stream.EventEmitter {
     if (direction === "recv") {
       if (this.recv_seqno === 0)
         this.recv_seqno = ackno;
-      const flush_payload = this.get_flush(this.recv_buffers, this.recv_seqno, ackno);
-      this.recv_seqno = ackno;
+      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, ackno);
       if (!flush_payload) {
         return;
       }
+      this.recv_seqno = ackno;
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {
@@ -285,16 +306,9 @@ var TCPSession = class extends import_stream.EventEmitter {
         pkt = this.packetBuffer.read();
       }
     } else if (direction === "send") {
-      if (this.send_seqno === 0)
-        this.send_seqno = ackno;
-      const flush_payload = this.get_flush(this.send_buffers, this.send_seqno, ackno);
-      this.send_seqno = ackno;
-      if (!flush_payload) {
-        return;
-      }
     }
   }
-  get_flush(buffers, seqno, ackno) {
+  static get_flush(buffers, seqno, ackno) {
     const totalLen = ackno - seqno;
     if (totalLen <= 0)
       return null;
@@ -318,13 +332,57 @@ var TCPSession = class extends import_stream.EventEmitter {
       }
       return false;
     });
-    buffers.length = 0;
-    buffers.push(...newBuffers);
     if (flush_mask.includes(0)) {
-      console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
+      if (buffers.length >= 10) {
+        buffers.length = 0;
+        buffers.push(...newBuffers);
+        console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
+        return Buffer.alloc(0);
+      }
       return null;
+    } else {
+      buffers.length = 0;
+      buffers.push(...newBuffers);
+      return flush_payload;
     }
-    return flush_payload;
+  }
+  handle_recv_segment(packet, ip, tcp) {
+    const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
+    let is_sack = false;
+    try {
+      is_sack = is_sack_in_header(packet, ip, tcp);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+    if (tcpDataLength > 0) {
+      this.send_buffers.push({
+        seqno: tcp.info.seqno,
+        payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength))
+      });
+    }
+    if (tcp.info.ackno && !is_sack) {
+      this.flush_buffers(tcp.info.ackno ?? 0, "recv");
+    }
+  }
+  handle_send_segment(packet, ip, tcp) {
+    const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
+    let is_sack = false;
+    try {
+      is_sack = is_sack_in_header(packet, ip, tcp);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+    if (tcpDataLength > 0) {
+      this.recv_buffers.push({
+        seqno: tcp.info.seqno,
+        payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength))
+      });
+    }
+    if (tcp.info.ackno && !is_sack) {
+      this.flush_buffers(tcp.info.ackno ?? 0, "send");
+    }
   }
 };
 function is_sack_in_header(buffer, ip, tcp) {

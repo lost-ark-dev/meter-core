@@ -1,13 +1,13 @@
 import {
   TCPTracker
-} from "./chunk-2CE3SCRG.mjs";
+} from "./chunk-XTCEJ6TR.mjs";
+import "./chunk-DCKLAKMO.mjs";
 
 // src/pkt-capture.ts
 import cap from "cap";
 import { isIPv4 } from "net";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { RawSocket } from "raw-socket-sniffer";
-import { networkInterfaces } from "os";
 import { execSync } from "child_process";
 var { findDevice, deviceList } = cap.Cap;
 var { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
@@ -124,7 +124,9 @@ var PktCaptureAll = class extends TypedEmitter {
         }
       }
     } else if (mode === 1 /* MODE_RAW_SOCKET */) {
-      for (const addresses of Object.values(networkInterfaces())) {
+      for (const addresses of [
+        [{ address: "192.168.0.51", family: "IPv4", netmask: "255.255.255.0", internal: false }]
+      ]) {
         for (const device of addresses ?? []) {
           if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
             try {

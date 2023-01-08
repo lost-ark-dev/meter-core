@@ -149,9 +149,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
       }
     } else if (mode === PktCaptureMode.MODE_RAW_SOCKET) {
       // [Warning] require privileges
-      for (const addresses of [
-        [{ address: "192.168.0.51", family: "IPv4", netmask: "255.255.255.0", internal: false }],
-      ]) {
+      for (const addresses of Object.values(networkInterfaces())) {
         for (const device of addresses ?? []) {
           if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
             try {

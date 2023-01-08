@@ -475,6 +475,7 @@ function isDeviceIp(ip, listen_options) {
 
 // src/pkt-capture.ts
 var import_raw_socket_sniffer = require("raw-socket-sniffer");
+var import_os = require("os");
 var import_child_process = require("child_process");
 var { findDevice, deviceList } = import_cap.default.Cap;
 var { Ethernet, PROTOCOL, IPV4, TCP } = import_cap.default.decoders;
@@ -591,9 +592,7 @@ var PktCaptureAll = class extends import_tiny_typed_emitter.TypedEmitter {
         }
       }
     } else if (mode === 1 /* MODE_RAW_SOCKET */) {
-      for (const addresses of [
-        [{ address: "192.168.0.51", family: "IPv4", netmask: "255.255.255.0", internal: false }]
-      ]) {
+      for (const addresses of Object.values((0, import_os.networkInterfaces)())) {
         for (const device of addresses ?? []) {
           if ((0, import_net.isIPv4)(device.address) && device.family === "IPv4" && device.internal === false) {
             try {

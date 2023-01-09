@@ -5,7 +5,7 @@ export class PartyTracker {
     private static instance: PartyTracker;
     private characterIdToPartyId: Map<bigint, number>;
     private entityIdToPartyId: Map<bigint, number>;
-    private raidInstanceToPartyInstances: Map<number, number[]>;
+    private raidInstanceToPartyInstances: Map<number, Set<number>>;
     private ownName: string|undefined;
 
     private constructor() {
@@ -92,29 +92,29 @@ export class PartyTracker {
 
     public removePartyMappings(partyInstanceId: number) {
         const raidId = this.getRaidInstanceId(partyInstanceId);
-        const partyIds: number[] = raidId ? this.raidInstanceToPartyInstances.get(raidId) ?? [partyInstanceId] : [partyInstanceId];
+        const partyIds: Set<number> = raidId ? this.raidInstanceToPartyInstances.get(raidId) ?? new Set([partyInstanceId]) : new Set([partyInstanceId]);
         for (const e of this.characterIdToPartyId) {
-            if (partyIds.includes(e[1])) this.characterIdToPartyId.delete(e[0]);
+            if (partyIds.has(e[1])) this.characterIdToPartyId.delete(e[0]);
         }
         for (const e of this.entityIdToPartyId) {
-            if (partyIds.includes(e[1])) this.characterIdToPartyId.delete(e[0]);
+            if (partyIds.has(e[1])) this.characterIdToPartyId.delete(e[0]);
         }
     }
 
     private getRaidInstanceId(partyId: number): number|undefined {
         for (const data of this.raidInstanceToPartyInstances) {
-            if (data[1].includes(partyId)) return data[0];
+            if (data[1].has(partyId)) return data[0];
         }
         return undefined;
     }
 
     private registerPartyId(raidInstanceId: number, partyId: number) {
-        var list: number[]|undefined = this.raidInstanceToPartyInstances.get(raidInstanceId);
+        var list: Set<number>|undefined = this.raidInstanceToPartyInstances.get(raidInstanceId);
         if (!list) {
-            list = [];
+            list = new Set();
             this.raidInstanceToPartyInstances.set(raidInstanceId, list);
         }
-        list.push(partyId);
+        list.add(partyId);
     }
 
 

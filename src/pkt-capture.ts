@@ -151,7 +151,12 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
       // [Warning] require privileges
       for (const addresses of Object.values(networkInterfaces())) {
         for (const device of addresses ?? []) {
-          if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
+          if (
+            isIPv4(device.address) &&
+            device.family === "IPv4" &&
+            device.internal === false &&
+            !this.captures.has(device.address) // Some users have multiple interfaces with same ip, we want only 1
+          ) {
             try {
               const rsc = new RawSocketCapture(device.address, {
                 ip: device.address,

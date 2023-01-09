@@ -14,7 +14,7 @@ export type PKTInitPC = {
   Unk7: number;
   Unk8: number;
   Level: number;
-  statPair: { readNBytesInt64: bigint; Unk0_0_1: number }[];
+  statPair: { Value: bigint; StatType: number }[];
   Unk11: number;
   Unk12: number;
   Unk13: number;
@@ -81,8 +81,8 @@ export function read(buf: Buffer) {
     reader.u16(),
     () => {
       const F = {} as any;
-      F.readNBytesInt64 = ReadNBytesInt64.read(reader);
-      F.Unk0_0_1 = reader.u8();
+      F.Value = ReadNBytesInt64.read(reader);
+      F.StatType = reader.u8();
       return F;
     },
     152

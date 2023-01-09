@@ -85,7 +85,7 @@ export type LegacyLoggerSettings = {
 
 export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
   private static supportAttackBuffIds = [211606, 211749, 361708, 362006];
-  private static supportDebuffIds = [210230, 360506];
+  private static supportDebuffIds = [210230, 360506, 360804];
 
   #data: MeterData;
   emitText: boolean;

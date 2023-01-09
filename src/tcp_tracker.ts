@@ -193,7 +193,8 @@ export class TCPSession extends EventEmitter {
       // joining session already in progress
       this.state = "ESTAB"; // I mean, probably established, right? Unless it isn't.
       //}
-    } else if (tcp.info.flags & TCPFlags.rst) {
+    }
+    if (tcp.info.flags & TCPFlags.rst) {
       this.emit("end", this);
     } else {
       // not a SYN, so run the state machine

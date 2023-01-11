@@ -59,8 +59,8 @@ interface LegacyLoggerEvents {
     modifier: string,
     currentHp: number,
     maxHp: number,
-    sourceIsBuffedBySupport: boolean,
-    targetIsDebuffedBySupport: boolean
+    effectsOnTarget: (number|bigint)[][],
+    effectsOnSource: (number|bigint)[][],
   ) => void;
   [LineId.Heal]: (id: bigint, name: string, healAmount: number, currentHp: number) => void;
   [LineId.Buff]: (
@@ -86,6 +86,31 @@ export type LegacyLoggerSettings = {
 export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
   private static supportAttackBuffIds = [211606, 211749, 361708, 362006];
   private static supportDebuffIds = [210230, 360506, 360804];
+
+  private static playerDebuffIds = [
+    301830, // Artillerist: Party: Target Focus
+    210230, 212610, // Bard: Note Brand
+    212302, 212303, 212304, // Bard: Symphonia
+    170404, // Gunlancer: Party: Armor Destruction
+    171807, // Gunlancer: Open Weakness
+    360506, 360804, 361004, 361207, 361505, // Paladin: Light's Vestige
+    280010, // Reaper: Corrosion
+    270501, 278100, // Shadowhunter: Party: Damage Amplification
+    280412, // Sharpshooter: Party: Damage Amplification
+    372020, // Sorceress: Party: Damage Amplification
+    220805, // Wardancer: Fatal Wave
+    220801, // Wardancer: Roar of Courage
+    271303, 271704, 230611, 230906, 231803, 280212, // Party: Damage Amplification
+    281114, 372120, 372452, 161102, 161210, 162230, // Party: Damage Amplification
+    300402, 300510, 300902, 301006, 171002, 171502, 180111, // Party: Armor Destruction
+    181103, 181660, 181804, // Party: Armor Destruction
+    171807, 250411, 251221, 251311, 45113702, // Open Weakness
+    171803, 250410, 251220, 251310, // Party: Open Weakness
+    380201, 380202, 380203, // Life Absorption
+    191720, 192306, 192612, 193207, 291230, 291820, 292220, // Party: Weakness Exposure
+    321120, 321320, 321730, 381820, 382030, 382220, // Party: Weakness Exposure
+    182107, 232105, // Party: Target Focus
+  ];
 
   #data: MeterData;
   emitText: boolean;
@@ -356,8 +381,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.skillDamageEvent.Modifier & (hitflag.dot | hitflag.dot_critical)
             )
               skillName = "Bleed";
-            var isBuffedBySupport = false;
-            var isDebuffedBySupport = false;
+            var statusEffectsOnTarget = [];
+            var statusEffectsOnSource = [];
             if (sourceEntity.entityType == EntityType.Player) {
               const p = sourceEntity as Player;
               const isLocalPlayer = p.name == this.#localPlayer.name;
@@ -365,12 +390,17 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               if (isInParty) {
                 const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
                 if (partyId) {
-                  isBuffedBySupport = isLocalPlayer ? StatusTracker.getInstance().HasAnyStatusEffect(p.entityId, StatusEffecType.Local, LegacyLogger.supportAttackBuffIds) : StatusTracker.getInstance().HasAnyStatusEffectFromParty(p.characterId, StatusEffecType.Party, partyId, LegacyLogger.supportAttackBuffIds);
-                  isDebuffedBySupport = StatusTracker.getInstance().HasAnyStatusEffectFromParty(event.skillDamageEvent.TargetId, StatusEffecType.Local, partyId, LegacyLogger.supportDebuffIds);
+                  const effect = StatusTracker.getInstance().GetStatusEffects(isLocalPlayer ? p.entityId : p.characterId, isLocalPlayer ? StatusEffecType.Local : StatusEffecType.Party);
+                  for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                  // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
+                  const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(event.skillDamageEvent.TargetId, StatusEffecType.Local, partyId);
+                  for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
                 }
               } else if(isLocalPlayer) {
-                isBuffedBySupport = StatusTracker.getInstance().HasAnyStatusEffect(p.entityId, StatusEffecType.Local, LegacyLogger.supportAttackBuffIds);
-                isDebuffedBySupport = StatusTracker.getInstance().HasAnyStatusEffect(event.skillDamageEvent.TargetId, StatusEffecType.Local, LegacyLogger.supportDebuffIds);
+                const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffecType.Local);
+                for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                const tEffects = StatusTracker.getInstance().GetStatusEffects(event.skillDamageEvent.TargetId, StatusEffecType.Local);
+                for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
               }
             }
             this.#buildLine(
@@ -387,8 +417,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.skillDamageEvent.Modifier.toString(16),
               Number(event.skillDamageEvent.CurHp),
               Number(event.skillDamageEvent.MaxHp),
-              isBuffedBySupport,
-              isDebuffedBySupport,
+              statusEffectsOnTarget,
+              statusEffectsOnSource,
             );
           });
         }
@@ -415,23 +445,28 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.Modifier & (hitflag.dot | hitflag.dot_critical)
             )
               skillName = "Bleed";
-            var isBuffedBySupport = false;
-            var isDebuffedBySupport = false;
-            if (sourceEntity.entityType == EntityType.Player) {
-              const p = sourceEntity as Player;
-              const isLocalPlayer = p.name == this.#localPlayer.name;
-              var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
-              if (isInParty) {
-                const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
-                if (partyId) {
-                  isBuffedBySupport = isLocalPlayer ? StatusTracker.getInstance().HasAnyStatusEffect(p.entityId, StatusEffecType.Local, LegacyLogger.supportAttackBuffIds) : StatusTracker.getInstance().HasAnyStatusEffectFromParty(p.characterId, StatusEffecType.Party, partyId, LegacyLogger.supportAttackBuffIds);
-                  isDebuffedBySupport = StatusTracker.getInstance().HasAnyStatusEffectFromParty(event.TargetId, StatusEffecType.Local, partyId, LegacyLogger.supportDebuffIds);
+              var statusEffectsOnTarget = [];
+              var statusEffectsOnSource = [];
+              if (sourceEntity.entityType == EntityType.Player) {
+                const p = sourceEntity as Player;
+                const isLocalPlayer = p.name == this.#localPlayer.name;
+                var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
+                if (isInParty) {
+                  const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
+                  if (partyId) {
+                    const effect = StatusTracker.getInstance().GetStatusEffects(isLocalPlayer ? p.entityId : p.characterId, isLocalPlayer ? StatusEffecType.Local : StatusEffecType.Party);
+                    for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                    // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
+                    const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(event.TargetId, StatusEffecType.Local, partyId);
+                    for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
+                  }
+                } else if(isLocalPlayer) {
+                  const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffecType.Local);
+                  for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                  const tEffects = StatusTracker.getInstance().GetStatusEffects(event.TargetId, StatusEffecType.Local);
+                  for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
                 }
-              } else if(isLocalPlayer) {
-                isBuffedBySupport = StatusTracker.getInstance().HasAnyStatusEffect(p.entityId, StatusEffecType.Local, LegacyLogger.supportAttackBuffIds);
-                isDebuffedBySupport = StatusTracker.getInstance().HasAnyStatusEffect(event.TargetId, StatusEffecType.Local, LegacyLogger.supportDebuffIds);
               }
-            }
             this.#buildLine(
               LineId.Damage,
               sourceEntity.entityId,
@@ -446,8 +481,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.Modifier.toString(16),
               Number(event.CurHp),
               Number(event.MaxHp),
-              isBuffedBySupport,
-              isDebuffedBySupport,
+              statusEffectsOnTarget,
+              statusEffectsOnSource,
             );
           });
         }

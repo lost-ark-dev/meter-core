@@ -100,4 +100,14 @@ export class StatusTracker {
         var registry = this.getStatusEffectRegistryForPlayer(targetId, et);
         registry.delete(statusEffectId);
     }
+    public GetStatusEffects(targetId: TargetId, et: StatusEffecType): Array<StatusEffect> {
+        const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+        return [...registry.values()];
+    }
+
+    public GetStatusEffectsFromParty(targetId: TargetId, et:StatusEffecType, partyId: number): Array<StatusEffect> {
+        const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+        return [...registry.values()].filter((value, _index, _array) => { return partyId == PartyTracker.getInstance().getPartyIdFromEntityId(value.sourceId); });
+    }
+
 }

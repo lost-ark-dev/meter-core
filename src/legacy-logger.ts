@@ -214,6 +214,19 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
         PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
+        for (let se of parsed.statusEffectDatas) {
+          const val: number = se.Value ? se.Value.readUInt32LE() : 0;
+          StatusTracker.getInstance().RegisterStatusEffect({
+            instanceId: se.EffectInstanceId,
+            sourceId: se.SourceId,
+            started: new Date(),
+            statusEffectId: se.StatusEffectId,
+            targetId: parsed.PlayerId,
+            type: StatusEffecType.Local,
+            value: val,
+          });
+        }
+
         if (this.#needEmit) {
           const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
           this.#buildLine(
@@ -277,6 +290,18 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
         PartyTracker.getInstance().completeEntry(player.characterId, player.entityId);
+        for (let se of parsed.PCStruct.statusEffectDatas) {
+          const val: number = se.Value ? se.Value.readUInt32LE() : 0;
+          StatusTracker.getInstance().RegisterStatusEffect({
+            instanceId: se.EffectInstanceId,
+            sourceId: se.SourceId,
+            started: new Date(),
+            statusEffectId: se.StatusEffectId,
+            targetId: parsed.PCStruct.PlayerId,
+            type: StatusEffecType.Local,
+            value: val,
+          });
+        }
         if (this.#needEmit) {
           const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
           this.#buildLine(

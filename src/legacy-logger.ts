@@ -84,33 +84,6 @@ export type LegacyLoggerSettings = {
 };
 
 export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
-  private static supportAttackBuffIds = [211606, 211749, 361708, 362006];
-  private static supportDebuffIds = [210230, 360506, 360804];
-
-  private static playerDebuffIds = [
-    301830, // Artillerist: Party: Target Focus
-    210230, 212610, // Bard: Note Brand
-    212302, 212303, 212304, // Bard: Symphonia
-    170404, // Gunlancer: Party: Armor Destruction
-    171807, // Gunlancer: Open Weakness
-    360506, 360804, 361004, 361207, 361505, // Paladin: Light's Vestige
-    280010, // Reaper: Corrosion
-    270501, 278100, // Shadowhunter: Party: Damage Amplification
-    280412, // Sharpshooter: Party: Damage Amplification
-    372020, // Sorceress: Party: Damage Amplification
-    220805, // Wardancer: Fatal Wave
-    220801, // Wardancer: Roar of Courage
-    271303, 271704, 230611, 230906, 231803, 280212, // Party: Damage Amplification
-    281114, 372120, 372452, 161102, 161210, 162230, // Party: Damage Amplification
-    300402, 300510, 300902, 301006, 171002, 171502, 180111, // Party: Armor Destruction
-    181103, 181660, 181804, // Party: Armor Destruction
-    171807, 250411, 251221, 251311, 45113702, // Open Weakness
-    171803, 250410, 251220, 251310, // Party: Open Weakness
-    380201, 380202, 380203, // Life Absorption
-    191720, 192306, 192612, 193207, 291230, 291820, 292220, // Party: Weakness Exposure
-    321120, 321320, 321730, 381820, 382030, 382220, // Party: Weakness Exposure
-    182107, 232105, // Party: Target Focus
-  ];
 
   #data: MeterData;
   emitText: boolean;

@@ -636,3 +636,9 @@ export const enum itemcategory {
   astra_equip_concentration = 100103,
   astra_equip_desire = 100104,
 }
+export const enum blockskilltype {
+  success = 0,
+  fail = 1,
+  inprogress = 2,
+  start = 3,
+}

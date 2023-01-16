@@ -1,6 +1,6 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
-import * as ReadFlagBytes from "../../common/ReadFlagBytes";
+import * as SkillOptionData from "../../common/SkillOptionData";
 import * as Vector3F from "../../common/Vector3F";
 import * as Angle from "../../common/Angle";
 export type PKTSkillStartNotify = {
@@ -12,7 +12,7 @@ export type PKTSkillStartNotify = {
   NewPosition: Vector3F.Vector3F;
   SourceId: bigint;
   Unk1_m?: number;
-  SkillOptionData: ReadFlagBytes.ReadFlagBytes;
+  SkillOptionData: SkillOptionData.SkillOptionData;
   AiStateId?: number;
   SkillLevel: number;
   NewDirectionYaw: Angle.Angle;
@@ -28,7 +28,7 @@ export function read(buf: Buffer) {
   data.NewPosition = Vector3F.read(reader);
   data.SourceId = reader.u64();
   if (reader.bool()) data.Unk1_m = reader.i32();
-  data.SkillOptionData = ReadFlagBytes.read(reader);
+  data.SkillOptionData = SkillOptionData.read(reader);
   if (reader.bool()) data.AiStateId = reader.u32();
   data.SkillLevel = reader.u8();
   data.NewDirectionYaw = Angle.read(reader);

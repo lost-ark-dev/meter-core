@@ -1,10 +1,10 @@
 // Auto Generated, do not edit.
 import type { Read } from "../../stream";
-import * as ReadFlagBytes2 from "../../common/ReadFlagBytes2";
+import * as MoveOptionData from "../../common/MoveOptionData";
 import * as SkillDamageEvent from "../structures/SkillDamageEvent";
 import * as Vector3F from "../../common/Vector3F";
 export type SkillDamageAbnormalMoveEvent = {
-  Unk0_m: ReadFlagBytes2.ReadFlagBytes2;
+  Unk0_m: MoveOptionData.MoveOptionData;
   Unk8_m: number;
   Unk2_m: bigint;
   Destination: Vector3F.Vector3F;
@@ -16,7 +16,7 @@ export type SkillDamageAbnormalMoveEvent = {
 };
 export function read(reader: Read) {
   const data = {} as SkillDamageAbnormalMoveEvent;
-  data.Unk0_m = ReadFlagBytes2.read(reader);
+  data.Unk0_m = MoveOptionData.read(reader);
   data.Unk8_m = reader.u16();
   data.Unk2_m = reader.u64();
   data.Destination = Vector3F.read(reader);

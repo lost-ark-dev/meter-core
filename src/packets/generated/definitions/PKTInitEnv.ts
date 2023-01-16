@@ -24,11 +24,11 @@ export function read(buf: Buffer) {
   data.struct_26 = reader.array(
     reader.u16(),
     () => {
-      const E = {} as any;
-      E.struct_544 = reader.string(128);
-      E.versionString = reader.string(64);
-      E.struct_531 = reader.string(32);
-      return E;
+      const T = {} as any;
+      T.struct_544 = reader.string(128);
+      T.versionString = reader.string(64);
+      T.struct_531 = reader.string(32);
+      return T;
     },
     64
   );

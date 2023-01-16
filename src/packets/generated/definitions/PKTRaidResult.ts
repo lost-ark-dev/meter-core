@@ -7,7 +7,7 @@ export type PKTRaidResult = {
   Unk2: number;
   Unk3: bigint;
   Unk4: number;
-  struct_44: { struct_493: Buffer; Unk0_0_1: bigint; Unk0_0_2: number; Unk0_0_3: bigint }[];
+  struct_44: { struct_494: Buffer; Unk0_0_1: bigint; Unk0_0_2: number; Unk0_0_3: bigint }[];
   Unk6: bigint;
   Unk7: bigint;
 };
@@ -22,12 +22,12 @@ export function read(buf: Buffer) {
   data.struct_44 = reader.array(
     reader.u16(),
     () => {
-      const Z = {} as any;
-      Z.struct_493 = reader.bytes(reader.u16(), 3);
-      Z.Unk0_0_1 = ReadNBytesInt64.read(reader);
-      Z.Unk0_0_2 = reader.u32();
-      Z.Unk0_0_3 = ReadNBytesInt64.read(reader);
-      return Z;
+      const z = {} as any;
+      z.struct_494 = reader.bytes(reader.u16(), 3);
+      z.Unk0_0_1 = ReadNBytesInt64.read(reader);
+      z.Unk0_0_2 = reader.u32();
+      z.Unk0_0_3 = ReadNBytesInt64.read(reader);
+      return z;
     },
     3
   );

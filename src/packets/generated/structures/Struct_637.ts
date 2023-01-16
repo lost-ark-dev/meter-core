@@ -7,7 +7,7 @@ export type Struct_637 = {
   Unk2: number;
   lostArkDateTime: LostArkDateTime.LostArkDateTime;
   Unk4_0?: number;
-  struct_429: Buffer;
+  struct_426: Buffer;
 };
 export function read(reader: Read) {
   const data = {} as Struct_637;
@@ -16,6 +16,6 @@ export function read(reader: Read) {
   data.Unk2 = reader.u16();
   data.lostArkDateTime = LostArkDateTime.read(reader);
   if (reader.bool()) data.Unk4_0 = reader.u8();
-  data.struct_429 = reader.bytes(reader.u16(), 3, 14);
+  data.struct_426 = reader.bytes(reader.u16(), 3, 14);
   return data;
 }

@@ -8,7 +8,7 @@ export type StatusEffectData = {
   lostArkDateTime: LostArkDateTime.LostArkDateTime;
   SkillLevel: number;
   StatusEffectId: number;
-  struct_422: Buffer;
+  struct_420: Buffer;
   InstanceId: bigint;
   Value?: Buffer;
   Unk9_0?: bigint;
@@ -22,7 +22,7 @@ export function read(reader: Read) {
   data.lostArkDateTime = LostArkDateTime.read(reader);
   data.SkillLevel = reader.u8();
   data.StatusEffectId = reader.u32();
-  data.struct_422 = reader.bytes(reader.u16(), 8, 7);
+  data.struct_420 = reader.bytes(reader.u16(), 8, 7);
   data.InstanceId = reader.u64();
   if (reader.bool()) data.Value = reader.bytes(16);
   if (reader.bool()) data.Unk9_0 = reader.u64();

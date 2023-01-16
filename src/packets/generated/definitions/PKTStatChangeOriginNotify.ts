@@ -14,20 +14,20 @@ export function read(buf: Buffer) {
   data.StatPairList = reader.array(
     reader.u16(),
     () => {
-      const b = {} as any;
-      b.Value = ReadNBytesInt64.read(reader);
-      b.StatType = reader.u8();
-      return b;
+      const D = {} as any;
+      D.Value = ReadNBytesInt64.read(reader);
+      D.StatType = reader.u8();
+      return D;
     },
     152
   );
   data.Unk1 = reader.array(
     reader.u16(),
     () => {
-      const c = {} as any;
-      c.Value = ReadNBytesInt64.read(reader);
-      c.StatType = reader.u8();
-      return c;
+      const E = {} as any;
+      E.Value = ReadNBytesInt64.read(reader);
+      E.StatType = reader.u8();
+      return E;
     },
     152
   );

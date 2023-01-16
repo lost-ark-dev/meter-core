@@ -22,7 +22,7 @@ export type PKTInitPC = {
   Unk15: number;
   statusEffectDatas: StatusEffectData.StatusEffectData[];
   Unk17: number;
-  struct_325: Buffer;
+  struct_320: Buffer;
   Unk19: bigint;
   Unk20: number;
   Unk21: number;
@@ -38,18 +38,18 @@ export type PKTInitPC = {
   Unk31: number;
   Unk32: number;
   Unk33: number;
-  struct_373: Struct_678.Struct_678[];
+  struct_368: Struct_678.Struct_678[];
   Unk35: number;
   Unk36_0?: number;
   Unk37: number;
   Unk38: number;
   Unk39: bigint;
   CharacterId: bigint;
-  struct_320: string;
+  struct_343: string;
   Unk42: number;
   Unk43: number;
   Unk44: number;
-  struct_219: Buffer;
+  struct_217: Buffer;
   Unk46: bigint;
   Unk47: number;
   Unk48: number;
@@ -80,10 +80,10 @@ export function read(buf: Buffer) {
   data.statPair = reader.array(
     reader.u16(),
     () => {
-      const F = {} as any;
-      F.Value = ReadNBytesInt64.read(reader);
-      F.StatType = reader.u8();
-      return F;
+      const U = {} as any;
+      U.Value = ReadNBytesInt64.read(reader);
+      U.StatType = reader.u8();
+      return U;
     },
     152
   );
@@ -94,7 +94,7 @@ export function read(buf: Buffer) {
   data.Unk15 = reader.u8();
   data.statusEffectDatas = reader.array(reader.u16(), () => StatusEffectData.read(reader), 80);
   data.Unk17 = reader.u8();
-  data.struct_325 = reader.bytes(reader.u16(), 104, 30);
+  data.struct_320 = reader.bytes(reader.u16(), 104, 30);
   data.Unk19 = reader.u64();
   data.Unk20 = reader.u32();
   data.Unk21 = reader.u8();
@@ -110,18 +110,18 @@ export function read(buf: Buffer) {
   data.Unk31 = reader.u8();
   data.Unk32 = reader.u32();
   data.Unk33 = reader.u8();
-  data.struct_373 = reader.array(reader.u16(), () => Struct_678.read(reader), 5);
+  data.struct_368 = reader.array(reader.u16(), () => Struct_678.read(reader), 5);
   data.Unk35 = reader.u8();
   if (reader.bool()) data.Unk36_0 = reader.u32();
   data.Unk37 = reader.u32();
   data.Unk38 = reader.u8();
   data.Unk39 = reader.u64();
   data.CharacterId = reader.u64();
-  data.struct_320 = reader.string(7);
+  data.struct_343 = reader.string(7);
   data.Unk42 = reader.u8();
   data.Unk43 = reader.u8();
   data.Unk44 = reader.u32();
-  data.struct_219 = reader.bytes(reader.u16(), 3, 17);
+  data.struct_217 = reader.bytes(reader.u16(), 3, 17);
   data.Unk46 = reader.u64();
   data.Unk47 = reader.u8();
   data.Unk48 = reader.u8();

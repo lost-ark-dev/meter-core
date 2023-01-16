@@ -1,7 +1,7 @@
 import { EventEmitter } from "stream";
+import { IPTracker } from "./ip_tracker";
 import { PacketBuffer } from "./pkt-buffer";
-const http = require("http");
-type IPv4 = {
+export type IPv4 = {
   info: {
     hdrlen: number;
     dscp: number;
@@ -19,7 +19,7 @@ type IPv4 = {
   offset: number;
   hdrlen: number;
 };
-type TCP = {
+export type TCP = {
   info: {
     srcport: number;
     dstport: number;
@@ -108,11 +108,15 @@ export class TCPSession extends EventEmitter {
   send_buffers: TCPSegment[];
 
   recv_seqno: number; // Current seq number flushed
+  recv_last_ackno: number;
   recv_buffers: TCPSegment[];
   listen_options: ListenOptions;
 
   is_ignored: boolean;
   packetBuffer: PacketBuffer;
+
+  send_ip_tracker: IPTracker;
+  recv_ip_tracker: IPTracker;
 
   constructor(listen_options: ListenOptions) {
     super();
@@ -123,16 +127,21 @@ export class TCPSession extends EventEmitter {
     this.send_buffers = [];
 
     this.recv_seqno = 0;
+    this.recv_last_ackno = 0;
     this.recv_buffers = [];
     this.is_ignored = false;
     this.packetBuffer = new PacketBuffer();
 
+    this.send_ip_tracker = new IPTracker();
+    this.recv_ip_tracker = new IPTracker();
+    this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
+    this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
     EventEmitter.call(this);
   }
   track(buffer: Buffer, ip: IPv4, tcp: TCP) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
-
+    //console.log(src, dst, tcp.info.seqno, tcp.info.ackno);
     if (this.state === "NONE") {
       //Detect connection direction & filter out outgoing connections from listening port (local:6040->remote:????)
       const isSrcDeviceIp = isDeviceIp(ip.info.srcaddr, this.listen_options);
@@ -174,13 +183,16 @@ export class TCPSession extends EventEmitter {
         this.dst = dst;
         this.is_ignored = true; //We set to ignore this session, but we still want to track for connection start/end
       }
+      /*
+      //Disabled handshake detection as raw rockets has server/client unordered
       if (tcp.info.flags & TCPFlags.syn && !(tcp.info.flags & TCPFlags.ack)) {
         // initial SYN, best case
         this.state = "SYN_SENT";
       } else {
-        // joining session already in progress
-        this.state = "ESTAB"; // I mean, probably established, right? Unless it isn't.
-      }
+        */
+      // joining session already in progress
+      this.state = "ESTAB"; // I mean, probably established, right? Unless it isn't.
+      //}
     } else if (tcp.info.flags & TCPFlags.rst) {
       this.emit("end", this);
     } else {
@@ -223,43 +235,22 @@ export class TCPSession extends EventEmitter {
     if (this.is_ignored) return; //Ignore data transfert
 
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
-    let is_sack = false;
-    try {
-      is_sack = is_sack_in_header(buffer, ip, tcp);
-    } catch (e) {
-      console.error(e);
-      return;
-    }
     if (src === this.src) {
-      // this packet came from the active opener / client
-      if (tcpDataLength > 0) {
-        //We store the the segment in the buffers list
-        this.send_buffers.push({
-          seqno: tcp.info.seqno,
-          payload: Buffer.from(buffer.subarray(tcp.offset, tcp.offset + tcpDataLength)),
-        });
-      }
-      if (tcp.info.ackno && !is_sack) {
-        this.flush_buffers(tcp.info.ackno ?? 0, "recv");
-      }
       // console.log("sending ACK for packet we didn't see received: " + tcp.info.ackno ?? 0);
       if (tcp.info.flags & TCPFlags.fin) {
         this.state = "FIN_WAIT";
+      } else {
+        //console.log("recv", tcp.info.seqno, tcp.info.ackno);
+        this.handle_recv_segment(buffer, ip, tcp);
+        //this.recv_ip_tracker.track(buffer, ip, tcp);
       }
     } else if (src === this.dst) {
-      if (tcpDataLength > 0) {
-        //We store the the segment in the buffers list
-        this.recv_buffers.push({
-          seqno: tcp.info.seqno,
-          payload: Buffer.from(buffer.subarray(tcp.offset, tcp.offset + tcpDataLength)),
-        });
-      }
-      if (tcp.info.ackno && !is_sack) {
-        this.flush_buffers(tcp.info.ackno ?? 0, "send");
-      }
       if (tcp.info.flags & TCPFlags.fin) {
         this.state = "CLOSE_WAIT";
+      } else {
+        //console.log("send", tcp.info.seqno, tcp.info.ackno);
+        this.handle_send_segment(buffer, ip, tcp);
+        //this.send_ip_tracker.track(buffer, ip, tcp);
       }
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
@@ -306,14 +297,22 @@ export class TCPSession extends EventEmitter {
     //We assume that seqno/ackno will never overflow (2^32 bytes ~ 4.3GB)
     if (direction === "recv") {
       //Update seqno when unknown
-      if (this.recv_seqno === 0) this.recv_seqno = ackno;
+      if (this.recv_seqno === 0) {
+        this.recv_seqno = ackno;
+        this.recv_last_ackno = ackno;
+      }
       //Get ordered buffers
-      const flush_payload = this.get_flush(this.recv_buffers, this.recv_seqno, ackno);
-      this.recv_seqno = ackno;
+      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, this.recv_last_ackno);
+
       if (!flush_payload) {
+        this.recv_last_ackno = ackno;
         //can't flush payload, missing some of it, dropping
         return;
       }
+      //TODO: Here we wait to have 1 more ack before flushing data, this will add delay but may fix raw socket weird order
+      this.recv_seqno = this.recv_last_ackno;
+      this.recv_last_ackno = ackno;
+
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {
@@ -321,20 +320,22 @@ export class TCPSession extends EventEmitter {
         pkt = this.packetBuffer.read();
       }
     } else if (direction === "send") {
+      //We ignore data sent
+      /*
       //Update seqno when unknown
       if (this.send_seqno === 0) this.send_seqno = ackno;
       //Get ordered buffers
-      const flush_payload = this.get_flush(this.send_buffers, this.send_seqno, ackno);
-      this.send_seqno = ackno;
+      const flush_payload = TCPSession.get_flush(this.send_buffers, this.send_seqno, ackno);
       if (!flush_payload) {
         //can't flush payload, missing some of it, dropping
         return;
       }
-      //We ignore data sent
+      this.send_seqno = ackno;
       //this.emit("payload_send", flush_payload);
+      */
     }
   }
-  get_flush(buffers: TCPSegment[], seqno: number, ackno: number): Buffer | null {
+  static get_flush(buffers: TCPSegment[], seqno: number, ackno: number): Buffer | null {
     const totalLen = ackno - seqno;
     if (totalLen <= 0) return null;
     let flush_payload = Buffer.alloc(totalLen);
@@ -369,16 +370,91 @@ export class TCPSession extends EventEmitter {
       }
       return false;
     });
-    //Update stored buffers:
-    buffers.length = 0;
-    buffers.push(...newBuffers);
     //TODO: use a mask (or anything) to be sure we got all the portions of the payload
     //We apply the mask to remove unknown portions (probably can be fixed by implementing sack)
     if (flush_mask.includes(0)) {
-      console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
+      buffers.length = 0;
+      buffers.push(...newBuffers);
+
+      console.log(flush_mask.toString("hex"));
+
+      if (buffers.length >= 10) {
+        //TODO: add a fail count for a given ack to not flush that many buffers, and then, only flush buffers in between
+
+        console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
+        return Buffer.alloc(0);
+      }
+      //TODO: recreate buffers from flush mask to not reprocess everything next try
+      else {
+        let i = 0;
+        let start_seqno = seqno;
+        let len = 0;
+        for (i; i <= flush_mask.length; i++) {
+          //<= is intended, to include 1 more loop
+          if (flush_mask[i]) {
+            len++;
+            continue;
+          }
+          if (len > 0) {
+            buffers.push({
+              seqno: start_seqno,
+              payload: Buffer.from(flush_payload.subarray(i - len, i)),
+            });
+          }
+          start_seqno = seqno + i;
+          len = 0;
+        }
+      }
+
       return null;
+    } else {
+      //TODO: reset fail count as we successfully flushed
+      //Update stored buffers:
+      buffers.length = 0;
+      buffers.push(...newBuffers);
+      return flush_payload;
     }
-    return flush_payload;
+  }
+  handle_recv_segment(packet: Buffer, ip: IPv4, tcp: TCP) {
+    const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
+    let is_sack = false;
+    try {
+      is_sack = is_sack_in_header(packet, ip, tcp);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+    // this packet came from the active opener / client
+    if (tcpDataLength > 0) {
+      //We store the the segment in the buffers list
+      this.send_buffers.push({
+        seqno: tcp.info.seqno,
+        payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength)),
+      });
+    }
+    if (tcp.info.ackno && !is_sack) {
+      this.flush_buffers(tcp.info.ackno ?? 0, "recv");
+    }
+  }
+  handle_send_segment(packet: Buffer, ip: IPv4, tcp: TCP) {
+    const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
+    let is_sack = false;
+    try {
+      is_sack = is_sack_in_header(packet, ip, tcp);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+    if (tcpDataLength > 0) {
+      //We store the the segment in the buffers list
+      this.recv_buffers.push({
+        seqno: tcp.info.seqno,
+        payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength)),
+      });
+    }
+    if (tcp.info.ackno && !is_sack) {
+      this.flush_buffers(tcp.info.ackno ?? 0, "send");
+    }
   }
 }
 function is_sack_in_header(buffer: Buffer, ip: IPv4, tcp: TCP) {

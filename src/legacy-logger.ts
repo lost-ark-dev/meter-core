@@ -663,11 +663,11 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     return this.#currentEncounter.entities.get(id)?.name || id.toString(16);
   }
 
-  #getStatPairMap(statpair: { Unk0_0_1: number; readNBytesInt64: bigint }[]) {
+  #getStatPairMap(statpair: { StatType: number; Value: bigint }[]) {
     //TODO: use a "Common" packet for statpair parsing
     const map = new Map<stattype, bigint>();
     statpair.forEach((pair) => {
-      map.set(pair.Unk0_0_1, pair.readNBytesInt64);
+      map.set(pair.StatType, pair.Value);
     });
     return map;
   }

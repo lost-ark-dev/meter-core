@@ -1,57 +1,3 @@
-"use strict";
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/packets/generated/reads.ts
-var reads_exports = {};
-__export(reads_exports, {
-  PKTAuthTokenResult: () => read,
-  PKTCounterAttackNotify: () => read2,
-  PKTDeathNotify: () => read3,
-  PKTInitEnv: () => read5,
-  PKTInitPC: () => read9,
-  PKTNewNpc: () => read15,
-  PKTNewNpcSummon: () => read16,
-  PKTNewPC: () => read19,
-  PKTNewProjectile: () => read21,
-  PKTParalyzationStateNotify: () => read22,
-  PKTPartyInfo: () => read24,
-  PKTPartyLeaveResult: () => read25,
-  PKTPartyStatusEffectAddNotify: () => read26,
-  PKTPartyStatusEffectRemoveNotify: () => read27,
-  PKTPartyStatusEffectResultNotify: () => read28,
-  PKTRaidBossKillNotify: () => read29,
-  PKTRaidResult: () => read30,
-  PKTRemoveObject: () => read32,
-  PKTSkillDamageAbnormalMoveNotify: () => read36,
-  PKTSkillDamageNotify: () => read37,
-  PKTSkillStageNotify: () => read38,
-  PKTSkillStartNotify: () => read40,
-  PKTStatChangeOriginNotify: () => read41,
-  PKTStatusEffectAddNotify: () => read42,
-  PKTStatusEffectRemoveNotify: () => read43,
-  PKTStatusEffectSyncDataNotify: () => read44,
-  PKTTriggerBossBattleStatus: () => read45,
-  PKTTriggerFinishNotify: () => read46,
-  PKTTriggerStartNotify: () => read47
-});
-module.exports = __toCommonJS(reads_exports);
-
 // src/packets/stream.ts
 var Read = class {
   b;
@@ -141,6 +87,8 @@ function read(buf) {
   data.Unk1_m = reader.bytes(reader.u32(), 688);
   return data;
 }
+var name = "PKTAuthTokenResult";
+var opcode = 44294;
 
 // src/packets/generated/definitions/PKTCounterAttackNotify.ts
 function read2(buf) {
@@ -152,6 +100,8 @@ function read2(buf) {
   data.SourceId = reader.u64();
   return data;
 }
+var name2 = "PKTCounterAttackNotify";
+var opcode2 = 23544;
 
 // src/packets/generated/definitions/PKTDeathNotify.ts
 function read3(buf) {
@@ -171,6 +121,8 @@ function read3(buf) {
     data.Unk8_0 = reader.u8();
   return data;
 }
+var name3 = "PKTDeathNotify";
+var opcode3 = 21940;
 
 // src/packets/common/LostArkDateTime.ts
 var daysInMonths = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -242,6 +194,8 @@ function read5(buf) {
   );
   return data;
 }
+var name4 = "PKTInitEnv";
+var opcode4 = 12201;
 
 // src/packets/common/ReadNBytesInt64.ts
 function bytesToInt64(value) {
@@ -367,6 +321,8 @@ function read9(buf) {
   data.Unk56 = reader.u32();
   return data;
 }
+var name5 = "PKTInitPC";
+var opcode5 = 44217;
 
 // src/packets/generated/structures/Struct_637.ts
 function read10(reader) {
@@ -493,6 +449,8 @@ function read15(buf) {
   data.Unk3 = reader.u8();
   return data;
 }
+var name6 = "PKTNewNpc";
+var opcode6 = 31638;
 
 // src/packets/generated/definitions/PKTNewNpcSummon.ts
 function read16(buf) {
@@ -505,6 +463,8 @@ function read16(buf) {
   data.NpcData = read14(reader);
   return data;
 }
+var name7 = "PKTNewNpcSummon";
+var opcode7 = 57156;
 
 // src/packets/generated/structures/TrackMoveInfo.ts
 function read17(reader) {
@@ -603,6 +563,8 @@ function read19(buf) {
   data.PCStruct = read18(reader);
   return data;
 }
+var name8 = "PKTNewPC";
+var opcode8 = 13099;
 
 // src/packets/generated/structures/ProjectileInfo.ts
 function read20(reader) {
@@ -641,6 +603,8 @@ function read21(buf) {
   data.projectileInfo = read20(reader);
   return data;
 }
+var name9 = "PKTNewProjectile";
+var opcode9 = 1296;
 
 // src/packets/generated/definitions/PKTParalyzationStateNotify.ts
 function read22(buf) {
@@ -649,6 +613,8 @@ function read22(buf) {
   data.Unk0 = reader.bytes(30);
   return data;
 }
+var name10 = "PKTParalyzationStateNotify";
+var opcode10 = 1696;
 
 // src/packets/generated/structures/PartyMemberData.ts
 function read23(reader) {
@@ -688,6 +654,8 @@ function read24(buf) {
   data.PartyLootType = reader.u8();
   return data;
 }
+var name11 = "PKTPartyInfo";
+var opcode11 = 20135;
 
 // src/packets/generated/definitions/PKTPartyLeaveResult.ts
 function read25(buf) {
@@ -698,6 +666,8 @@ function read25(buf) {
   data.PartyLeaveType = reader.u8();
   return data;
 }
+var name12 = "PKTPartyLeaveResult";
+var opcode12 = 12275;
 
 // src/packets/generated/definitions/PKTPartyStatusEffectAddNotify.ts
 function read26(buf) {
@@ -710,6 +680,8 @@ function read26(buf) {
   data.Unk4 = reader.u8();
   return data;
 }
+var name13 = "PKTPartyStatusEffectAddNotify";
+var opcode13 = 8895;
 
 // src/packets/generated/definitions/PKTPartyStatusEffectRemoveNotify.ts
 function read27(buf) {
@@ -721,6 +693,8 @@ function read27(buf) {
   data.statusEffectIds = reader.array(reader.u16(), () => reader.u32(), 80);
   return data;
 }
+var name14 = "PKTPartyStatusEffectRemoveNotify";
+var opcode14 = 13843;
 
 // src/packets/generated/definitions/PKTPartyStatusEffectResultNotify.ts
 function read28(buf) {
@@ -734,6 +708,8 @@ function read28(buf) {
   reader.skip(1);
   return data;
 }
+var name15 = "PKTPartyStatusEffectResultNotify";
+var opcode15 = 601;
 
 // src/packets/generated/definitions/PKTRaidBossKillNotify.ts
 function read29(buf) {
@@ -742,6 +718,8 @@ function read29(buf) {
   data.Unk0 = reader.bytes(5);
   return data;
 }
+var name16 = "PKTRaidBossKillNotify";
+var opcode16 = 20140;
 
 // src/packets/generated/definitions/PKTRaidResult.ts
 function read30(buf) {
@@ -768,6 +746,8 @@ function read30(buf) {
   data.Unk7 = reader.u64();
   return data;
 }
+var name17 = "PKTRaidResult";
+var opcode17 = 17609;
 
 // src/packets/generated/structures/UnpublishObject.ts
 function read31(reader) {
@@ -784,6 +764,8 @@ function read32(buf) {
   data.unpublishedObjects = reader.array(reader.u16(), () => read31(reader), 200);
   return data;
 }
+var name18 = "PKTRemoveObject";
+var opcode18 = 39958;
 
 // src/packets/common/ReadFlagBytes2.ts
 function read33(reader) {
@@ -848,6 +830,8 @@ function read36(buf) {
   data.SkillId = reader.u32();
   return data;
 }
+var name19 = "PKTSkillDamageAbnormalMoveNotify";
+var opcode19 = 29416;
 
 // src/packets/generated/definitions/PKTSkillDamageNotify.ts
 function read37(buf) {
@@ -860,6 +844,8 @@ function read37(buf) {
   data.SkillEffectId = reader.u32();
   return data;
 }
+var name20 = "PKTSkillDamageNotify";
+var opcode20 = 1847;
 
 // src/packets/generated/definitions/PKTSkillStageNotify.ts
 function read38(buf) {
@@ -873,6 +859,8 @@ function read38(buf) {
   data.SkillId = reader.u32();
   return data;
 }
+var name21 = "PKTSkillStageNotify";
+var opcode21 = 6028;
 
 // src/packets/common/ReadFlagBytes.ts
 function read39(reader) {
@@ -916,6 +904,8 @@ function read40(buf) {
   data.NewDirectionYaw = read13(reader);
   return data;
 }
+var name22 = "PKTSkillStartNotify";
+var opcode22 = 45202;
 
 // src/packets/generated/definitions/PKTStatChangeOriginNotify.ts
 function read41(buf) {
@@ -947,6 +937,8 @@ function read41(buf) {
   data.ObjectId = reader.u64();
   return data;
 }
+var name23 = "PKTStatChangeOriginNotify";
+var opcode23 = 36460;
 
 // src/packets/generated/definitions/PKTStatusEffectAddNotify.ts
 function read42(buf) {
@@ -960,6 +952,8 @@ function read42(buf) {
   data.New = reader.bool();
   return data;
 }
+var name24 = "PKTStatusEffectAddNotify";
+var opcode24 = 4713;
 
 // src/packets/generated/definitions/PKTStatusEffectRemoveNotify.ts
 function read43(buf) {
@@ -970,6 +964,8 @@ function read43(buf) {
   data.ObjectId = reader.u64();
   return data;
 }
+var name25 = "PKTStatusEffectRemoveNotify";
+var opcode25 = 55030;
 
 // src/packets/generated/definitions/PKTStatusEffectSyncDataNotify.ts
 function read44(buf) {
@@ -984,6 +980,8 @@ function read44(buf) {
   reader.skip(1);
   return data;
 }
+var name26 = "PKTStatusEffectSyncDataNotify";
+var opcode26 = 35589;
 
 // src/packets/generated/definitions/PKTTriggerBossBattleStatus.ts
 function read45(buf) {
@@ -995,6 +993,8 @@ function read45(buf) {
   reader.skip(1);
   return data;
 }
+var name27 = "PKTTriggerBossBattleStatus";
+var opcode27 = 35800;
 
 // src/packets/generated/definitions/PKTTriggerFinishNotify.ts
 function read46(buf) {
@@ -1006,6 +1006,8 @@ function read46(buf) {
   data.InvolvedPCs = reader.array(reader.u16(), () => reader.u64(), 40);
   return data;
 }
+var name28 = "PKTTriggerFinishNotify";
+var opcode28 = 53300;
 
 // src/packets/generated/definitions/PKTTriggerStartNotify.ts
 function read47(buf) {
@@ -1017,35 +1019,95 @@ function read47(buf) {
   data.TriggerSignalType = reader.u32();
   return data;
 }
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  PKTAuthTokenResult,
-  PKTCounterAttackNotify,
-  PKTDeathNotify,
-  PKTInitEnv,
-  PKTInitPC,
-  PKTNewNpc,
-  PKTNewNpcSummon,
-  PKTNewPC,
-  PKTNewProjectile,
-  PKTParalyzationStateNotify,
-  PKTPartyInfo,
-  PKTPartyLeaveResult,
-  PKTPartyStatusEffectAddNotify,
-  PKTPartyStatusEffectRemoveNotify,
-  PKTPartyStatusEffectResultNotify,
-  PKTRaidBossKillNotify,
-  PKTRaidResult,
-  PKTRemoveObject,
-  PKTSkillDamageAbnormalMoveNotify,
-  PKTSkillDamageNotify,
-  PKTSkillStageNotify,
-  PKTSkillStartNotify,
-  PKTStatChangeOriginNotify,
-  PKTStatusEffectAddNotify,
-  PKTStatusEffectRemoveNotify,
-  PKTStatusEffectSyncDataNotify,
-  PKTTriggerBossBattleStatus,
-  PKTTriggerFinishNotify,
-  PKTTriggerStartNotify
-});
+var name29 = "PKTTriggerStartNotify";
+var opcode29 = 50016;
+
+export {
+  read,
+  name,
+  opcode,
+  read2,
+  name2,
+  opcode2,
+  read3,
+  name3,
+  opcode3,
+  read5 as read4,
+  name4,
+  opcode4,
+  read9 as read5,
+  name5,
+  opcode5,
+  read15 as read6,
+  name6,
+  opcode6,
+  read16 as read7,
+  name7,
+  opcode7,
+  read19 as read8,
+  name8,
+  opcode8,
+  read21 as read9,
+  name9,
+  opcode9,
+  read22 as read10,
+  name10,
+  opcode10,
+  read24 as read11,
+  name11,
+  opcode11,
+  read25 as read12,
+  name12,
+  opcode12,
+  read26 as read13,
+  name13,
+  opcode13,
+  read27 as read14,
+  name14,
+  opcode14,
+  read28 as read15,
+  name15,
+  opcode15,
+  read29 as read16,
+  name16,
+  opcode16,
+  read30 as read17,
+  name17,
+  opcode17,
+  read32 as read18,
+  name18,
+  opcode18,
+  read36 as read19,
+  name19,
+  opcode19,
+  read37 as read20,
+  name20,
+  opcode20,
+  read38 as read21,
+  name21,
+  opcode21,
+  read40 as read22,
+  name22,
+  opcode22,
+  read41 as read23,
+  name23,
+  opcode23,
+  read42 as read24,
+  name24,
+  opcode24,
+  read43 as read25,
+  name25,
+  opcode25,
+  read44 as read26,
+  name26,
+  opcode26,
+  read45 as read27,
+  name27,
+  opcode27,
+  read46 as read28,
+  name28,
+  opcode28,
+  read47 as read29,
+  name29,
+  opcode29
+};

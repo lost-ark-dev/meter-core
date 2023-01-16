@@ -3,7 +3,7 @@ import { inspect } from "util";
 import { MeterData } from "./data";
 import { Decompressor } from "./decompressor";
 import { LegacyLogger } from "./legacy-logger";
-import { PktCaptureAll } from "./pkt-capture";
+import { PktCaptureAll, PktCaptureMode } from "./pkt-capture";
 import { PKTStream } from "./pkt-stream";
 
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
@@ -12,7 +12,7 @@ const xorTable = readFileSync("./meter-data/xor.bin");
 const compressor = new Decompressor(oodle_state, xorTable);
 const stream = new PKTStream(compressor);
 
-const capture = new PktCaptureAll();
+const capture = new PktCaptureAll(PktCaptureMode.MODE_RAW_SOCKET);
 capture.on("packet", (buf) => {
   try {
     const badPkt = stream.read(buf);

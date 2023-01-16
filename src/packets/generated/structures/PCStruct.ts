@@ -43,7 +43,7 @@ export type PCStruct = {
   Name: string;
   Unk35: number;
   Unk36: number;
-  statPair: { readNBytesInt64: bigint; Unk0_0_1: number }[];
+  statPair: { Value: bigint; StatType: number }[];
   Unk38: Buffer;
   Unk39: number;
   Unk40: number;
@@ -103,8 +103,8 @@ export function read(reader: Read) {
     reader.u16(),
     () => {
       const U = {} as any;
-      U.readNBytesInt64 = ReadNBytesInt64.read(reader);
-      U.Unk0_0_1 = reader.u8();
+      U.Value = ReadNBytesInt64.read(reader);
+      U.StatType = reader.u8();
       return U;
     },
     152

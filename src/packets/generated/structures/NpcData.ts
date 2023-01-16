@@ -31,7 +31,7 @@ export type NpcData = {
   Unk21_0?: number;
   Unk22: number;
   Unk23_0?: number;
-  statPair: { readNBytesInt64: bigint; Unk0_0_1: number }[];
+  statPair: { Value: bigint; StatType: number }[];
   Unk25_0?: bigint;
   Unk26_0?: number;
   Unk27_0?: number;
@@ -71,8 +71,8 @@ export function read(reader: Read) {
     reader.u16(),
     () => {
       const N = {} as any;
-      N.readNBytesInt64 = ReadNBytesInt64.read(reader);
-      N.Unk0_0_1 = reader.u8();
+      N.Value = ReadNBytesInt64.read(reader);
+      N.StatType = reader.u8();
       return N;
     },
     152

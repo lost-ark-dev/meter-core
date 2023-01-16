@@ -1,1 +1,18 @@
-"use strict";var b=Object.defineProperty;var S=Object.getOwnPropertyDescriptor;var x=Object.getOwnPropertyNames;var I=Object.prototype.hasOwnProperty;var T=(r,o,_,k)=>{if(o&&typeof o=="object"||typeof o=="function")for(let u of x(o))!I.call(r,u)&&u!==_&&b(r,u,{get:()=>o[u],enumerable:!(k=S(o,u))||k.enumerable});return r};var N=r=>T(b({},"__esModule",{value:!0}),r);var O={};module.exports=N(O);
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/packets/generated/types.ts
+var types_exports = {};
+module.exports = __toCommonJS(types_exports);

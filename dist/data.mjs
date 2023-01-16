@@ -1,1 +1,84 @@
-import"./chunk-K76F7N5Y.mjs";var i=class{enums;npc;PCData;skill;skillBuff;skillEffect;constructor(){this.enums=new Map,this.npc=new Map,this.PCData=new Map,this.skill=new Map,this.skillBuff=new Map,this.skillEffect=new Map}processEnumData(t){for(let[e,s]of Object.entries(t)){let n=new Map;for(let[r,l]of Object.entries(s))n.set(r,l);this.enums.set(e,n)}}processNpcData(t){for(let e of Object.values(t))this.npc.set(e.id,e)}processPCData(t){for(let[e,s]of Object.entries(t))this.PCData.set(parseInt(e),s)}processSkillData(t){for(let e of Object.values(t))this.skill.set(e.id,e)}processSkillBuffData(t){for(let e of Object.values(t))this.skillBuff.set(e.id,e)}processSkillBuffEffectData(t){for(let e of Object.values(t))this.skillEffect.set(e.id,e)}getNpcName(t){return this.npc.get(t)?.name||""}getClassName(t){return this.PCData.get(t)||""}getSkillName(t){return this.skill.get(t)?.name||""}getSkillClassId(t){return this.skill.get(t)?.classid||0}getSkillEffectComment(t){return this.skillEffect.get(t)?.comment||""}isBattleItem(t,e){let s=this.skillEffect.get(t)?.itemcategory;switch(e){case"attack":return s==="useup_battle_item_common_attack";case"buff":return s==="useup_battle_item_common_buff";case"function":return s==="useup_battle_item_common_function";default:return typeof s=="string"}}getBattleItemName(t){return this.skillEffect.get(t)?.itemname||""}};export{i as MeterData};
+// src/data.ts
+var MeterData = class {
+  enums;
+  npc;
+  PCData;
+  skill;
+  skillBuff;
+  skillEffect;
+  constructor() {
+    this.enums = /* @__PURE__ */ new Map();
+    this.npc = /* @__PURE__ */ new Map();
+    this.PCData = /* @__PURE__ */ new Map();
+    this.skill = /* @__PURE__ */ new Map();
+    this.skillBuff = /* @__PURE__ */ new Map();
+    this.skillEffect = /* @__PURE__ */ new Map();
+  }
+  processEnumData(data) {
+    for (const [ename, edata] of Object.entries(data)) {
+      const en = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(edata))
+        en.set(k, v);
+      this.enums.set(ename, en);
+    }
+  }
+  processNpcData(data) {
+    for (const npc of Object.values(data)) {
+      this.npc.set(npc.id, npc);
+    }
+  }
+  processPCData(data) {
+    for (const [k, v] of Object.entries(data)) {
+      this.PCData.set(parseInt(k), v);
+    }
+  }
+  processSkillData(data) {
+    for (const skill of Object.values(data)) {
+      this.skill.set(skill.id, skill);
+    }
+  }
+  processSkillBuffData(data) {
+    for (const skillBuff of Object.values(data)) {
+      this.skillBuff.set(skillBuff.id, skillBuff);
+    }
+  }
+  processSkillBuffEffectData(data) {
+    for (const skillEffect of Object.values(data)) {
+      this.skillEffect.set(skillEffect.id, skillEffect);
+    }
+  }
+  getNpcName(id) {
+    return this.npc.get(id)?.name || "";
+  }
+  getClassName(id) {
+    return this.PCData.get(id) || "";
+  }
+  getSkillName(id) {
+    return this.skill.get(id)?.name || "";
+  }
+  getSkillClassId(id) {
+    return this.skill.get(id)?.classid || 0;
+  }
+  getSkillEffectComment(id) {
+    return this.skillEffect.get(id)?.comment || "";
+  }
+  isBattleItem(id, type) {
+    const itemcategory = this.skillEffect.get(id)?.itemcategory;
+    switch (type) {
+      case "attack":
+        return itemcategory === "useup_battle_item_common_attack";
+      case "buff":
+        return itemcategory === "useup_battle_item_common_buff";
+      case "function":
+        return itemcategory === "useup_battle_item_common_function";
+      default:
+        return typeof itemcategory === "string";
+    }
+  }
+  getBattleItemName(id) {
+    return this.skillEffect.get(id)?.itemname || "";
+  }
+};
+export {
+  MeterData
+};

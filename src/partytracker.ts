@@ -97,7 +97,7 @@ export class PartyTracker {
             if (partyIds.has(e[1])) this.characterIdToPartyId.delete(e[0]);
         }
         for (const e of this.entityIdToPartyId) {
-            if (partyIds.has(e[1])) this.characterIdToPartyId.delete(e[0]);
+            if (partyIds.has(e[1])) this.entityIdToPartyId.delete(e[0]);
         }
     }
 

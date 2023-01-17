@@ -64,6 +64,14 @@ export class StatusTracker {
         // TODO: Implement
     }
 
+    public RemoveLocalObject(objectId: bigint) {
+        this.LocalStatusEffectRegistry.delete(objectId);
+    }
+
+    public RemovePartyObject(objectId: bigint) {
+        this.PartyStatusEffectRegistry.delete(objectId);
+    }
+
     public RegisterStatusEffect(se: StatusEffect) {
         var registry = this.getStatusEffectRegistryForPlayer(se.targetId, se.type);
         // look if this effect already in on the target by instance id
@@ -108,6 +116,11 @@ export class StatusTracker {
     public GetStatusEffectsFromParty(targetId: TargetId, et:StatusEffecType, partyId: number): Array<StatusEffect> {
         const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
         return [...registry.values()].filter((value, _index, _array) => { return partyId == PartyTracker.getInstance().getPartyIdFromEntityId(value.sourceId); });
+    }
+
+    public Clear() {
+        this.LocalStatusEffectRegistry.clear();
+        this.PartyStatusEffectRegistry.clear();
     }
 
 }

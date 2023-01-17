@@ -138,9 +138,21 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         }
       })
       .on("PKTDeathNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        if (PartyTracker.getInstance().isEntityInParty(parsed.TargetId)) {
+          let p = this.#currentEncounter.entities.get(parsed.TargetId);
+          if (p?.name == this.#localPlayer.name) {
+            StatusTracker.getInstance().RemoveLocalObject(parsed.TargetId);
+          } else {
+            let charId = PCIdMapper.getInstance().getCharacterId(parsed.TargetId);
+            if (charId)
+              StatusTracker.getInstance().RemovePartyObject(charId);
+          }
+        } else {
+          StatusTracker.getInstance().RemoveLocalObject(parsed.TargetId);
+        }
         if (this.#needEmit) {
-          const parsed = pkt.parsed;
-          if (!parsed) return;
           this.#buildLine(
             LineId.Death,
             parsed.TargetId,
@@ -164,7 +176,9 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         };
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().clear();
-        PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
+        StatusTracker.getInstance().Clear();
+        if (player.characterId != 0n)
+          PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
         if (this.#localPlayer && this.#localPlayer.characterId && this.#localPlayer.characterId > 0n)
           PartyTracker.getInstance().completeEntry(this.#localPlayer.characterId, parsed.PlayerId);
         // console.log("PKTInitEnv", this.#localPlayer);
@@ -356,7 +370,12 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTRaidResult", (pkt) => {
         if (this.#needEmit) this.#buildLine(LineId.PhaseTransition, 0);
       })
-      .on("PKTRemoveObject", (pkt) => {})
+      .on("PKTRemoveObject", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        for (let upo of parsed.unpublishedObjects)
+          StatusTracker.getInstance().RemoveLocalObject(upo.ObjectId);
+      })
       .on("PKTSkillDamageAbnormalMoveNotify", (pkt) => {
         if (this.#needEmit) {
           const parsedDmg = pkt.parsed;

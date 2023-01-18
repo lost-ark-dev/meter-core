@@ -588,13 +588,13 @@ declare function read$c(buf: Buffer): PKTRemoveObject;
 declare const name$c = "PKTRemoveObject";
 declare const opcode$c = 33454;
 
-type MoveOptionData = {
-    Mod?: number;
-    Speed?: number;
-    NextPos?: bigint;
-    flag8?: number;
-    flag10?: Buffer;
-    flag20?: Buffer;
+type SkillMoveOptionData = {
+    MoveTime?: number;
+    StandUpTime?: number;
+    DownTime?: number;
+    FreezeTime?: number;
+    MoveHeight?: number;
+    FarmostDist?: number;
     flag40?: Buffer;
 };
 
@@ -612,7 +612,7 @@ type SkillDamageEvent = {
 type SkillDamageAbnormalMoveEvent = {
     Unk1_m: number;
     Unk2_m: bigint;
-    Unk0_m: MoveOptionData;
+    SkillMoveOptionData: SkillMoveOptionData;
     Unk4_m: number;
     Unk8_m: number;
     Destination: Vector3F;

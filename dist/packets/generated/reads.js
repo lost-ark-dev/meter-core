@@ -985,22 +985,22 @@ function read46(buf) {
   return data;
 }
 
-// src/packets/common/MoveOptionData.ts
+// src/packets/common/SkillMoveOptionData.ts
 function read47(reader) {
   const data = {};
   const flag = reader.u8();
   if (flag & 1)
-    data.Mod = reader.u8();
+    data.MoveTime = reader.u32();
   if (flag & 2)
-    data.Speed = reader.u32();
+    data.StandUpTime = reader.u32();
   if (flag & 4)
-    data.NextPos = reader.u64();
+    data.DownTime = reader.u32();
   if (flag & 8)
-    data.flag8 = reader.u32();
+    data.FreezeTime = reader.u32();
   if (flag & 16)
-    data.flag10 = reader.bytes(reader.u16(), 4);
+    data.MoveHeight = reader.u32();
   if (flag & 32)
-    data.flag20 = reader.bytes(reader.u16(), 5);
+    data.FarmostDist = reader.u32();
   if (flag & 64)
     data.flag40 = reader.bytes(reader.u16(), 6);
   return data;
@@ -1026,7 +1026,7 @@ function read49(reader) {
   const data = {};
   data.Unk1_m = reader.u8();
   data.Unk2_m = reader.u64();
-  data.Unk0_m = read47(reader);
+  data.SkillMoveOptionData = read47(reader);
   data.Unk4_m = reader.u16();
   data.Unk8_m = reader.u16();
   data.Destination = read21(reader);

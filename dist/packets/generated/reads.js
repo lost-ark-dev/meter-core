@@ -243,8 +243,8 @@ function read9(buf) {
   if (reader.bool())
     data.Unk5_0 = reader.u8();
   data.Unk6 = reader.u8();
-  data.TargetId = reader.u64();
   data.SourceId = reader.u64();
+  data.TargetId = reader.u64();
   if (reader.bool())
     data.Unk9_0 = reader.u8();
   return data;

@@ -71,8 +71,8 @@ type PKTDeathNotify = {
     Unk4: number;
     Unk5_0?: number;
     Unk6: number;
-    TargetId: bigint;
     SourceId: bigint;
+    TargetId: bigint;
     Unk9_0?: number;
 };
 declare function read$x(buf: Buffer): PKTDeathNotify;

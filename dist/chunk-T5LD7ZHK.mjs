@@ -1,31 +1,3 @@
-"use strict";
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name41 in all)
-    __defProp(target, name41, { get: all[name41], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/pkt-stream.ts
-var pkt_stream_exports = {};
-__export(pkt_stream_exports, {
-  PKT: () => PKT,
-  PKTStream: () => PKTStream
-});
-module.exports = __toCommonJS(pkt_stream_exports);
-var import_tiny_typed_emitter = require("tiny-typed-emitter");
-
 // src/packets/stream.ts
 var Read = class {
   b;
@@ -1272,137 +1244,125 @@ function read62(buf) {
 var name40 = "PKTTroopMemberUpdateMinNotify";
 var opcode40 = 53789;
 
-// src/packets/generated/mapping.ts
-var mapping = /* @__PURE__ */ new Map([
-  [opcode, [name, read2]],
-  [opcode2, [name2, read4]],
-  [
-    opcode3,
-    [name3, read5]
-  ],
-  [opcode4, [name4, read6]],
-  [opcode5, [name5, read7]],
-  [opcode6, [name6, read8]],
-  [opcode7, [name7, read9]],
-  [opcode8, [name8, read10]],
-  [opcode9, [name9, read12]],
-  [opcode10, [name10, read16]],
-  [opcode11, [name11, read18]],
-  [opcode12, [name12, read24]],
-  [opcode13, [name13, read25]],
-  [opcode14, [name14, read28]],
-  [opcode15, [name15, read32]],
-  [opcode16, [name16, read33]],
-  [opcode17, [name17, read35]],
-  [opcode18, [name18, read36]],
-  [
-    opcode19,
-    [name19, read37]
-  ],
-  [
-    opcode20,
-    [name20, read38]
-  ],
-  [opcode21, [name21, read39]],
-  [
-    opcode22,
-    [name22, read40]
-  ],
-  [
-    opcode23,
-    [name23, read41]
-  ],
-  [
-    opcode24,
-    [name24, read42]
-  ],
-  [
-    opcode25,
-    [name25, read43]
-  ],
-  [opcode26, [name26, read44]],
-  [opcode27, [name27, read45]],
-  [opcode28, [name28, read46]],
-  [
-    opcode29,
-    [name29, read50]
-  ],
-  [opcode30, [name30, read51]],
-  [opcode31, [name31, read52]],
-  [opcode32, [name32, read54]],
-  [opcode33, [name33, read55]],
-  [opcode34, [name34, read56]],
-  [opcode35, [name35, read57]],
-  [opcode36, [name36, read58]],
-  [opcode37, [name37, read59]],
-  [opcode38, [name38, read60]],
-  [opcode39, [name39, read61]],
-  [opcode40, [name40, read62]]
-]);
-
-// src/pkt-stream.ts
-var PKTStream = class extends import_tiny_typed_emitter.TypedEmitter {
-  #decompressor;
-  constructor(decompressor) {
-    super();
-    this.#decompressor = decompressor;
-  }
-  read(buf) {
-    try {
-      if (buf.length < 6)
-        return false;
-      const xor = buf.readUInt8(5);
-      if (xor > 2)
-        return false;
-      const compression = buf.readUInt8(4);
-      if (compression > 3)
-        return false;
-      const data = buf.subarray(6);
-      const opcode41 = buf.readUInt16LE(2);
-      const pkt = mapping.get(opcode41);
-      if (pkt) {
-        const [name41, read63] = pkt;
-        this.emit(
-          name41,
-          new PKT(data, opcode41, compression, Boolean(xor), this.#decompressor, read63)
-        );
-      }
-      this.emit("*", data, opcode41, compression, Boolean(xor));
-    } catch (e) {
-      return false;
-    }
-  }
+export {
+  read2 as read,
+  name,
+  opcode,
+  read4 as read2,
+  name2,
+  opcode2,
+  read5 as read3,
+  name3,
+  opcode3,
+  read6 as read4,
+  name4,
+  opcode4,
+  read7 as read5,
+  name5,
+  opcode5,
+  read8 as read6,
+  name6,
+  opcode6,
+  read9 as read7,
+  name7,
+  opcode7,
+  read10 as read8,
+  name8,
+  opcode8,
+  read12 as read9,
+  name9,
+  opcode9,
+  read16 as read10,
+  name10,
+  opcode10,
+  read18 as read11,
+  name11,
+  opcode11,
+  read24 as read12,
+  name12,
+  opcode12,
+  read25 as read13,
+  name13,
+  opcode13,
+  read28 as read14,
+  name14,
+  opcode14,
+  read32 as read15,
+  name15,
+  opcode15,
+  read33 as read16,
+  name16,
+  opcode16,
+  read35 as read17,
+  name17,
+  opcode17,
+  read36 as read18,
+  name18,
+  opcode18,
+  read37 as read19,
+  name19,
+  opcode19,
+  read38 as read20,
+  name20,
+  opcode20,
+  read39 as read21,
+  name21,
+  opcode21,
+  read40 as read22,
+  name22,
+  opcode22,
+  read41 as read23,
+  name23,
+  opcode23,
+  read42 as read24,
+  name24,
+  opcode24,
+  read43 as read25,
+  name25,
+  opcode25,
+  read44 as read26,
+  name26,
+  opcode26,
+  read45 as read27,
+  name27,
+  opcode27,
+  read46 as read28,
+  name28,
+  opcode28,
+  read50 as read29,
+  name29,
+  opcode29,
+  read51 as read30,
+  name30,
+  opcode30,
+  read52 as read31,
+  name31,
+  opcode31,
+  read54 as read32,
+  name32,
+  opcode32,
+  read55 as read33,
+  name33,
+  opcode33,
+  read56 as read34,
+  name34,
+  opcode34,
+  read57 as read35,
+  name35,
+  opcode35,
+  read58 as read36,
+  name36,
+  opcode36,
+  read59 as read37,
+  name37,
+  opcode37,
+  read60 as read38,
+  name38,
+  opcode38,
+  read61 as read39,
+  name39,
+  opcode39,
+  read62 as read40,
+  name40,
+  opcode40
 };
-var PKT = class {
-  #data;
-  #opcode;
-  #compression;
-  #xor;
-  #decompressor;
-  #read;
-  constructor(data, opcode41, compression, xor, decompressor, read63) {
-    this.#data = data;
-    this.#opcode = opcode41;
-    this.#compression = compression;
-    this.#xor = xor;
-    this.#decompressor = decompressor;
-    this.#read = read63;
-  }
-  #cached;
-  get parsed() {
-    if (!this.#cached) {
-      try {
-        this.#cached = this.#read(this.#decompressor.decrypt(this.#data, this.#opcode, this.#compression, this.#xor));
-      } catch (e) {
-        console.error(`[meter-core/pkt-stream] - ${e}`);
-        return void 0;
-      }
-    }
-    return this.#cached;
-  }
-};
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  PKT,
-  PKTStream
-});

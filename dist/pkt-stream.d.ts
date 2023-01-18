@@ -1,14 +1,20 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from './decompressor.js';
-import { P as PKTAuthTokenResult, a as PKTCounterAttackNotify, b as PKTDeathNotify, c as PKTInitEnv, d as PKTInitPC, e as PKTNewNpc, f as PKTNewNpcSummon, g as PKTNewPC, h as PKTNewProjectile, i as PKTParalyzationStateNotify, j as PKTPartyInfo, k as PKTPartyLeaveResult, l as PKTPartyStatusEffectAddNotify, m as PKTPartyStatusEffectRemoveNotify, n as PKTPartyStatusEffectResultNotify, o as PKTRaidBossKillNotify, p as PKTRaidResult, q as PKTRemoveObject, r as PKTSkillDamageAbnormalMoveNotify, s as PKTSkillDamageNotify, t as PKTSkillStageNotify, u as PKTSkillStartNotify, v as PKTStatChangeOriginNotify, w as PKTStatusEffectAddNotify, x as PKTStatusEffectRemoveNotify, y as PKTStatusEffectSyncDataNotify, z as PKTTriggerBossBattleStatus, A as PKTTriggerFinishNotify, B as PKTTriggerStartNotify } from './PKTTriggerStartNotify-31c98bc5.js';
+import { P as PKTAbilityChangeNotify, a as PKTActiveAbilityNotify, b as PKTAddonSkillFeatureChangeNotify, c as PKTAuthTokenResult, d as PKTBlockSkillStateNotify, e as PKTCounterAttackNotify, f as PKTDeathNotify, g as PKTInitAbility, h as PKTInitEnv, i as PKTInitPC, j as PKTInitLocal, k as PKTNewNpc, l as PKTNewNpcSummon, m as PKTNewPC, n as PKTNewProjectile, o as PKTParalyzationStateNotify, p as PKTPartyInfo, q as PKTPartyLeaveResult, r as PKTPartyPassiveStatusEffectAddNotify, s as PKTPartyPassiveStatusEffectRemoveNotify, t as PKTPartyStatusEffectAddNotify, u as PKTPartyStatusEffectRemoveNotify, v as PKTPartyStatusEffectResultNotify, w as PKTPassiveStatusEffectAddNotify, x as PKTPassiveStatusEffectRemoveNotify, y as PKTRaidBossKillNotify, z as PKTRaidResult, A as PKTRemoveObject, B as PKTSkillDamageAbnormalMoveNotify, C as PKTSkillDamageNotify, D as PKTSkillStageNotify, E as PKTSkillStartNotify, F as PKTStatChangeOriginNotify, G as PKTStatusEffectAddNotify, H as PKTStatusEffectRemoveNotify, I as PKTStatusEffectSyncDataNotify, J as PKTTriggerBossBattleStatus, K as PKTTriggerFinishNotify, L as PKTTriggerStartNotify, M as PKTTroopMemberUpdateMinNotify } from './PKTTroopMemberUpdateMinNotify-7b5a5a3c.js';
 import 'oodle';
 
 interface PKTStreamEvents {
+    PKTAbilityChangeNotify: (pkt: PKT<PKTAbilityChangeNotify>) => void;
+    PKTActiveAbilityNotify: (pkt: PKT<PKTActiveAbilityNotify>) => void;
+    PKTAddonSkillFeatureChangeNotify: (pkt: PKT<PKTAddonSkillFeatureChangeNotify>) => void;
     PKTAuthTokenResult: (pkt: PKT<PKTAuthTokenResult>) => void;
+    PKTBlockSkillStateNotify: (pkt: PKT<PKTBlockSkillStateNotify>) => void;
     PKTCounterAttackNotify: (pkt: PKT<PKTCounterAttackNotify>) => void;
     PKTDeathNotify: (pkt: PKT<PKTDeathNotify>) => void;
+    PKTInitAbility: (pkt: PKT<PKTInitAbility>) => void;
     PKTInitEnv: (pkt: PKT<PKTInitEnv>) => void;
     PKTInitPC: (pkt: PKT<PKTInitPC>) => void;
+    PKTInitLocal: (pkt: PKT<PKTInitLocal>) => void;
     PKTNewNpc: (pkt: PKT<PKTNewNpc>) => void;
     PKTNewNpcSummon: (pkt: PKT<PKTNewNpcSummon>) => void;
     PKTNewPC: (pkt: PKT<PKTNewPC>) => void;
@@ -16,9 +22,13 @@ interface PKTStreamEvents {
     PKTParalyzationStateNotify: (pkt: PKT<PKTParalyzationStateNotify>) => void;
     PKTPartyInfo: (pkt: PKT<PKTPartyInfo>) => void;
     PKTPartyLeaveResult: (pkt: PKT<PKTPartyLeaveResult>) => void;
+    PKTPartyPassiveStatusEffectAddNotify: (pkt: PKT<PKTPartyPassiveStatusEffectAddNotify>) => void;
+    PKTPartyPassiveStatusEffectRemoveNotify: (pkt: PKT<PKTPartyPassiveStatusEffectRemoveNotify>) => void;
     PKTPartyStatusEffectAddNotify: (pkt: PKT<PKTPartyStatusEffectAddNotify>) => void;
     PKTPartyStatusEffectRemoveNotify: (pkt: PKT<PKTPartyStatusEffectRemoveNotify>) => void;
     PKTPartyStatusEffectResultNotify: (pkt: PKT<PKTPartyStatusEffectResultNotify>) => void;
+    PKTPassiveStatusEffectAddNotify: (pkt: PKT<PKTPassiveStatusEffectAddNotify>) => void;
+    PKTPassiveStatusEffectRemoveNotify: (pkt: PKT<PKTPassiveStatusEffectRemoveNotify>) => void;
     PKTRaidBossKillNotify: (pkt: PKT<PKTRaidBossKillNotify>) => void;
     PKTRaidResult: (pkt: PKT<PKTRaidResult>) => void;
     PKTRemoveObject: (pkt: PKT<PKTRemoveObject>) => void;
@@ -33,6 +43,7 @@ interface PKTStreamEvents {
     PKTTriggerBossBattleStatus: (pkt: PKT<PKTTriggerBossBattleStatus>) => void;
     PKTTriggerFinishNotify: (pkt: PKT<PKTTriggerFinishNotify>) => void;
     PKTTriggerStartNotify: (pkt: PKT<PKTTriggerStartNotify>) => void;
+    PKTTroopMemberUpdateMinNotify: (pkt: PKT<PKTTroopMemberUpdateMinNotify>) => void;
     "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }
 

@@ -463,6 +463,7 @@ declare const enum itemcategory {
     useup_add_town_jukebox_music = 34600,
     useup_add_selfie_item = 34700,
     useup_etc_talisman = 34801,
+    useup_etc_message_npc_spawn = 34802,
     useup_gem_reward = 34900,
     useup_aos_equip = 35000,
     useup_aos_useup = 35100,
@@ -636,5 +637,11 @@ declare const enum itemcategory {
     astra_equip_concentration = 100103,
     astra_equip_desire = 100104
 }
+declare const enum blockskilltype {
+    success = 0,
+    fail = 1,
+    inprogress = 2,
+    start = 3
+}
 
-export { hitflag, hitoption, itemcategory, npcgrade, npctype, stattype, triggersignaltype };
+export { blockskilltype, hitflag, hitoption, itemcategory, npcgrade, npctype, stattype, triggersignaltype };

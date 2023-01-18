@@ -231,7 +231,8 @@ var TCPSession = class extends import_stream2.EventEmitter {
         this.is_ignored = true;
       }
       this.state = "ESTAB";
-    } else if (tcp.info.flags & 4 /* rst */) {
+    }
+    if (tcp.info.flags & 4 /* rst */) {
       this.emit("end", this);
     } else {
       this[this.state](buffer, ip, tcp);
@@ -594,7 +595,7 @@ var PktCaptureAll = class extends import_tiny_typed_emitter.TypedEmitter {
     } else if (mode === 1 /* MODE_RAW_SOCKET */) {
       for (const addresses of Object.values((0, import_os.networkInterfaces)())) {
         for (const device of addresses ?? []) {
-          if ((0, import_net.isIPv4)(device.address) && device.family === "IPv4" && device.internal === false) {
+          if ((0, import_net.isIPv4)(device.address) && device.family === "IPv4" && device.internal === false && !this.captures.has(device.address)) {
             try {
               const rsc = new RawSocketCapture(device.address, {
                 ip: device.address,

@@ -319,18 +319,6 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       }
     }).on("PKTStatChangeOriginNotify", (pkt) => {
       if (this.#needEmit) {
-        const parsed = pkt.parsed;
-        if (!parsed)
-          return;
-        const currentStatsMap = this.#getStatPairMap(pkt.parsed.StatPairList);
-        const changedStatsMap = this.#getStatPairMap(pkt.parsed.Unk1);
-        this.#buildLine(
-          9 /* Heal */,
-          parsed.ObjectId,
-          this.#getEntityName(parsed.ObjectId),
-          Number(changedStatsMap.get(1 /* hp */)) || 0,
-          Number(currentStatsMap.get(1 /* hp */)) || 0
-        );
       }
     }).on("PKTStatusEffectAddNotify", (pkt) => {
     }).on("PKTStatusEffectRemoveNotify", (pkt) => {
@@ -440,7 +428,7 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
   #getStatPairMap(statpair) {
     const map = /* @__PURE__ */ new Map();
     statpair.forEach((pair) => {
-      map.set(pair.Unk0_0_1, pair.readNBytesInt64);
+      map.set(pair.StatType, pair.Value);
     });
     return map;
   }

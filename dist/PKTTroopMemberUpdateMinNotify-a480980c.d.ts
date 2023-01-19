@@ -581,8 +581,13 @@ declare function read$d(buf: Buffer): PKTRaidResult;
 declare const name$d = "PKTRaidResult";
 declare const opcode$d = 24561;
 
+type UnpublishObject = {
+    ObjectId: bigint;
+    UnpublishReason: number;
+};
+
 type PKTRemoveObject = {
-    unpublishedObjects: Buffer[];
+    unpublishedObjects: UnpublishObject[];
 };
 declare function read$c(buf: Buffer): PKTRemoveObject;
 declare const name$c = "PKTRemoveObject";

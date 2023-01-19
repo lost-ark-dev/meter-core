@@ -47,19 +47,19 @@ __export(reads_exports, {
   PKTPassiveStatusEffectRemoveNotify: () => read43,
   PKTRaidBossKillNotify: () => read44,
   PKTRaidResult: () => read45,
-  PKTRemoveObject: () => read46,
-  PKTSkillDamageAbnormalMoveNotify: () => read50,
-  PKTSkillDamageNotify: () => read51,
-  PKTSkillStageNotify: () => read52,
-  PKTSkillStartNotify: () => read54,
-  PKTStatChangeOriginNotify: () => read55,
-  PKTStatusEffectAddNotify: () => read56,
-  PKTStatusEffectRemoveNotify: () => read57,
-  PKTStatusEffectSyncDataNotify: () => read58,
-  PKTTriggerBossBattleStatus: () => read59,
-  PKTTriggerFinishNotify: () => read60,
-  PKTTriggerStartNotify: () => read61,
-  PKTTroopMemberUpdateMinNotify: () => read62
+  PKTRemoveObject: () => read47,
+  PKTSkillDamageAbnormalMoveNotify: () => read51,
+  PKTSkillDamageNotify: () => read52,
+  PKTSkillStageNotify: () => read53,
+  PKTSkillStartNotify: () => read55,
+  PKTStatChangeOriginNotify: () => read56,
+  PKTStatusEffectAddNotify: () => read57,
+  PKTStatusEffectRemoveNotify: () => read58,
+  PKTStatusEffectSyncDataNotify: () => read59,
+  PKTTriggerBossBattleStatus: () => read60,
+  PKTTriggerFinishNotify: () => read61,
+  PKTTriggerStartNotify: () => read62,
+  PKTTroopMemberUpdateMinNotify: () => read63
 });
 module.exports = __toCommonJS(reads_exports);
 
@@ -975,16 +975,24 @@ function read45(buf) {
   return data;
 }
 
+// src/packets/generated/structures/UnpublishObject.ts
+function read46(reader) {
+  const data = {};
+  data.ObjectId = reader.u64();
+  data.UnpublishReason = reader.u8();
+  return data;
+}
+
 // src/packets/generated/definitions/PKTRemoveObject.ts
-function read46(buf) {
+function read47(buf) {
   const reader = new Read(buf);
   const data = {};
-  data.unpublishedObjects = reader.array(reader.u16(), () => reader.bytes(9), 200);
+  data.unpublishedObjects = reader.array(reader.u16(), () => read46(reader), 200);
   return data;
 }
 
 // src/packets/common/SkillMoveOptionData.ts
-function read47(reader) {
+function read48(reader) {
   const data = {};
   const flag = reader.u8();
   if (flag & 1)
@@ -1005,7 +1013,7 @@ function read47(reader) {
 }
 
 // src/packets/generated/structures/SkillDamageEvent.ts
-function read48(reader) {
+function read49(reader) {
   const data = {};
   data.Unk3_m = reader.i16();
   data.CurHp = read14(reader);
@@ -1020,47 +1028,47 @@ function read48(reader) {
 }
 
 // src/packets/generated/structures/SkillDamageAbnormalMoveEvent.ts
-function read49(reader) {
+function read50(reader) {
   const data = {};
   data.Unk1_m = reader.u8();
   data.Unk2_m = reader.u64();
-  data.SkillMoveOptionData = read47(reader);
+  data.SkillMoveOptionData = read48(reader);
   data.Unk4_m = reader.u16();
   data.Unk8_m = reader.u16();
   data.Destination = read21(reader);
   data.Unk3_m = reader.u16();
   data.Position = read21(reader);
-  data.skillDamageEvent = read48(reader);
+  data.skillDamageEvent = read49(reader);
   return data;
 }
 
 // src/packets/generated/definitions/PKTSkillDamageAbnormalMoveNotify.ts
-function read50(buf) {
+function read51(buf) {
   const reader = new Read(buf);
   const data = {};
   data.Unk1_m = reader.u8();
   data.SourceId = reader.u64();
   data.Unk2_m = reader.u32();
-  data.SkillDamageAbnormalMoveEvents = reader.array(reader.u16(), () => read49(reader), 50);
+  data.SkillDamageAbnormalMoveEvents = reader.array(reader.u16(), () => read50(reader), 50);
   data.SkillId = reader.u32();
   data.SkillEffectId = reader.u32();
   return data;
 }
 
 // src/packets/generated/definitions/PKTSkillDamageNotify.ts
-function read51(buf) {
+function read52(buf) {
   const reader = new Read(buf);
   const data = {};
   data.SkillId = reader.u32();
   data.SkillLevel = reader.u8();
   data.SkillEffectId = reader.u32();
-  data.SkillDamageEvents = reader.array(reader.u16(), () => read48(reader), 50);
+  data.SkillDamageEvents = reader.array(reader.u16(), () => read49(reader), 50);
   data.SourceId = reader.u64();
   return data;
 }
 
 // src/packets/generated/definitions/PKTSkillStageNotify.ts
-function read52(buf) {
+function read53(buf) {
   const reader = new Read(buf);
   const data = {};
   data.SkillId = reader.u32();
@@ -1072,7 +1080,7 @@ function read52(buf) {
 }
 
 // src/packets/common/SkillOptionData.ts
-function read53(reader) {
+function read54(reader) {
   const data = {};
   const flag = reader.u8();
   if (flag & 1)
@@ -1093,7 +1101,7 @@ function read53(reader) {
 }
 
 // src/packets/generated/definitions/PKTSkillStartNotify.ts
-function read54(buf) {
+function read55(buf) {
   const reader = new Read(buf);
   const data = {};
   data.SourceId = reader.u64();
@@ -1108,14 +1116,14 @@ function read54(buf) {
   data.SkillLevel = reader.u8();
   data.SkillId = reader.u32();
   data.NewDirectionYaw = read22(reader);
-  data.SkillOptionData = read53(reader);
+  data.SkillOptionData = read54(reader);
   if (reader.bool())
     data.PitchRotation = read22(reader);
   return data;
 }
 
 // src/packets/generated/definitions/PKTStatChangeOriginNotify.ts
-function read55(buf) {
+function read56(buf) {
   const reader = new Read(buf);
   const data = {};
   data.ObjectId = reader.u64();
@@ -1146,7 +1154,7 @@ function read55(buf) {
 }
 
 // src/packets/generated/definitions/PKTStatusEffectAddNotify.ts
-function read56(buf) {
+function read57(buf) {
   const reader = new Read(buf);
   const data = {};
   data.ObjectId = reader.u64();
@@ -1159,7 +1167,7 @@ function read56(buf) {
 }
 
 // src/packets/generated/definitions/PKTStatusEffectRemoveNotify.ts
-function read57(buf) {
+function read58(buf) {
   const reader = new Read(buf);
   const data = {};
   data.ObjectId = reader.u64();
@@ -1169,7 +1177,7 @@ function read57(buf) {
 }
 
 // src/packets/generated/definitions/PKTStatusEffectSyncDataNotify.ts
-function read58(buf) {
+function read59(buf) {
   const reader = new Read(buf);
   const data = {};
   data.Value = reader.u32();
@@ -1182,7 +1190,7 @@ function read58(buf) {
 }
 
 // src/packets/generated/definitions/PKTTriggerBossBattleStatus.ts
-function read59(buf) {
+function read60(buf) {
   const reader = new Read(buf);
   const data = {};
   reader.skip(2);
@@ -1193,7 +1201,7 @@ function read59(buf) {
 }
 
 // src/packets/generated/definitions/PKTTriggerFinishNotify.ts
-function read60(buf) {
+function read61(buf) {
   const reader = new Read(buf);
   const data = {};
   data.InvolvedPCs = reader.array(reader.u16(), () => reader.u64(), 40);
@@ -1204,7 +1212,7 @@ function read60(buf) {
 }
 
 // src/packets/generated/definitions/PKTTriggerStartNotify.ts
-function read61(buf) {
+function read62(buf) {
   const reader = new Read(buf);
   const data = {};
   data.SourceId = reader.u64();
@@ -1215,7 +1223,7 @@ function read61(buf) {
 }
 
 // src/packets/generated/definitions/PKTTroopMemberUpdateMinNotify.ts
-function read62(buf) {
+function read63(buf) {
   const reader = new Read(buf);
   const data = {};
   data.MaxHp = read14(reader);

@@ -2,19 +2,25 @@
 import { Read } from "../../stream";
 import * as NpcData from "../structures/NpcData";
 export type PKTNewNpc = {
-  Unk0_0?: number;
-  Unk1_0?: bigint;
   NpcStruct: NpcData.NpcData;
-  Unk3: number;
+  Unk1: number;
+  Unk2_0?: bigint;
+  Unk3_0?: number;
+  Unk0_0?: string;
+  Unk0_1?: string;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTNewNpc;
-  if (reader.bool()) data.Unk0_0 = reader.u8();
-  if (reader.bool()) data.Unk1_0 = reader.u64();
   data.NpcStruct = NpcData.read(reader);
-  data.Unk3 = reader.u8();
+  data.Unk1 = reader.u8();
+  if (reader.bool()) data.Unk2_0 = reader.u64();
+  if (reader.bool()) data.Unk3_0 = reader.u8();
+  if (reader.bool() /*Unk0*/) {
+    data.Unk0_0 = reader.string(20);
+    data.Unk0_1 = reader.string(20);
+  }
   return data;
 }
 export const name = "PKTNewNpc";
-export const opcode = 31638;
+export const opcode = 11763;

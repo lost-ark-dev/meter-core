@@ -1,6 +1,6 @@
 import {
   TCPTracker
-} from "./chunk-YK5CGQUM.mjs";
+} from "./chunk-PLWELAAX.mjs";
 import "./chunk-J367NFGR.mjs";
 
 // src/pkt-capture.ts
@@ -127,7 +127,7 @@ var PktCaptureAll = class extends TypedEmitter {
     } else if (mode === 1 /* MODE_RAW_SOCKET */) {
       for (const addresses of Object.values(networkInterfaces())) {
         for (const device of addresses ?? []) {
-          if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false) {
+          if (isIPv4(device.address) && device.family === "IPv4" && device.internal === false && !this.captures.has(device.address)) {
             try {
               const rsc = new RawSocketCapture(device.address, {
                 ip: device.address,

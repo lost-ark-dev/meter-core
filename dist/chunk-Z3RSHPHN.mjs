@@ -22,7 +22,18 @@ import {
   name28,
   name29,
   name3,
+  name30,
+  name31,
+  name32,
+  name33,
+  name34,
+  name35,
+  name36,
+  name37,
+  name38,
+  name39,
   name4,
+  name40,
   name5,
   name6,
   name7,
@@ -51,7 +62,18 @@ import {
   opcode28,
   opcode29,
   opcode3,
+  opcode30,
+  opcode31,
+  opcode32,
+  opcode33,
+  opcode34,
+  opcode35,
+  opcode36,
+  opcode37,
+  opcode38,
+  opcode39,
   opcode4,
+  opcode40,
   opcode5,
   opcode6,
   opcode7,
@@ -80,19 +102,33 @@ import {
   read28,
   read29,
   read3,
+  read30,
+  read31,
+  read32,
+  read33,
+  read34,
+  read35,
+  read36,
+  read37,
+  read38,
+  read39,
   read4,
+  read40,
   read5,
   read6,
   read7,
   read8,
   read9
-} from "./chunk-E2XSE3GG.mjs";
+} from "./chunk-CJOQ4RAD.mjs";
 
 // src/packets/generated/mapping.ts
 var mapping = /* @__PURE__ */ new Map([
   [opcode, [name, read]],
   [opcode2, [name2, read2]],
-  [opcode3, [name3, read3]],
+  [
+    opcode3,
+    [name3, read3]
+  ],
   [opcode4, [name4, read4]],
   [opcode5, [name5, read5]],
   [opcode6, [name6, read6]],
@@ -103,14 +139,8 @@ var mapping = /* @__PURE__ */ new Map([
   [opcode11, [name11, read11]],
   [opcode12, [name12, read12]],
   [opcode13, [name13, read13]],
-  [
-    opcode14,
-    [name14, read14]
-  ],
-  [
-    opcode15,
-    [name15, read15]
-  ],
+  [opcode14, [name14, read14]],
+  [opcode15, [name15, read15]],
   [opcode16, [name16, read16]],
   [opcode17, [name17, read17]],
   [opcode18, [name18, read18]],
@@ -118,16 +148,45 @@ var mapping = /* @__PURE__ */ new Map([
     opcode19,
     [name19, read19]
   ],
-  [opcode20, [name20, read20]],
+  [
+    opcode20,
+    [name20, read20]
+  ],
   [opcode21, [name21, read21]],
-  [opcode22, [name22, read22]],
-  [opcode23, [name23, read23]],
-  [opcode24, [name24, read24]],
-  [opcode25, [name25, read25]],
+  [
+    opcode22,
+    [name22, read22]
+  ],
+  [
+    opcode23,
+    [name23, read23]
+  ],
+  [
+    opcode24,
+    [name24, read24]
+  ],
+  [
+    opcode25,
+    [name25, read25]
+  ],
   [opcode26, [name26, read26]],
   [opcode27, [name27, read27]],
   [opcode28, [name28, read28]],
-  [opcode29, [name29, read29]]
+  [
+    opcode29,
+    [name29, read29]
+  ],
+  [opcode30, [name30, read30]],
+  [opcode31, [name31, read31]],
+  [opcode32, [name32, read32]],
+  [opcode33, [name33, read33]],
+  [opcode34, [name34, read34]],
+  [opcode35, [name35, read35]],
+  [opcode36, [name36, read36]],
+  [opcode37, [name37, read37]],
+  [opcode38, [name38, read38]],
+  [opcode39, [name39, read39]],
+  [opcode40, [name40, read40]]
 ]);
 
 export {

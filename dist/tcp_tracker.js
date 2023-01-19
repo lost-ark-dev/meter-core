@@ -217,7 +217,8 @@ var TCPSession = class extends import_stream2.EventEmitter {
         this.is_ignored = true;
       }
       this.state = "ESTAB";
-    } else if (tcp.info.flags & 4 /* rst */) {
+    }
+    if (tcp.info.flags & 4 /* rst */) {
       this.emit("end", this);
     } else {
       this[this.state](buffer, ip, tcp);

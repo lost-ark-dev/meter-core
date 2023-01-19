@@ -537,6 +537,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       })
       .on("PKTStatChangeOriginNotify", (pkt) => {
         if (this.#needEmit) {
+          //TODO: fix dump, this wasn't working anw
+          /*
           const parsed = pkt.parsed;
           if (!parsed) return;
           // TODO: check healAmount, currentHp + fix def
@@ -549,6 +551,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
             Number(changedStatsMap.get(stattype.hp)) || 0,
             Number(currentStatsMap.get(stattype.hp)) || 0
           );
+          */
         }
       })
       .on("PKTStatusEffectAddNotify", (pkt) => {

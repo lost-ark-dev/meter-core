@@ -20,6 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/packets/generated/enums.ts
 var enums_exports = {};
 __export(enums_exports, {
+  blockskilltype: () => blockskilltype,
   hitflag: () => hitflag,
   hitoption: () => hitoption,
   itemcategory: () => itemcategory,
@@ -500,6 +501,7 @@ var itemcategory = /* @__PURE__ */ ((itemcategory2) => {
   itemcategory2[itemcategory2["useup_add_town_jukebox_music"] = 34600] = "useup_add_town_jukebox_music";
   itemcategory2[itemcategory2["useup_add_selfie_item"] = 34700] = "useup_add_selfie_item";
   itemcategory2[itemcategory2["useup_etc_talisman"] = 34801] = "useup_etc_talisman";
+  itemcategory2[itemcategory2["useup_etc_message_npc_spawn"] = 34802] = "useup_etc_message_npc_spawn";
   itemcategory2[itemcategory2["useup_gem_reward"] = 34900] = "useup_gem_reward";
   itemcategory2[itemcategory2["useup_aos_equip"] = 35e3] = "useup_aos_equip";
   itemcategory2[itemcategory2["useup_aos_useup"] = 35100] = "useup_aos_useup";
@@ -674,8 +676,16 @@ var itemcategory = /* @__PURE__ */ ((itemcategory2) => {
   itemcategory2[itemcategory2["astra_equip_desire"] = 100104] = "astra_equip_desire";
   return itemcategory2;
 })(itemcategory || {});
+var blockskilltype = /* @__PURE__ */ ((blockskilltype2) => {
+  blockskilltype2[blockskilltype2["success"] = 0] = "success";
+  blockskilltype2[blockskilltype2["fail"] = 1] = "fail";
+  blockskilltype2[blockskilltype2["inprogress"] = 2] = "inprogress";
+  blockskilltype2[blockskilltype2["start"] = 3] = "start";
+  return blockskilltype2;
+})(blockskilltype || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  blockskilltype,
   hitflag,
   hitoption,
   itemcategory,

@@ -2,11 +2,17 @@
 import type { PKT } from "../../pkt-stream";
 import type * as types from "./types";
 export interface PKTStreamEvents {
+  PKTAbilityChangeNotify: (pkt: PKT<types.PKTAbilityChangeNotify>) => void;
+  PKTActiveAbilityNotify: (pkt: PKT<types.PKTActiveAbilityNotify>) => void;
+  PKTAddonSkillFeatureChangeNotify: (pkt: PKT<types.PKTAddonSkillFeatureChangeNotify>) => void;
   PKTAuthTokenResult: (pkt: PKT<types.PKTAuthTokenResult>) => void;
+  PKTBlockSkillStateNotify: (pkt: PKT<types.PKTBlockSkillStateNotify>) => void;
   PKTCounterAttackNotify: (pkt: PKT<types.PKTCounterAttackNotify>) => void;
   PKTDeathNotify: (pkt: PKT<types.PKTDeathNotify>) => void;
+  PKTInitAbility: (pkt: PKT<types.PKTInitAbility>) => void;
   PKTInitEnv: (pkt: PKT<types.PKTInitEnv>) => void;
   PKTInitPC: (pkt: PKT<types.PKTInitPC>) => void;
+  PKTInitLocal: (pkt: PKT<types.PKTInitLocal>) => void;
   PKTNewNpc: (pkt: PKT<types.PKTNewNpc>) => void;
   PKTNewNpcSummon: (pkt: PKT<types.PKTNewNpcSummon>) => void;
   PKTNewPC: (pkt: PKT<types.PKTNewPC>) => void;
@@ -14,9 +20,13 @@ export interface PKTStreamEvents {
   PKTParalyzationStateNotify: (pkt: PKT<types.PKTParalyzationStateNotify>) => void;
   PKTPartyInfo: (pkt: PKT<types.PKTPartyInfo>) => void;
   PKTPartyLeaveResult: (pkt: PKT<types.PKTPartyLeaveResult>) => void;
+  PKTPartyPassiveStatusEffectAddNotify: (pkt: PKT<types.PKTPartyPassiveStatusEffectAddNotify>) => void;
+  PKTPartyPassiveStatusEffectRemoveNotify: (pkt: PKT<types.PKTPartyPassiveStatusEffectRemoveNotify>) => void;
   PKTPartyStatusEffectAddNotify: (pkt: PKT<types.PKTPartyStatusEffectAddNotify>) => void;
   PKTPartyStatusEffectRemoveNotify: (pkt: PKT<types.PKTPartyStatusEffectRemoveNotify>) => void;
   PKTPartyStatusEffectResultNotify: (pkt: PKT<types.PKTPartyStatusEffectResultNotify>) => void;
+  PKTPassiveStatusEffectAddNotify: (pkt: PKT<types.PKTPassiveStatusEffectAddNotify>) => void;
+  PKTPassiveStatusEffectRemoveNotify: (pkt: PKT<types.PKTPassiveStatusEffectRemoveNotify>) => void;
   PKTRaidBossKillNotify: (pkt: PKT<types.PKTRaidBossKillNotify>) => void;
   PKTRaidResult: (pkt: PKT<types.PKTRaidResult>) => void;
   PKTRemoveObject: (pkt: PKT<types.PKTRemoveObject>) => void;
@@ -31,5 +41,6 @@ export interface PKTStreamEvents {
   PKTTriggerBossBattleStatus: (pkt: PKT<types.PKTTriggerBossBattleStatus>) => void;
   PKTTriggerFinishNotify: (pkt: PKT<types.PKTTriggerFinishNotify>) => void;
   PKTTriggerStartNotify: (pkt: PKT<types.PKTTriggerStartNotify>) => void;
+  PKTTroopMemberUpdateMinNotify: (pkt: PKT<types.PKTTroopMemberUpdateMinNotify>) => void;
   "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }

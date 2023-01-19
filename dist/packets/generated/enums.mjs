@@ -1,4 +1,5 @@
 import {
+  blockskilltype,
   hitflag,
   hitoption,
   itemcategory,
@@ -6,8 +7,9 @@ import {
   npctype,
   stattype,
   triggersignaltype
-} from "../../chunk-FPW25QRO.mjs";
+} from "../../chunk-DAY5DOC4.mjs";
 export {
+  blockskilltype,
   hitflag,
   hitoption,
   itemcategory,

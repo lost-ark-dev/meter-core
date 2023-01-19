@@ -165,7 +165,7 @@ type PKTInitPC = {
     CharacterId: bigint;
     Unk31: number;
     Unk32: number;
-    Unk33: number;
+    Level: number;
     Unk34: number;
     Unk35: number;
     Unk36: number;
@@ -184,7 +184,7 @@ type PKTInitPC = {
     Unk46: number;
     Unk47: Buffer;
     Unk48: number;
-    Level: number;
+    Unk49: Buffer;
     Unk50: bigint;
     struct_349: string;
     ClassId: number;

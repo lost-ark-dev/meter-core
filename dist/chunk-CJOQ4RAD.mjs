@@ -370,7 +370,7 @@ function read16(buf) {
   data.CharacterId = reader.u64();
   data.Unk31 = reader.u8();
   data.Unk32 = reader.u8();
-  data.Unk33 = reader.u16();
+  data.Level = reader.u16();
   data.Unk34 = reader.u8();
   data.Unk35 = reader.u8();
   data.Unk36 = reader.u8();
@@ -395,9 +395,7 @@ function read16(buf) {
   data.Unk46 = reader.u32();
   data.Unk47 = reader.bytes(25);
   data.Unk48 = reader.u8();
-  reader.skip(79);
-  data.Level = reader.u16();
-  reader.skip(31);
+  data.Unk49 = reader.bytes(112);
   data.Unk50 = reader.u64();
   data.struct_349 = reader.string(7);
   data.ClassId = reader.u16();

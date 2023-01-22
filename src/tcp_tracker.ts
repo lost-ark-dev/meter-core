@@ -120,6 +120,8 @@ export class TCPSession extends EventEmitter {
   send_ip_tracker: IPTracker;
   recv_ip_tracker: IPTracker;
 
+  skip_socks5: number;
+
   constructor(listen_options: ListenOptions) {
     super();
     this.listen_options = listen_options;
@@ -138,6 +140,9 @@ export class TCPSession extends EventEmitter {
     this.recv_ip_tracker = new IPTracker();
     this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
     this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
+
+    this.skip_socks5 = 0;
+
     EventEmitter.call(this);
   }
   track(buffer: Buffer, ip: IPv4, tcp: TCP) {
@@ -227,7 +232,11 @@ export class TCPSession extends EventEmitter {
       //TODO: Here we wait to have 1 more ack before flushing data, this will add delay but may fix raw socket weird order
       this.recv_seqno = this.recv_last_ackno;
       this.recv_last_ackno = ackno;
-
+      if (flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2]))) this.skip_socks5 = 5;
+      if (this.skip_socks5 > 0) {
+        this.skip_socks5--;
+        return;
+      }
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {

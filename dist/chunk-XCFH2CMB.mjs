@@ -197,7 +197,7 @@ var TCPSession = class extends EventEmitter {
       this.recv_seqno = this.recv_last_ackno;
       this.recv_last_ackno = ackno;
       if (flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
-        this.skip_socks5 = 5;
+        this.skip_socks5 = 4;
       if (this.skip_socks5 > 0) {
         this.skip_socks5--;
         return;

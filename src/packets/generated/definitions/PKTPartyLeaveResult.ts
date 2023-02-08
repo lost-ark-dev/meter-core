@@ -2,16 +2,16 @@
 import { Read } from "../../stream";
 export type PKTPartyLeaveResult = {
   PartyInstanceId: number;
-  Name: string;
   PartyLeaveType: number;
+  Name: string;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTPartyLeaveResult;
   data.PartyInstanceId = reader.u32();
-  data.Name = reader.string(20);
   data.PartyLeaveType = reader.u8();
+  data.Name = reader.string(20);
   return data;
 }
 export const name = "PKTPartyLeaveResult";
-export const opcode = 56943;
+export const opcode = 25148;

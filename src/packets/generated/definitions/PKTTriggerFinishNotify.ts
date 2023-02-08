@@ -16,4 +16,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTTriggerFinishNotify";
-export const opcode = 43614;
+export const opcode = 44444;

@@ -187,6 +187,7 @@ var TCPSession = class extends import_stream2.EventEmitter {
   send_ip_tracker;
   recv_ip_tracker;
   skip_socks5;
+  in_handshake;
   constructor(listen_options) {
     super();
     this.listen_options = listen_options;
@@ -203,6 +204,7 @@ var TCPSession = class extends import_stream2.EventEmitter {
     this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
     this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
     this.skip_socks5 = 0;
+    this.in_handshake = true;
     import_stream2.EventEmitter.call(this);
   }
   track(buffer, ip, tcp) {
@@ -267,12 +269,13 @@ var TCPSession = class extends import_stream2.EventEmitter {
       }
       this.recv_seqno = this.recv_last_ackno;
       this.recv_last_ackno = ackno;
-      if (flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
+      if (this.in_handshake && flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
         this.skip_socks5 = 4;
       if (this.skip_socks5 > 0) {
         this.skip_socks5--;
         return;
       }
+      this.in_handshake = false;
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {

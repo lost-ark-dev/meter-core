@@ -74,6 +74,7 @@ declare class TCPSession extends EventEmitter {
     send_ip_tracker: IPTracker;
     recv_ip_tracker: IPTracker;
     skip_socks5: number;
+    in_handshake: boolean;
     constructor(listen_options: ListenOptions);
     track(buffer: Buffer, ip: IPv4, tcp: TCP): void;
     ESTAB(buffer: Buffer, ip: IPv4, tcp: TCP): void;

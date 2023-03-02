@@ -643,3 +643,18 @@ export const enum blockskilltype {
   inprogress = 2,
   start = 3,
 }
+export const enum buffshowprioritycategory {
+  pet = 0,
+  classskill = 1,
+  ability = 2,
+  set = 3,
+  cook = 4,
+  identity = 5,
+  bracelet = 6,
+  battleitem = 7,
+  etc = 8,
+}
+export const enum statuseffectcategory {
+  buff = 0,
+  debuff = 1,
+}

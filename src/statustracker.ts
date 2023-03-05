@@ -12,7 +12,7 @@ export interface StatusEffect {
     started: Date;
     type: StatusEffecType;
     value: number;
-
+    stack: number;
 }
 type StatusEffectInstanceId = number;
 type TargetId = bigint;

@@ -7,7 +7,7 @@ export type StatusEffectData = {
   SourceId: bigint;
   InstanceId: bigint;
   Unk4: number;
-  Unk5: number;
+  stack: number;
   Unk6_0?: bigint;
   Value?: Buffer;
   struct_419: Buffer;
@@ -21,7 +21,7 @@ export function read(reader: Read) {
   data.SourceId = reader.u64();
   data.InstanceId = reader.u64();
   data.Unk4 = reader.u32();
-  data.Unk5 = reader.u8();
+  data.stack = reader.u8();
   if (reader.bool()) data.Unk6_0 = reader.u64();
   if (reader.bool()) data.Value = reader.bytes(16);
   data.struct_419 = reader.bytes(reader.u16(), 8, 7);

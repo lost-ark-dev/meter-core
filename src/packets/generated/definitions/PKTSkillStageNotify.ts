@@ -1,19 +1,19 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTSkillStageNotify = {
-  SkillId: number;
   SourceId: bigint;
+  SkillId: number;
   Stage: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTSkillStageNotify;
-  data.SkillId = reader.u32();
+  reader.skip(29);
   data.SourceId = reader.u64();
-  reader.skip(33);
+  reader.skip(10);
+  data.SkillId = reader.u32();
   data.Stage = reader.u8();
-  reader.skip(6);
   return data;
 }
 export const name = "PKTSkillStageNotify";
-export const opcode = 47144;
+export const opcode = 51700;

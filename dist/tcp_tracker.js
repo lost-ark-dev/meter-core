@@ -140,6 +140,8 @@ var TCPTracker = class extends import_stream2.EventEmitter {
     let is_new = false;
     let session = this.sessions[key];
     if (!session) {
+      if (!(tcp.info.flags & 8 /* psh */) && !(tcp.info.flags & 2 /* syn */))
+        return;
       is_new = true;
       session = new TCPSession(this.listen_options);
       this.sessions[key] = session;
@@ -170,6 +172,8 @@ var TCPSession = class extends import_stream2.EventEmitter {
   packetBuffer;
   send_ip_tracker;
   recv_ip_tracker;
+  skip_socks5;
+  in_handshake;
   constructor(listen_options) {
     super();
     this.listen_options = listen_options;
@@ -185,6 +189,8 @@ var TCPSession = class extends import_stream2.EventEmitter {
     this.recv_ip_tracker = new IPTracker();
     this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
     this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
+    this.skip_socks5 = 0;
+    this.in_handshake = true;
     import_stream2.EventEmitter.call(this);
   }
   track(buffer, ip, tcp) {
@@ -218,26 +224,10 @@ var TCPSession = class extends import_stream2.EventEmitter {
       }
       this.state = "ESTAB";
     }
-    if (tcp.info.flags & 4 /* rst */) {
+    if (tcp.info.flags & 4 /* rst */ || tcp.info.flags & 1 /* fin */) {
       this.emit("end", this);
     } else {
-      this[this.state](buffer, ip, tcp);
-    }
-  }
-  SYN_SENT(buffer, ip, tcp) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    if (src === this.dst && tcp.info.flags & (16 /* ack */ | 2 /* syn */)) {
-      this.send_seqno = tcp.info.ackno ?? 0;
-      this.state = "SYN_RCVD";
-    } else if (tcp.info.flags & 4 /* rst */) {
-      this.state = "CLOSED";
-    }
-  }
-  SYN_RCVD(buffer, ip, tcp) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    if (src === this.src && tcp.info.flags & 16 /* ack */) {
-      this.recv_seqno = tcp.info.ackno ?? 0;
-      this.state = "ESTAB";
+      this.ESTAB(buffer, ip, tcp);
     }
   }
   ESTAB(buffer, ip, tcp) {
@@ -245,48 +235,12 @@ var TCPSession = class extends import_stream2.EventEmitter {
       return;
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     if (src === this.src) {
-      if (tcp.info.flags & 1 /* fin */) {
-        this.state = "FIN_WAIT";
-      } else {
-        this.handle_recv_segment(buffer, ip, tcp);
-      }
+      this.handle_recv_segment(buffer, ip, tcp);
     } else if (src === this.dst) {
-      if (tcp.info.flags & 1 /* fin */) {
-        this.state = "CLOSE_WAIT";
-      } else {
-        this.handle_send_segment(buffer, ip, tcp);
-      }
+      this.handle_send_segment(buffer, ip, tcp);
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
     }
-  }
-  FIN_WAIT(buffer, ip, tcp) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    if (src === this.dst && tcp.info.flags & 1 /* fin */) {
-      this.state = "CLOSING";
-    }
-  }
-  CLOSE_WAIT(buffer, ip, tcp) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    if (src === this.src && tcp.info.flags & 1 /* fin */) {
-      this.state = "LAST_ACK";
-    }
-  }
-  LAST_ACK(buffer, ip, tcp) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    if (src === this.dst) {
-      this.state = "CLOSED";
-      this.emit("end", this);
-    }
-  }
-  CLOSING(buffer, ip, tcp) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-    if (src === this.src) {
-      this.state = "CLOSED";
-      this.emit("end", this);
-    }
-  }
-  CLOSED(buffer, ip, tcp) {
   }
   flush_buffers(ackno, direction) {
     if (direction === "recv") {
@@ -301,6 +255,13 @@ var TCPSession = class extends import_stream2.EventEmitter {
       }
       this.recv_seqno = this.recv_last_ackno;
       this.recv_last_ackno = ackno;
+      if (this.in_handshake && flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
+        this.skip_socks5 = 4;
+      if (this.skip_socks5 > 0) {
+        this.skip_socks5--;
+        return;
+      }
+      this.in_handshake = false;
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {

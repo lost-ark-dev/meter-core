@@ -113,7 +113,7 @@ export enum PktCaptureMode {
 export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
   captures: Map<string, PktCapture>;
 
-  constructor(mode: PktCaptureMode) {
+  constructor(mode: PktCaptureMode, port = 6040) {
     super();
     this.captures = new Map();
     if (!adminRelauncher(mode)) {
@@ -135,7 +135,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
               const pcapc = new PcapCapture(device.name, {
                 ip: address.addr,
                 mask: address.netmask,
-                port: 6040,
+                port,
               });
               // re-emit
               pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
@@ -161,7 +161,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
               const rsc = new RawSocketCapture(device.address, {
                 ip: device.address,
                 mask: device.netmask,
-                port: 6040,
+                port,
               });
               // re-emit
               rsc.on("packet", (buf) => this.emit("packet", buf, device.address));

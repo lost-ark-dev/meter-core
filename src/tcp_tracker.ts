@@ -73,6 +73,8 @@ export class TCPTracker extends EventEmitter {
     let is_new = false;
     let session = this.sessions[key];
     if (!session) {
+      //if (tcp.info.flags & TCPFlags.rst || tcp.info.flags & TCPFlags.fin) return; //Connexion is supposed to be closing, ignoring
+      if (!(tcp.info.flags & TCPFlags.psh) && !(tcp.info.flags & TCPFlags.syn)) return; //Wait for a syn or psh to create session
       is_new = true;
       session = new TCPSession(this.listen_options);
       this.sessions[key] = session;
@@ -100,7 +102,7 @@ type TCPSegment = {
   payload: Buffer;
 };
 export class TCPSession extends EventEmitter {
-  state: "NONE" | "SYN_SENT" | "SYN_RCVD" | "ESTAB" | "FIN_WAIT" | "CLOSE_WAIT" | "LAST_ACK" | "CLOSING" | "CLOSED";
+  state: "NONE" | "ESTAB";
   src?: string;
   dst?: string;
 
@@ -117,6 +119,9 @@ export class TCPSession extends EventEmitter {
 
   send_ip_tracker: IPTracker;
   recv_ip_tracker: IPTracker;
+
+  skip_socks5: number;
+  in_handshake: boolean;
 
   constructor(listen_options: ListenOptions) {
     super();
@@ -136,6 +141,10 @@ export class TCPSession extends EventEmitter {
     this.recv_ip_tracker = new IPTracker();
     this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
     this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
+
+    this.skip_socks5 = 0;
+    this.in_handshake = true;
+
     EventEmitter.call(this);
   }
   track(buffer: Buffer, ip: IPv4, tcp: TCP) {
@@ -183,117 +192,29 @@ export class TCPSession extends EventEmitter {
         this.dst = dst;
         this.is_ignored = true; //We set to ignore this session, but we still want to track for connection start/end
       }
-      /*
-      //Disabled handshake detection as raw rockets has server/client unordered
-      if (tcp.info.flags & TCPFlags.syn && !(tcp.info.flags & TCPFlags.ack)) {
-        // initial SYN, best case
-        this.state = "SYN_SENT";
-      } else {
-        */
-      // joining session already in progress
-      this.state = "ESTAB"; // I mean, probably established, right? Unless it isn't.
+      this.state = "ESTAB";
       //}
     }
-    if (tcp.info.flags & TCPFlags.rst) {
+    if (tcp.info.flags & TCPFlags.rst || tcp.info.flags & TCPFlags.fin) {
       this.emit("end", this);
     } else {
-      // not a SYN, so run the state machine
-      this[this.state](buffer, ip, tcp);
+      //process estab
+      this.ESTAB(buffer, ip, tcp);
     }
   }
-  SYN_SENT(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
 
-    if (src === this.dst && tcp.info.flags & (TCPFlags.ack | TCPFlags.syn)) {
-      this.send_seqno = tcp.info.ackno ?? 0;
-      this.state = "SYN_RCVD";
-    } else if (tcp.info.flags & TCPFlags.rst) {
-      this.state = "CLOSED";
-      //this.emit("reset", this, "recv"); // TODO - check which direction did the reset, probably recv
-      //    } else {
-      //        console.log("Didn't get SYN-ACK packet from dst while handshaking: " + util.inspect(tcp, false, 4));
-    }
-  }
-  SYN_RCVD(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-
-    if (src === this.src && tcp.info.flags & TCPFlags.ack) {
-      // TODO - make sure SYN flag isn't set, also match src and dst
-      this.recv_seqno = tcp.info.ackno ?? 0;
-      //this.emit("start", this);
-      this.state = "ESTAB";
-      //    } else {
-      //        console.log("Didn't get ACK packet from src while handshaking: " + util.inspect(tcp, false, 4));
-    }
-  }
-  // TODO - actually implement SACK decoding and tracking
-  // if (tcp.options.sack) {
-  //     console.log("SACK magic, handle this: " + util.inspect(tcp.options.sack));
-  //     console.log(util.inspect(ip, false, 5));
-  // }
-  // TODO - check for tcp.flags.rst and emit reset event
   ESTAB(buffer: Buffer, ip: IPv4, tcp: TCP) {
     if (this.is_ignored) return; //Ignore data transfert
-
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     if (src === this.src) {
-      // console.log("sending ACK for packet we didn't see received: " + tcp.info.ackno ?? 0);
-      if (tcp.info.flags & TCPFlags.fin) {
-        this.state = "FIN_WAIT";
-      } else {
-        //console.log("recv", tcp.info.seqno, tcp.info.ackno);
-        this.handle_recv_segment(buffer, ip, tcp);
-        //this.recv_ip_tracker.track(buffer, ip, tcp);
-      }
+      this.handle_recv_segment(buffer, ip, tcp);
     } else if (src === this.dst) {
-      if (tcp.info.flags & TCPFlags.fin) {
-        this.state = "CLOSE_WAIT";
-      } else {
-        //console.log("send", tcp.info.seqno, tcp.info.ackno);
-        this.handle_send_segment(buffer, ip, tcp);
-        //this.send_ip_tracker.track(buffer, ip, tcp);
-      }
+      this.handle_send_segment(buffer, ip, tcp);
     } else {
       console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
     }
   }
-  // TODO - need to track half-closed data
-  FIN_WAIT(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
 
-    if (src === this.dst && tcp.info.flags & TCPFlags.fin) {
-      this.state = "CLOSING";
-    }
-  }
-  // TODO - need to track half-closed data
-  CLOSE_WAIT(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-
-    if (src === this.src && tcp.info.flags & TCPFlags.fin) {
-      this.state = "LAST_ACK";
-    }
-  }
-  // TODO - need to track half-closed data
-  LAST_ACK(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-
-    if (src === this.dst) {
-      this.state = "CLOSED";
-      this.emit("end", this);
-    }
-  }
-  // TODO - need to track half-closed data
-  CLOSING(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    let src = ip.info.srcaddr + ":" + tcp.info.srcport;
-
-    if (src === this.src) {
-      this.state = "CLOSED";
-      this.emit("end", this);
-    }
-  }
-  CLOSED(buffer: Buffer, ip: IPv4, tcp: TCP) {
-    // not sure what to do here. We are closed, so I guess bump some counters or something.
-  }
   flush_buffers(ackno: number, direction: Direction) {
     //We assume that seqno/ackno will never overflow (2^32 bytes ~ 4.3GB)
     if (direction === "recv") {
@@ -313,7 +234,13 @@ export class TCPSession extends EventEmitter {
       //TODO: Here we wait to have 1 more ack before flushing data, this will add delay but may fix raw socket weird order
       this.recv_seqno = this.recv_last_ackno;
       this.recv_last_ackno = ackno;
-
+      if (this.in_handshake && flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
+        this.skip_socks5 = 4;
+      if (this.skip_socks5 > 0) {
+        this.skip_socks5--;
+        return;
+      }
+      this.in_handshake = false;
       this.packetBuffer.write(flush_payload);
       let pkt = this.packetBuffer.read();
       while (pkt) {

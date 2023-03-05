@@ -1,6 +1,6 @@
 import {
   TCPTracker
-} from "./chunk-PLWELAAX.mjs";
+} from "./chunk-T2OMOYCV.mjs";
 import "./chunk-J367NFGR.mjs";
 
 // src/pkt-capture.ts
@@ -93,7 +93,7 @@ var PktCaptureMode = /* @__PURE__ */ ((PktCaptureMode2) => {
 })(PktCaptureMode || {});
 var PktCaptureAll = class extends TypedEmitter {
   captures;
-  constructor(mode) {
+  constructor(mode, port = 6040) {
     super();
     this.captures = /* @__PURE__ */ new Map();
     if (!adminRelauncher(mode)) {
@@ -113,7 +113,7 @@ var PktCaptureAll = class extends TypedEmitter {
               const pcapc = new PcapCapture(device.name, {
                 ip: address.addr,
                 mask: address.netmask,
-                port: 6040
+                port
               });
               pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
               this.captures.set(device.name, pcapc);
@@ -132,7 +132,7 @@ var PktCaptureAll = class extends TypedEmitter {
               const rsc = new RawSocketCapture(device.address, {
                 ip: device.address,
                 mask: device.netmask,
-                port: 6040
+                port
               });
               rsc.on("packet", (buf) => this.emit("packet", buf, device.address));
               this.captures.set(device.address, rsc);

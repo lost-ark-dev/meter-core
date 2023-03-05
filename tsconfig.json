@@ -2,7 +2,11 @@
   "extends": "@tsconfig/node18-strictest-esm/tsconfig.json",
   "compilerOptions": {
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "module": "CommonJS"
   },
-  "include": ["src/*"]
+  "ts-node": {
+    "files": true
+  },
+  "include": ["src/**/*"]
 }

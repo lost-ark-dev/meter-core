@@ -21,12 +21,14 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var enums_exports = {};
 __export(enums_exports, {
   blockskilltype: () => blockskilltype,
+  buffshowprioritycategory: () => buffshowprioritycategory,
   hitflag: () => hitflag,
   hitoption: () => hitoption,
   itemcategory: () => itemcategory,
   npcgrade: () => npcgrade,
   npctype: () => npctype,
   stattype: () => stattype,
+  statuseffectcategory: () => statuseffectcategory,
   triggersignaltype: () => triggersignaltype
 });
 module.exports = __toCommonJS(enums_exports);
@@ -683,14 +685,33 @@ var blockskilltype = /* @__PURE__ */ ((blockskilltype2) => {
   blockskilltype2[blockskilltype2["start"] = 3] = "start";
   return blockskilltype2;
 })(blockskilltype || {});
+var buffshowprioritycategory = /* @__PURE__ */ ((buffshowprioritycategory2) => {
+  buffshowprioritycategory2[buffshowprioritycategory2["pet"] = 0] = "pet";
+  buffshowprioritycategory2[buffshowprioritycategory2["classskill"] = 1] = "classskill";
+  buffshowprioritycategory2[buffshowprioritycategory2["ability"] = 2] = "ability";
+  buffshowprioritycategory2[buffshowprioritycategory2["set"] = 3] = "set";
+  buffshowprioritycategory2[buffshowprioritycategory2["cook"] = 4] = "cook";
+  buffshowprioritycategory2[buffshowprioritycategory2["identity"] = 5] = "identity";
+  buffshowprioritycategory2[buffshowprioritycategory2["bracelet"] = 6] = "bracelet";
+  buffshowprioritycategory2[buffshowprioritycategory2["battleitem"] = 7] = "battleitem";
+  buffshowprioritycategory2[buffshowprioritycategory2["etc"] = 8] = "etc";
+  return buffshowprioritycategory2;
+})(buffshowprioritycategory || {});
+var statuseffectcategory = /* @__PURE__ */ ((statuseffectcategory2) => {
+  statuseffectcategory2[statuseffectcategory2["buff"] = 0] = "buff";
+  statuseffectcategory2[statuseffectcategory2["debuff"] = 1] = "debuff";
+  return statuseffectcategory2;
+})(statuseffectcategory || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   blockskilltype,
+  buffshowprioritycategory,
   hitflag,
   hitoption,
   itemcategory,
   npcgrade,
   npctype,
   stattype,
+  statuseffectcategory,
   triggersignaltype
 });

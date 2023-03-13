@@ -41,6 +41,7 @@ import {
   opcode8,
   opcode9
 } from "../../chunk-KHYI7EP6.mjs";
+import "../../chunk-NHABU752.mjs";
 export {
   opcode as PKTAbilityChangeNotify,
   opcode2 as PKTActiveAbilityNotify,

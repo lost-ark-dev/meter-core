@@ -1,3 +1,5 @@
+import "./chunk-NHABU752.mjs";
+
 // src/data.ts
 var MeterData = class {
   enums;
@@ -6,6 +8,7 @@ var MeterData = class {
   skill;
   skillBuff;
   skillEffect;
+  combatEffect;
   constructor() {
     this.enums = /* @__PURE__ */ new Map();
     this.npc = /* @__PURE__ */ new Map();
@@ -13,6 +16,7 @@ var MeterData = class {
     this.skill = /* @__PURE__ */ new Map();
     this.skillBuff = /* @__PURE__ */ new Map();
     this.skillEffect = /* @__PURE__ */ new Map();
+    this.combatEffect = /* @__PURE__ */ new Map();
   }
   processEnumData(data) {
     for (const [ename, edata] of Object.entries(data)) {
@@ -47,6 +51,11 @@ var MeterData = class {
       this.skillEffect.set(skillEffect.id, skillEffect);
     }
   }
+  processCombatEffectData(data) {
+    for (const combatEffect of Object.values(data)) {
+      this.combatEffect.set(combatEffect.id, combatEffect);
+    }
+  }
   getNpcName(id) {
     return this.npc.get(id)?.name || "";
   }
@@ -61,6 +70,9 @@ var MeterData = class {
   }
   getSkillEffectComment(id) {
     return this.skillEffect.get(id)?.comment || "";
+  }
+  isSupportClassId(id) {
+    return id === 105 || id === 204 || id === 603;
   }
   isBattleItem(id, type) {
     const itemcategory = this.skillEffect.get(id)?.itemcategory;

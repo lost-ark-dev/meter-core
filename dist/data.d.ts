@@ -9,15 +9,43 @@ type Skill = {
     name: string;
     desc: string;
     classid: number;
-    icon: number;
+    icon: string;
 };
 type SkillBuff = {
     id: number;
     name: string;
     desc: string;
     icon: string;
+    iconshowtype: string;
     duration: number;
+    category: "buff" | "debuff";
+    type: string;
+    buffcategory: string;
+    target: string;
+    uniquegroup: number;
     overlapFlag: number;
+    passiveoption: PassiveOption[];
+    setname?: string;
+};
+type PassiveOption = {
+    type: string;
+    keystat: string;
+    keyindex: number;
+    value: number;
+};
+type CombatEffect = {
+    id: number;
+    conditions: CombatEffectCondition[];
+    actions: CombatEffectActions[];
+};
+type CombatEffectCondition = {
+    type: string;
+    actor: string;
+    arg: number;
+};
+type CombatEffectActions = {
+    type: string;
+    actor: string;
 };
 type SkillEffect = {
     id: number;
@@ -35,6 +63,7 @@ declare class MeterData {
     skill: Map<number, Skill>;
     skillBuff: Map<number, SkillBuff>;
     skillEffect: Map<number, SkillEffect>;
+    combatEffect: Map<number, CombatEffect>;
     constructor();
     processEnumData(data: {
         [key: string]: {
@@ -56,13 +85,17 @@ declare class MeterData {
     processSkillBuffEffectData(data: {
         [key: string]: SkillEffect;
     }): void;
+    processCombatEffectData(data: {
+        [key: string]: CombatEffect;
+    }): void;
     getNpcName(id: number): string;
     getClassName(id: number): string;
     getSkillName(id: number): string;
     getSkillClassId(id: number): number;
     getSkillEffectComment(id: number): string;
+    isSupportClassId(id: number): boolean;
     isBattleItem(id: number, type?: "attack" | "buff" | "function"): boolean;
     getBattleItemName(id: number): string;
 }
 
-export { MeterData, Npc, Skill, SkillBuff, SkillEffect };
+export { CombatEffect, CombatEffectActions, CombatEffectCondition, MeterData, Npc, PassiveOption, Skill, SkillBuff, SkillEffect };

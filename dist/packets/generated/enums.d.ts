@@ -125,7 +125,7 @@ declare const enum hitoption {
     frontal_attack = 1,
     flank_attack = 2
 }
-declare const enum stattype {
+declare enum stattype {
     none = 0,
     hp = 1,
     mp = 2,
@@ -643,5 +643,20 @@ declare const enum blockskilltype {
     inprogress = 2,
     start = 3
 }
+declare const enum buffshowprioritycategory {
+    pet = 0,
+    classskill = 1,
+    ability = 2,
+    set = 3,
+    cook = 4,
+    identity = 5,
+    bracelet = 6,
+    battleitem = 7,
+    etc = 8
+}
+declare const enum statuseffectcategory {
+    buff = 0,
+    debuff = 1
+}
 
-export { blockskilltype, hitflag, hitoption, itemcategory, npcgrade, npctype, stattype, triggersignaltype };
+export { blockskilltype, buffshowprioritycategory, hitflag, hitoption, itemcategory, npcgrade, npctype, stattype, statuseffectcategory, triggersignaltype };

@@ -340,10 +340,11 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (!parsed) return;
         for (const effect of parsed.statusEffectDatas) {
           const sourceId: bigint = parsed.PlayerIdOnRefresh != 0n ? parsed.PlayerIdOnRefresh : effect.SourceId;
+          const sourceEnt = this.#getSourceEntity(sourceId);
           const val: number = effect.Value ? effect.Value.readUInt32LE() : 0;
           var se: StatusEffect = {
             instanceId: effect.EffectInstanceId,
-            sourceId: sourceId,
+            sourceId: sourceEnt.entityId,
             started: new Date(),
             statusEffectId: effect.StatusEffectId,
             targetId: parsed.CharacterId,
@@ -558,9 +559,10 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         const val: number = parsed.statusEffectData.Value ? parsed.statusEffectData.Value.readUInt32LE() : 0;
+        const sourceEnt = this.#getSourceEntity(parsed.statusEffectData.SourceId);
         var se: StatusEffect = {
           instanceId: parsed.statusEffectData.EffectInstanceId,
-          sourceId: parsed.statusEffectData.SourceId,
+          sourceId: sourceEnt.entityId,
           started: new Date(),
           statusEffectId: parsed.statusEffectData.StatusEffectId,
           targetId: parsed.ObjectId,

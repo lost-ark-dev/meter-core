@@ -10,6 +10,8 @@ type Skill = {
     desc: string;
     classid: number;
     icon: string;
+    summonids?: number[];
+    summonsourceskill?: number;
 };
 type SkillBuff = {
     id: number;
@@ -25,6 +27,7 @@ type SkillBuff = {
     uniquegroup: number;
     overlapFlag: number;
     passiveoption: PassiveOption[];
+    sourceskills?: number[];
     setname?: string;
 };
 type PassiveOption = {

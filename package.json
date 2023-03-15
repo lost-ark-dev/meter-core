@@ -21,6 +21,7 @@
     "is-admin": "^3.0.0",
     "lz4-napi": "^2.2.0",
     "oodle": "github:Mathicha/oodle",
+    "platform-folders": "^0.6.0",
     "raw-socket-sniffer": "github:Herysia/raw-socket-sniffer",
     "snappyjs": "^0.7.0",
     "tiny-typed-emitter": "^2.1.0"

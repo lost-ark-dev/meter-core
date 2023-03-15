@@ -1,4 +1,7 @@
 import { createHash } from "crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import path from "path";
+import * as platformFolders from "platform-folders";
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "./data";
 import { hitflag, stattype, triggersignaltype } from "./packets/generated/enums";
@@ -94,12 +97,14 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
   #currentEncounter: Encounter;
   #wasWipe: boolean;
   #wasKill: boolean;
+  #localCharacterNames: Set<string>;
 
   #localPlayer: {
     name: string;
     class: number;
     gearLevel: number;
     characterId: bigint;
+    entityId: bigint;
   };
 
   constructor(stream: PKTStream, data: MeterData, settings: LegacyLoggerSettings = {}) {
@@ -120,7 +125,20 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       class: 0,
       gearLevel: 0,
       characterId: 0n,
+      entityId: 0n,
     };
+
+
+    const configFolder = path.join(platformFolders.getStateFolder(), "meter-core");
+    if (!existsSync(configFolder)) {
+      mkdirSync(configFolder);
+    }
+    const localCharFile = path.join(configFolder, "localcharacters.json");
+
+    this.#localCharacterNames = this.#loadeLocalChnaracterNamesFromDisk(localCharFile);
+    process.on("exit", (_) => {
+      this.#writeLocalPlayerNamesToDisk(localCharFile, this.#localCharacterNames);
+    });
 
     stream
       .on("PKTAuthTokenResult", (pkt) => {})
@@ -182,12 +200,13 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#localPlayer && this.#localPlayer.characterId && this.#localPlayer.characterId > 0n)
           PartyTracker.getInstance().completeEntry(this.#localPlayer.characterId, parsed.PlayerId);
         // console.log("PKTInitEnv", this.#localPlayer);
+        this.#localPlayer.entityId = player.entityId;
         if (this.#needEmit) this.#buildLine(LineId.InitEnv, player.entityId);
       })
       .on("PKTInitPC", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel), characterId: parsed.CharacterId };
+        this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel), characterId: parsed.CharacterId, entityId: parsed.PlayerId };
         this.#currentEncounter = new Encounter();
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -213,6 +232,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
             value: val,
           });
         }
+
+        this.#localCharacterNames.add(parsed.Name);
 
         if (this.#needEmit) {
           const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
@@ -320,6 +341,27 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTPartyInfo", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
+        if (this.#localPlayer.characterId === 0n) {
+          for(let md of parsed.MemberDatas) {
+            let isLocal = this.#guessLocalPlayerInfo(md.Name);
+            if (isLocal) {
+              this.#localPlayer.characterId = md.CharacterId;
+              this.#localPlayer.name = md.Name;
+              if (this.#localPlayer.entityId != 0n) {
+                const player: Player = {
+                  entityId: this.#localPlayer.entityId,
+                  entityType: EntityType.Player,
+                  name: this.#localPlayer.name,
+                  class: this.#localPlayer.class,
+                  gearLevel: this.#u32tof32(this.#localPlayer.gearLevel),
+                  characterId: this.#localPlayer.characterId,
+                };
+                this.#currentEncounter.entities.set(player.entityId, player);
+              }
+              break;
+            }
+          }
+        }
         // this means the party is collapsing because you are the only one left
         if (parsed.MemberDatas.length == 1 && parsed.MemberDatas[0]?.Name === this.#localPlayer.name) {
           PartyTracker.getInstance().remove(parsed.PartyInstanceId, parsed.MemberDatas[0].Name);
@@ -701,6 +743,26 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     const buf = Buffer.alloc(4);
     buf.writeUInt32LE(v);
     return Math.round(buf.readFloatLE() * 100) / 100;
+  }
+
+  #guessLocalPlayerInfo(name: string): boolean {
+    for(let si of this.#localCharacterNames) {
+      if (si === name) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  #writeLocalPlayerNamesToDisk(filename: string, playernames: Set<string>) {
+    writeFileSync(filename, JSON.stringify([...playernames.values()]));
+  }
+
+  #loadeLocalChnaracterNamesFromDisk(filename: string): Set<string> {
+    if (!existsSync(filename)) return new Set();
+    const b = readFileSync(filename, {encoding: "utf-8"});
+    const info = JSON.parse(b);
+    return new Set(info);
   }
 }
 

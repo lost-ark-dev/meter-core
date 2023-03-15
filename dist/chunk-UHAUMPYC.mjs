@@ -119,7 +119,7 @@ import {
   read7,
   read8,
   read9
-} from "./chunk-2S7YIPI5.mjs";
+} from "./chunk-HU3GXEXQ.mjs";
 
 // src/packets/generated/mapping.ts
 var mapping = /* @__PURE__ */ new Map([

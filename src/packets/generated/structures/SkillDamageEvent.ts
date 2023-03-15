@@ -2,24 +2,24 @@
 import type { Read } from "../../stream";
 import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 export type SkillDamageEvent = {
-  Unk3_m: number;
-  CurHp: bigint;
-  Damage: bigint;
   DamageAttr?: number;
-  DamageType: number;
+  MaxHp: bigint;
+  Damage: bigint;
+  Unk3_m: number;
   Modifier: number;
   TargetId: bigint;
-  MaxHp: bigint;
+  CurHp: bigint;
+  DamageType: number;
 };
 export function read(reader: Read) {
   const data = {} as SkillDamageEvent;
-  data.Unk3_m = reader.i16();
-  data.CurHp = ReadNBytesInt64.read(reader);
-  data.Damage = ReadNBytesInt64.read(reader);
   if (reader.bool()) data.DamageAttr = reader.u8();
-  data.DamageType = reader.u8();
+  data.MaxHp = ReadNBytesInt64.read(reader);
+  data.Damage = ReadNBytesInt64.read(reader);
+  data.Unk3_m = reader.i16();
   data.Modifier = reader.u8();
   data.TargetId = reader.u64();
-  data.MaxHp = ReadNBytesInt64.read(reader);
+  data.CurHp = ReadNBytesInt64.read(reader);
+  data.DamageType = reader.u8();
   return data;
 }

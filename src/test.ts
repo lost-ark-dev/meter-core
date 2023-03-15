@@ -37,9 +37,10 @@ legacyLogger.on("line", (line) => {
 /*
 stream.on("*", (data, opcode, compression, xor) => {
   try {
-    compressor.decrypt(data, opcode, compression, xor);
+    const dec = compressor.decrypt(data, opcode, compression, xor);
+    console.log(dec.toString("hex"));
   } catch (e) {
-    compressor.logErrorFunc(e);
+    console.error(e);
   }
 });
 */

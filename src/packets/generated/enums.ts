@@ -1,4 +1,4 @@
-export const enum triggersignaltype {
+export enum triggersignaltype {
   none = 0,
   out = 1,
   click_click = 2,
@@ -105,7 +105,7 @@ export const enum triggersignaltype {
   instance_timer_event_10 = 103,
   user_status_effect_removed = 104,
 }
-export const enum hitflag {
+export enum hitflag {
   normal = 0,
   critical = 1,
   miss = 2,
@@ -120,12 +120,12 @@ export const enum hitflag {
   damage_share = 11,
   dodge_hit = 12,
 }
-export const enum hitoption {
+export enum hitoption {
   back_attack = 0,
   frontal_attack = 1,
   flank_attack = 2,
 }
-export const enum stattype {
+export enum stattype {
   none = 0,
   hp = 1,
   mp = 2,
@@ -252,7 +252,7 @@ export const enum stattype {
   resource_recovery_rate = 149,
   weapon_dam = 151,
 }
-export const enum npcgrade {
+export enum npcgrade {
   none = 0,
   underling = 1,
   normal = 2,
@@ -265,7 +265,7 @@ export const enum npcgrade {
   epic_raid = 9,
   commander = 10,
 }
-export const enum npctype {
+export enum npctype {
   monster = 0,
   townsfolk = 1,
   summoned = 2,
@@ -274,7 +274,7 @@ export const enum npctype {
   pet = 5,
   monster_pc_form = 6,
 }
-export const enum itemcategory {
+export enum itemcategory {
   na = 0,
   equip_weapon_sword = 10101,
   equip_weapon_hammer = 10102,
@@ -532,6 +532,7 @@ export const enum itemcategory {
   material_life_mining = 70206,
   material_life_etc = 70207,
   material_assembly = 70300,
+  material_token_assembly = 70301,
   material_awakening_skill = 70400,
   material_tendency = 70500,
   material_tendency_deadline = 70501,
@@ -632,18 +633,19 @@ export const enum itemcategory {
   avatar_weapon_pen = 90229,
   avatar_weapon_umbrella = 90230,
   avatar_weapon_sword_female = 90231,
+  avatar_effect_footstep = 90301,
   astra_equip_will = 100101,
   astra_equip_belief = 100102,
   astra_equip_concentration = 100103,
   astra_equip_desire = 100104,
 }
-export const enum blockskilltype {
+export enum blockskilltype {
   success = 0,
   fail = 1,
   inprogress = 2,
   start = 3,
 }
-export const enum buffshowprioritycategory {
+export enum buffshowprioritycategory {
   pet = 0,
   classskill = 1,
   ability = 2,
@@ -654,7 +656,7 @@ export const enum buffshowprioritycategory {
   battleitem = 7,
   etc = 8,
 }
-export const enum statuseffectcategory {
+export enum statuseffectcategory {
   buff = 0,
   debuff = 1,
 }

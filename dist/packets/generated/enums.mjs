@@ -9,7 +9,7 @@ import {
   stattype,
   statuseffectcategory,
   triggersignaltype
-} from "../../chunk-T6Q4VKVX.mjs";
+} from "../../chunk-DXWTQAIV.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   blockskilltype,

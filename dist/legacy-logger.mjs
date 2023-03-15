@@ -1,4 +1,4 @@
-import "./chunk-T6Q4VKVX.mjs";
+import "./chunk-DXWTQAIV.mjs";
 import {
   PartyTracker
 } from "./chunk-5CJIWW4L.mjs";
@@ -369,10 +369,11 @@ var LegacyLogger = class extends TypedEmitter {
         return;
       for (const effect of parsed.statusEffectDatas) {
         const sourceId = parsed.PlayerIdOnRefresh != 0n ? parsed.PlayerIdOnRefresh : effect.SourceId;
+        const sourceEnt = this.#getSourceEntity(sourceId);
         const val = effect.Value ? effect.Value.readUInt32LE() : 0;
         var se = {
           instanceId: effect.EffectInstanceId,
-          sourceId,
+          sourceId: sourceEnt.entityId,
           started: new Date(),
           statusEffectId: effect.StatusEffectId,
           targetId: parsed.CharacterId,
@@ -559,9 +560,10 @@ var LegacyLogger = class extends TypedEmitter {
       if (!parsed)
         return;
       const val = parsed.statusEffectData.Value ? parsed.statusEffectData.Value.readUInt32LE() : 0;
+      const sourceEnt = this.#getSourceEntity(parsed.statusEffectData.SourceId);
       var se = {
         instanceId: parsed.statusEffectData.EffectInstanceId,
-        sourceId: parsed.statusEffectData.SourceId,
+        sourceId: sourceEnt.entityId,
         started: new Date(),
         statusEffectId: parsed.statusEffectData.StatusEffectId,
         targetId: parsed.ObjectId,

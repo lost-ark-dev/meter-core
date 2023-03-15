@@ -1,14 +1,14 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTAddonSkillFeatureChangeNotify = {
-  struct_113: Buffer;
+  struct_120: Buffer;
   ObjectId: bigint;
   addonSkillFeatureList: { addonSkillFeatureIdList: number[]; SkillId: number }[];
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTAddonSkillFeatureChangeNotify;
-  data.struct_113 = reader.bytes(reader.u16(), 200, 4);
+  data.struct_120 = reader.bytes(reader.u16(), 200, 4);
   data.ObjectId = reader.u64();
   data.addonSkillFeatureList = reader.array(
     reader.u16(),
@@ -23,4 +23,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTAddonSkillFeatureChangeNotify";
-export const opcode = 31789;
+export const opcode = 26664;

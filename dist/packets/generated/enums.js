@@ -572,6 +572,7 @@ var itemcategory = /* @__PURE__ */ ((itemcategory2) => {
   itemcategory2[itemcategory2["material_life_mining"] = 70206] = "material_life_mining";
   itemcategory2[itemcategory2["material_life_etc"] = 70207] = "material_life_etc";
   itemcategory2[itemcategory2["material_assembly"] = 70300] = "material_assembly";
+  itemcategory2[itemcategory2["material_token_assembly"] = 70301] = "material_token_assembly";
   itemcategory2[itemcategory2["material_awakening_skill"] = 70400] = "material_awakening_skill";
   itemcategory2[itemcategory2["material_tendency"] = 70500] = "material_tendency";
   itemcategory2[itemcategory2["material_tendency_deadline"] = 70501] = "material_tendency_deadline";
@@ -672,6 +673,7 @@ var itemcategory = /* @__PURE__ */ ((itemcategory2) => {
   itemcategory2[itemcategory2["avatar_weapon_pen"] = 90229] = "avatar_weapon_pen";
   itemcategory2[itemcategory2["avatar_weapon_umbrella"] = 90230] = "avatar_weapon_umbrella";
   itemcategory2[itemcategory2["avatar_weapon_sword_female"] = 90231] = "avatar_weapon_sword_female";
+  itemcategory2[itemcategory2["avatar_effect_footstep"] = 90301] = "avatar_effect_footstep";
   itemcategory2[itemcategory2["astra_equip_will"] = 100101] = "astra_equip_will";
   itemcategory2[itemcategory2["astra_equip_belief"] = 100102] = "astra_equip_belief";
   itemcategory2[itemcategory2["astra_equip_concentration"] = 100103] = "astra_equip_concentration";

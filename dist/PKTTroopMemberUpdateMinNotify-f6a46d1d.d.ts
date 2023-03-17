@@ -726,8 +726,8 @@ declare const opcode$5 = 22139;
 
 type PKTStatusEffectSyncDataNotify = {
     CharacterId: bigint;
-    Value: number;
     EffectInstanceId: number;
+    Value: number;
     ObjectId: bigint;
 };
 declare function read$4(buf: Buffer): PKTStatusEffectSyncDataNotify;

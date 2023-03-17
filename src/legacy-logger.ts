@@ -40,7 +40,7 @@ interface LegacyLoggerEvents {
     gearLevel: number,
     currentHp: number,
     maxHp: number,
-    characterId: bigint,
+    characterId: bigint
   ) => void;
   [LineId.NewNpc]: (id: bigint, npcId: number, name: string, currentHp: number, maxHp: number) => void;
   [LineId.Death]: (id: bigint, name: string, killerId: bigint, killerName: string) => void;
@@ -59,8 +59,8 @@ interface LegacyLoggerEvents {
     modifier: string,
     currentHp: number,
     maxHp: number,
-    effectsOnTarget: (number|bigint)[][],
-    effectsOnSource: (number|bigint)[][],
+    effectsOnTarget: (number | bigint)[][],
+    effectsOnSource: (number | bigint)[][]
   ) => void;
   [LineId.Heal]: (id: bigint, name: string, healAmount: number, currentHp: number) => void;
   [LineId.Buff]: (
@@ -84,7 +84,6 @@ export type LegacyLoggerSettings = {
 };
 
 export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
-
   #data: MeterData;
   emitText: boolean;
   emitLines: boolean;
@@ -146,8 +145,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
             StatusTracker.getInstance().RemoveLocalObject(parsed.TargetId);
           } else {
             let charId = PCIdMapper.getInstance().getCharacterId(parsed.TargetId);
-            if (charId)
-              StatusTracker.getInstance().RemovePartyObject(charId);
+            if (charId) StatusTracker.getInstance().RemovePartyObject(charId);
           }
         } else {
           StatusTracker.getInstance().RemoveLocalObject(parsed.TargetId);
@@ -177,8 +175,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().clear();
         StatusTracker.getInstance().Clear();
-        if (player.characterId != 0n)
-          PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
+        if (player.characterId != 0n) PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
         if (this.#localPlayer && this.#localPlayer.characterId && this.#localPlayer.characterId > 0n)
           PartyTracker.getInstance().completeEntry(this.#localPlayer.characterId, parsed.PlayerId);
         // console.log("PKTInitEnv", this.#localPlayer);
@@ -187,7 +184,12 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTInitPC", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#localPlayer = { name: parsed.Name, class: parsed.ClassId, gearLevel: this.#u32tof32(parsed.GearLevel), characterId: parsed.CharacterId };
+        this.#localPlayer = {
+          name: parsed.Name,
+          class: parsed.ClassId,
+          gearLevel: this.#u32tof32(parsed.GearLevel),
+          characterId: parsed.CharacterId,
+        };
         this.#currentEncounter = new Encounter();
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -195,7 +197,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           name: parsed.Name,
           class: parsed.ClassId,
           gearLevel: this.#u32tof32(parsed.GearLevel),
-          characterId: parsed.CharacterId
+          characterId: parsed.CharacterId,
         };
         // console.log("PKTInitPC", this.#localPlayer);
         this.#currentEncounter.entities.set(player.entityId, player);
@@ -226,7 +228,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
             player.gearLevel,
             Number(statsMap.get(stattype.hp)) || 0,
             Number(statsMap.get(stattype.max_hp)) || 0,
-            player.characterId,
+            player.characterId
           );
         }
       })
@@ -301,7 +303,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
             player.gearLevel,
             Number(statsMap.get(stattype.hp)) || 0,
             Number(statsMap.get(stattype.max_hp)) || 0,
-            player.characterId,
+            player.characterId
           );
         }
       })
@@ -313,6 +315,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           entityType: EntityType.Projectile,
           name: parsed.projectileInfo.ProjectileId.toString(16),
           ownerId: parsed.projectileInfo.OwnerId,
+          skillEffectId: parsed.projectileInfo.SkillEffect,
+          skillId: parsed.projectileInfo.SkillId,
         };
         this.#currentEncounter.entities.set(projectile.entityId, projectile);
       })
@@ -350,14 +354,14 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
             targetId: parsed.CharacterId,
             type: StatusEffecType.Party,
             value: val,
-          }
+          };
           StatusTracker.getInstance().RegisterStatusEffect(se);
         }
       })
       .on("PKTPartyStatusEffectRemoveNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for(const effectId of parsed.statusEffectIds)
+        for (const effectId of parsed.statusEffectIds)
           StatusTracker.getInstance().RemoveStatusEffect(parsed.CharacterId, effectId, StatusEffecType.Party);
       })
       .on("PKTPartyStatusEffectResultNotify", (pkt) => {
@@ -374,8 +378,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTRemoveObject", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for (let upo of parsed.unpublishedObjects)
-          StatusTracker.getInstance().RemoveLocalObject(upo.ObjectId);
+        for (let upo of parsed.unpublishedObjects) StatusTracker.getInstance().RemoveLocalObject(upo.ObjectId);
       })
       .on("PKTSkillDamageAbnormalMoveNotify", (pkt) => {
         if (this.#needEmit) {
@@ -383,7 +386,6 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           if (!parsedDmg) return;
           let sourceEntity = this.#getSourceEntity(parsedDmg.SourceId);
           let skillName = this.#data.getSkillName(parsedDmg.SkillId);
-          const skillEffect = this.#data.getSkillEffectComment(parsedDmg.SkillEffectId);
           sourceEntity = this.#guessIsPlayer(sourceEntity, parsedDmg.SkillId);
           parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
             if (
@@ -401,33 +403,55 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               skillName = "Bleed";
             var statusEffectsOnTarget = [];
             var statusEffectsOnSource = [];
-            if (sourceEntity.entityType == EntityType.Player) {
+            if (sourceEntity.entityType === EntityType.Player) {
               const p = sourceEntity as Player;
               const isLocalPlayer = p.name == this.#localPlayer.name;
               var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
               if (isInParty) {
                 const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
                 if (partyId) {
-                  const effect = StatusTracker.getInstance().GetStatusEffects(isLocalPlayer ? p.entityId : p.characterId, isLocalPlayer ? StatusEffecType.Local : StatusEffecType.Party);
-                  for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                  const effect = StatusTracker.getInstance().GetStatusEffects(
+                    isLocalPlayer ? p.entityId : p.characterId,
+                    isLocalPlayer ? StatusEffecType.Local : StatusEffecType.Party
+                  );
+                  for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
                   // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
-                  const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(event.skillDamageEvent.TargetId, StatusEffecType.Local, partyId);
-                  for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
+                  const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(
+                    event.skillDamageEvent.TargetId,
+                    StatusEffecType.Local,
+                    partyId
+                  );
+                  for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
                 }
-              } else if(isLocalPlayer) {
+              } else if (isLocalPlayer) {
                 const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffecType.Local);
-                for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                const tEffects = StatusTracker.getInstance().GetStatusEffects(event.skillDamageEvent.TargetId, StatusEffecType.Local);
-                for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
+                for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                const tEffects = StatusTracker.getInstance().GetStatusEffects(
+                  event.skillDamageEvent.TargetId,
+                  StatusEffecType.Local
+                );
+                for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
               }
             }
+            // Override skillEffect for battleitems (this way we know the real item used: slendid or not)
+            let skillEffectId = parsedDmg.SkillEffectId;
+            let skillEffect: string | undefined;
+            if (this.#data.isBattleItem(skillEffectId, "attack")) {
+              const entity = this.#currentEncounter.entities.get(parsedDmg.SourceId);
+              if (entity && entity.entityType === EntityType.Projectile) {
+                const proj = entity as Projectile;
+                skillEffectId = proj.skillEffectId;
+                skillEffect = this.#data.getBattleItemName(skillEffectId);
+              }
+            }
+            skillEffect = skillEffect ?? this.#data.getSkillEffectComment(skillEffectId);
             this.#buildLine(
               LineId.Damage,
               sourceEntity.entityId,
               sourceEntity.name,
               parsedDmg.SkillId,
               skillName,
-              parsedDmg.SkillEffectId,
+              skillEffectId,
               skillEffect,
               event.skillDamageEvent.TargetId,
               this.#getEntityName(event.skillDamageEvent.TargetId),
@@ -436,7 +460,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               Number(event.skillDamageEvent.CurHp),
               Number(event.skillDamageEvent.MaxHp),
               statusEffectsOnTarget,
-              statusEffectsOnSource,
+              statusEffectsOnSource
             );
           });
         }
@@ -463,35 +487,54 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.Modifier & (hitflag.dot | hitflag.dot_critical)
             )
               skillName = "Bleed";
-              var statusEffectsOnTarget = [];
-              var statusEffectsOnSource = [];
-              if (sourceEntity.entityType == EntityType.Player) {
-                const p = sourceEntity as Player;
-                const isLocalPlayer = p.name == this.#localPlayer.name;
-                var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
-                if (isInParty) {
-                  const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
-                  if (partyId) {
-                    const effect = StatusTracker.getInstance().GetStatusEffects(isLocalPlayer ? p.entityId : p.characterId, isLocalPlayer ? StatusEffecType.Local : StatusEffecType.Party);
-                    for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                    // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
-                    const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(event.TargetId, StatusEffecType.Local, partyId);
-                    for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
-                  }
-                } else if(isLocalPlayer) {
-                  const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffecType.Local);
-                  for(var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                  const tEffects = StatusTracker.getInstance().GetStatusEffects(event.TargetId, StatusEffecType.Local);
-                  for(var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
+            var statusEffectsOnTarget = [];
+            var statusEffectsOnSource = [];
+            if (sourceEntity.entityType === EntityType.Player) {
+              const p = sourceEntity as Player;
+              const isLocalPlayer = p.name == this.#localPlayer.name;
+              var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
+              if (isInParty) {
+                const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
+                if (partyId) {
+                  const effect = StatusTracker.getInstance().GetStatusEffects(
+                    isLocalPlayer ? p.entityId : p.characterId,
+                    isLocalPlayer ? StatusEffecType.Local : StatusEffecType.Party
+                  );
+                  for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                  // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
+                  const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(
+                    event.TargetId,
+                    StatusEffecType.Local,
+                    partyId
+                  );
+                  for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
                 }
+              } else if (isLocalPlayer) {
+                const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffecType.Local);
+                for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
+                const tEffects = StatusTracker.getInstance().GetStatusEffects(event.TargetId, StatusEffecType.Local);
+                for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
               }
+            }
+            // Override skillEffect for battleitems (this way we know the real item used: slendid or not)
+            let skillEffectId = parsedDmg.SkillEffectId;
+            let skillEffect: string | undefined;
+            if (this.#data.isBattleItem(skillEffectId, "attack")) {
+              const entity = this.#currentEncounter.entities.get(parsedDmg.SourceId);
+              if (entity && entity.entityType === EntityType.Projectile) {
+                const proj = entity as Projectile;
+                skillEffectId = proj.skillEffectId;
+                skillEffect = this.#data.getBattleItemName(skillEffectId);
+              }
+            }
+            skillEffect = skillEffect ?? this.#data.getSkillEffectComment(skillEffectId);
             this.#buildLine(
               LineId.Damage,
               sourceEntity.entityId,
               sourceEntity.name,
               parsedDmg.SkillId,
               skillName,
-              parsedDmg.SkillEffectId,
+              skillEffectId,
               skillEffect,
               event.TargetId,
               this.#getEntityName(event.TargetId),
@@ -500,7 +543,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               Number(event.CurHp),
               Number(event.MaxHp),
               statusEffectsOnTarget,
-              statusEffectsOnSource,
+              statusEffectsOnSource
             );
           });
         }
@@ -574,7 +617,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTStatusEffectRemoveNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for(const effectId of parsed.statusEffectIds)
+        for (const effectId of parsed.statusEffectIds)
           StatusTracker.getInstance().RemoveStatusEffect(parsed.ObjectId, effectId, StatusEffecType.Local);
       })
       .on("PKTTriggerBossBattleStatus", (pkt) => {
@@ -676,7 +719,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         newEntity.gearLevel,
         0,
         0,
-        newEntity.characterId,
+        newEntity.characterId
       );
       return newEntity;
     }
@@ -743,4 +786,6 @@ type Summon = Entity & {
 
 type Projectile = Entity & {
   ownerId: bigint;
+  skillEffectId: number;
+  skillId: number;
 };

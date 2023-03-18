@@ -6,7 +6,7 @@ import type { StatusEffectData } from "./packets/generated/structures/StatusEffe
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
 import type { PKTStream } from "./pkt-stream";
-import { StatusEffect, StatusEffectTargetType, StatusEffectBuffCategory, StatusEffectCategory, StatusEffectShowType, StatusEffectType, StatusTracker } from "./statustracker";
+import { StatusEffect, StatusEffectTargetType, StatusEffectBuffCategory, StatusEffectCategory, StatusEffectShowType, StatusTracker } from "./statustracker";
 
 export const enum LineId {
   InitEnv = 1,
@@ -404,37 +404,31 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.skillDamageEvent.Modifier & (hitflag.dot | hitflag.dot_critical)
             )
               skillName = "Bleed";
-            var statusEffectsOnTarget = [];
-            var statusEffectsOnSource = [];
-            if (sourceEntity.entityType === EntityType.Player) {
-              const p = sourceEntity as Player;
-              const isLocalPlayer = p.name == this.#localPlayer.name;
-              var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
-              if (isInParty) {
-                const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
-                if (partyId) {
-                  const effect = StatusTracker.getInstance().GetStatusEffects(
-                    isLocalPlayer ? p.entityId : p.characterId,
-                    isLocalPlayer ? StatusEffectTargetType.Local : StatusEffectTargetType.Party
-                  );
-                  for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                  // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
-                  const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(
-                    event.skillDamageEvent.TargetId,
-                    StatusEffectTargetType.Local,
-                    partyId
-                  );
-                  for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
-                }
-              } else if (isLocalPlayer) {
-                const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffectTargetType.Local);
-                for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                const tEffects = StatusTracker.getInstance().GetStatusEffects(
-                  event.skillDamageEvent.TargetId,
-                  StatusEffectTargetType.Local
-                );
-                for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
-              }
+            const statusEffectsOnTarget = [];
+            const statusEffectsOnSource = [];
+            const shouldUsePartyBuffForSource = this.#shouldUsePartyStatusEffectForEntity(sourceEntity);
+            const sourceEffects =  StatusTracker.getInstance().GetStatusEffects(
+              shouldUsePartyBuffForSource ? (sourceEntity as Player).characterId : sourceEntity.entityId,
+              shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+            );
+            for(let se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
+
+            const targetEntity = this.#currentEncounter.entities.get(event.skillDamageEvent.TargetId);
+            if (targetEntity) {
+              const shouldUsePartyBuffForTarget = this.#shouldUsePartyStatusEffectForEntity(targetEntity);
+              const sourceIsInParty = this.#isEntityInParty(sourceEntity);
+              const sourcePartyId = sourceIsInParty ? PartyTracker.getInstance().getPartyIdFromEntityId(sourceEntity.entityId) : undefined;
+              const targetEffects = sourceIsInParty && sourcePartyId
+              ? StatusTracker.getInstance().GetStatusEffectsFromParty(
+                shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
+                shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
+                sourcePartyId
+              )
+              : StatusTracker.getInstance().GetStatusEffects(
+                shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
+                shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+              );
+              for(let se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
             }
             // Override skillEffect for battleitems (this way we know the real item used: slendid or not)
             let skillEffectId = parsedDmg.SkillEffectId;
@@ -490,35 +484,35 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               event.Modifier & (hitflag.dot | hitflag.dot_critical)
             )
               skillName = "Bleed";
-            var statusEffectsOnTarget = [];
-            var statusEffectsOnSource = [];
-            if (sourceEntity.entityType === EntityType.Player) {
-              const p = sourceEntity as Player;
-              const isLocalPlayer = p.name == this.#localPlayer.name;
-              var isInParty = PartyTracker.getInstance().isCharacterInParty(p.characterId);
-              if (isInParty) {
-                const partyId = PartyTracker.getInstance().getPartyIdFromCharacterId(p.characterId);
-                if (partyId) {
-                  const effect = StatusTracker.getInstance().GetStatusEffects(
-                    isLocalPlayer ? p.entityId : p.characterId,
-                    isLocalPlayer ? StatusEffectTargetType.Local : StatusEffectTargetType.Party
-                  );
-                  for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                  // This is technically bugged since we could be hitting a player in an other party or our own, but for bosses it works like this
-                  const tEffects = StatusTracker.getInstance().GetStatusEffectsFromParty(
-                    event.TargetId,
-                    StatusEffectTargetType.Local,
-                    partyId
-                  );
-                  for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
-                }
-              } else if (isLocalPlayer) {
-                const effect = StatusTracker.getInstance().GetStatusEffects(p.entityId, StatusEffectTargetType.Local);
-                for (var ef of effect) statusEffectsOnSource.push([ef.statusEffectId, ef.sourceId]);
-                const tEffects = StatusTracker.getInstance().GetStatusEffects(event.TargetId, StatusEffectTargetType.Local);
-                for (var ef of tEffects) statusEffectsOnTarget.push([ef.statusEffectId, ef.sourceId]);
-              }
+
+            const statusEffectsOnTarget = [];
+            const statusEffectsOnSource = [];
+
+            const shouldUsePartyBuffForSource = this.#shouldUsePartyStatusEffectForEntity(sourceEntity);
+            const sourceEffects =  StatusTracker.getInstance().GetStatusEffects(
+              shouldUsePartyBuffForSource ? (sourceEntity as Player).characterId : sourceEntity.entityId,
+              shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+            );
+            for(let se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
+
+            const targetEntity = this.#currentEncounter.entities.get(event.TargetId);
+            if (targetEntity) {
+              const shouldUsePartyBuffForTarget = this.#shouldUsePartyStatusEffectForEntity(targetEntity);
+              const sourceIsInParty = this.#isEntityInParty(sourceEntity);
+              const sourcePartyId = sourceIsInParty ? PartyTracker.getInstance().getPartyIdFromEntityId(sourceEntity.entityId) : undefined;
+              const targetEffects = sourceIsInParty && sourcePartyId
+              ? StatusTracker.getInstance().GetStatusEffectsFromParty(
+                shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
+                shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
+                sourcePartyId
+              )
+              : StatusTracker.getInstance().GetStatusEffects(
+                shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
+                shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+              );
+              for(let se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
             }
+
             // Override skillEffect for battleitems (this way we know the real item used: slendid or not)
             let skillEffectId = parsedDmg.SkillEffectId;
             let skillEffect: string | undefined;
@@ -751,21 +745,46 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     return Math.round(buf.readFloatLE() * 100) / 100;
   }
 
+  #shouldUsePartyStatusEffectForEntity(entity: Entity) {
+    if (entity.entityType != EntityType.Player) return false;
+    const player: Player = entity as Player;
+    return this.#shouldUsePartyStatusEffect(player.characterId);
+  }
+
+  #shouldUsePartyStatusEffect(characterId: bigint) {
+    const localPlayerIsInParty = PartyTracker.getInstance().isCharacterInParty(this.#localPlayer.characterId);
+    const affectedPlayerIsInParty = PartyTracker.getInstance().isCharacterInParty(characterId);
+    if (localPlayerIsInParty) {
+      if (!affectedPlayerIsInParty || characterId == this.#localPlayer.characterId) {
+        // not in party or local player use local status effects
+        return false;
+      }
+      const localPlayerPartyId = PartyTracker.getInstance().getPartyIdFromCharacterId(this.#localPlayer.characterId);
+      const affectedPlayerPartyId = PartyTracker.getInstance().getPartyIdFromCharacterId(characterId);
+      if (localPlayerPartyId == affectedPlayerPartyId) {
+        // same party with local player use party status effects
+        return true;
+      }
+      // in a party but not with the local player use local status effects
+      return false;
+    }
+    // local player not in a party always use local status effects
+    return false;
+  }
+
+  #isEntityInParty(entity: Entity) {
+    if (entity.entityType !== EntityType.Player) return false;
+    const player = entity as Player;
+    return PartyTracker.getInstance().isCharacterInParty(player.characterId);
+  }
+
   #buildStatusEffect(se: StatusEffectData, targetId: bigint, sourceId: bigint, targetType: StatusEffectTargetType): StatusEffect {
     const val: number = se.Value ? se.Value.readUInt32LE() : 0;
-    let statusEffectType = StatusEffectType.Other;
     let statusEffectCategory = StatusEffectCategory.Other;
     let statusEffectBuffCategory = StatusEffectBuffCategory.Other;
     let showType = StatusEffectShowType.Other;
     const effectInfo = this.#data.skillBuff.get(se.StatusEffectId);
     if (effectInfo) {
-      switch(effectInfo.type) {
-        case "shield":
-          statusEffectType = StatusEffectType.Shield;
-          break;
-        default:
-          statusEffectType = StatusEffectType.Other;
-      }
       switch(effectInfo.category) {
         case "debuff":
           statusEffectCategory = StatusEffectCategory.Debuff;

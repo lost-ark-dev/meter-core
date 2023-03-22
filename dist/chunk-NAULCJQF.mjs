@@ -34,6 +34,7 @@ import {
   name39,
   name4,
   name40,
+  name41,
   name5,
   name6,
   name7,
@@ -74,6 +75,7 @@ import {
   opcode39,
   opcode4,
   opcode40,
+  opcode41,
   opcode5,
   opcode6,
   opcode7,
@@ -114,12 +116,13 @@ import {
   read39,
   read4,
   read40,
+  read41,
   read5,
   read6,
   read7,
   read8,
   read9
-} from "./chunk-RIBNCGPI.mjs";
+} from "./chunk-YO7BXYBM.mjs";
 
 // src/packets/generated/mapping.ts
 var mapping = /* @__PURE__ */ new Map([
@@ -144,19 +147,16 @@ var mapping = /* @__PURE__ */ new Map([
   [opcode16, [name16, read16]],
   [opcode17, [name17, read17]],
   [opcode18, [name18, read18]],
-  [
-    opcode19,
-    [name19, read19]
-  ],
+  [opcode19, [name19, read19]],
   [
     opcode20,
     [name20, read20]
   ],
-  [opcode21, [name21, read21]],
   [
-    opcode22,
-    [name22, read22]
+    opcode21,
+    [name21, read21]
   ],
+  [opcode22, [name22, read22]],
   [
     opcode23,
     [name23, read23]
@@ -169,14 +169,17 @@ var mapping = /* @__PURE__ */ new Map([
     opcode25,
     [name25, read25]
   ],
-  [opcode26, [name26, read26]],
+  [
+    opcode26,
+    [name26, read26]
+  ],
   [opcode27, [name27, read27]],
   [opcode28, [name28, read28]],
+  [opcode29, [name29, read29]],
   [
-    opcode29,
-    [name29, read29]
+    opcode30,
+    [name30, read30]
   ],
-  [opcode30, [name30, read30]],
   [opcode31, [name31, read31]],
   [opcode32, [name32, read32]],
   [opcode33, [name33, read33]],
@@ -186,7 +189,8 @@ var mapping = /* @__PURE__ */ new Map([
   [opcode37, [name37, read37]],
   [opcode38, [name38, read38]],
   [opcode39, [name39, read39]],
-  [opcode40, [name40, read40]]
+  [opcode40, [name40, read40]],
+  [opcode41, [name41, read41]]
 ]);
 
 export {

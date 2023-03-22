@@ -10,6 +10,7 @@ export { name as PKTInitAbility } from "./definitions/PKTInitAbility";
 export { name as PKTInitEnv } from "./definitions/PKTInitEnv";
 export { name as PKTInitPC } from "./definitions/PKTInitPC";
 export { name as PKTInitLocal } from "./definitions/PKTInitLocal";
+export { name as PKTMigrationExecute } from "./definitions/PKTMigrationExecute";
 export { name as PKTNewNpc } from "./definitions/PKTNewNpc";
 export { name as PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export { name as PKTNewPC } from "./definitions/PKTNewPC";

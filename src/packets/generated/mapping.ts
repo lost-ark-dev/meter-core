@@ -17,6 +17,7 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTInitEnv, [names.PKTInitEnv, reads.PKTInitEnv]],
   [codes.PKTInitPC, [names.PKTInitPC, reads.PKTInitPC]],
   [codes.PKTInitLocal, [names.PKTInitLocal, reads.PKTInitLocal]],
+  [codes.PKTMigrationExecute, [names.PKTMigrationExecute, reads.PKTMigrationExecute]],
   [codes.PKTNewNpc, [names.PKTNewNpc, reads.PKTNewNpc]],
   [codes.PKTNewNpcSummon, [names.PKTNewNpcSummon, reads.PKTNewNpcSummon]],
   [codes.PKTNewPC, [names.PKTNewPC, reads.PKTNewPC]],

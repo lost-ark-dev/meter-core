@@ -11,4 +11,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTAbilityChangeNotify";
-export const opcode = 5787;
+export const opcode = 2055;

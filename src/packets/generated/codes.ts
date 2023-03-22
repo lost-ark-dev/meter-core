@@ -10,6 +10,7 @@ export { opcode as PKTInitAbility } from "./definitions/PKTInitAbility";
 export { opcode as PKTInitEnv } from "./definitions/PKTInitEnv";
 export { opcode as PKTInitPC } from "./definitions/PKTInitPC";
 export { opcode as PKTInitLocal } from "./definitions/PKTInitLocal";
+export { opcode as PKTMigrationExecute } from "./definitions/PKTMigrationExecute";
 export { opcode as PKTNewNpc } from "./definitions/PKTNewNpc";
 export { opcode as PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export { opcode as PKTNewPC } from "./definitions/PKTNewPC";

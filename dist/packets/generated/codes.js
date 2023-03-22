@@ -31,157 +31,161 @@ __export(codes_exports, {
   PKTInitEnv: () => opcode9,
   PKTInitLocal: () => opcode11,
   PKTInitPC: () => opcode10,
-  PKTNewNpc: () => opcode12,
-  PKTNewNpcSummon: () => opcode13,
-  PKTNewPC: () => opcode14,
-  PKTNewProjectile: () => opcode15,
-  PKTParalyzationStateNotify: () => opcode16,
-  PKTPartyInfo: () => opcode17,
-  PKTPartyLeaveResult: () => opcode18,
-  PKTPartyPassiveStatusEffectAddNotify: () => opcode19,
-  PKTPartyPassiveStatusEffectRemoveNotify: () => opcode20,
-  PKTPartyStatusEffectAddNotify: () => opcode21,
-  PKTPartyStatusEffectRemoveNotify: () => opcode22,
-  PKTPartyStatusEffectResultNotify: () => opcode23,
-  PKTPassiveStatusEffectAddNotify: () => opcode24,
-  PKTPassiveStatusEffectRemoveNotify: () => opcode25,
-  PKTRaidBossKillNotify: () => opcode26,
-  PKTRaidResult: () => opcode27,
-  PKTRemoveObject: () => opcode28,
-  PKTSkillDamageAbnormalMoveNotify: () => opcode29,
-  PKTSkillDamageNotify: () => opcode30,
-  PKTSkillStageNotify: () => opcode31,
-  PKTSkillStartNotify: () => opcode32,
-  PKTStatChangeOriginNotify: () => opcode33,
-  PKTStatusEffectAddNotify: () => opcode34,
-  PKTStatusEffectRemoveNotify: () => opcode35,
-  PKTStatusEffectSyncDataNotify: () => opcode36,
-  PKTTriggerBossBattleStatus: () => opcode37,
-  PKTTriggerFinishNotify: () => opcode38,
-  PKTTriggerStartNotify: () => opcode39,
-  PKTTroopMemberUpdateMinNotify: () => opcode40
+  PKTMigrationExecute: () => opcode12,
+  PKTNewNpc: () => opcode13,
+  PKTNewNpcSummon: () => opcode14,
+  PKTNewPC: () => opcode15,
+  PKTNewProjectile: () => opcode16,
+  PKTParalyzationStateNotify: () => opcode17,
+  PKTPartyInfo: () => opcode18,
+  PKTPartyLeaveResult: () => opcode19,
+  PKTPartyPassiveStatusEffectAddNotify: () => opcode20,
+  PKTPartyPassiveStatusEffectRemoveNotify: () => opcode21,
+  PKTPartyStatusEffectAddNotify: () => opcode22,
+  PKTPartyStatusEffectRemoveNotify: () => opcode23,
+  PKTPartyStatusEffectResultNotify: () => opcode24,
+  PKTPassiveStatusEffectAddNotify: () => opcode25,
+  PKTPassiveStatusEffectRemoveNotify: () => opcode26,
+  PKTRaidBossKillNotify: () => opcode27,
+  PKTRaidResult: () => opcode28,
+  PKTRemoveObject: () => opcode29,
+  PKTSkillDamageAbnormalMoveNotify: () => opcode30,
+  PKTSkillDamageNotify: () => opcode31,
+  PKTSkillStageNotify: () => opcode32,
+  PKTSkillStartNotify: () => opcode33,
+  PKTStatChangeOriginNotify: () => opcode34,
+  PKTStatusEffectAddNotify: () => opcode35,
+  PKTStatusEffectRemoveNotify: () => opcode36,
+  PKTStatusEffectSyncDataNotify: () => opcode37,
+  PKTTriggerBossBattleStatus: () => opcode38,
+  PKTTriggerFinishNotify: () => opcode39,
+  PKTTriggerStartNotify: () => opcode40,
+  PKTTroopMemberUpdateMinNotify: () => opcode41
 });
 module.exports = __toCommonJS(codes_exports);
 
 // src/packets/generated/definitions/PKTAbilityChangeNotify.ts
-var opcode = 5787;
+var opcode = 2055;
 
 // src/packets/generated/definitions/PKTActiveAbilityNotify.ts
-var opcode2 = 39249;
+var opcode2 = 8789;
 
 // src/packets/generated/definitions/PKTAddonSkillFeatureChangeNotify.ts
-var opcode3 = 12299;
+var opcode3 = 27714;
 
 // src/packets/generated/definitions/PKTAuthTokenResult.ts
-var opcode4 = 51457;
+var opcode4 = 51585;
 
 // src/packets/generated/definitions/PKTBlockSkillStateNotify.ts
-var opcode5 = 5952;
+var opcode5 = 14430;
 
 // src/packets/generated/definitions/PKTCounterAttackNotify.ts
-var opcode6 = 17998;
+var opcode6 = 25211;
 
 // src/packets/generated/definitions/PKTDeathNotify.ts
-var opcode7 = 30293;
+var opcode7 = 1006;
 
 // src/packets/generated/definitions/PKTInitAbility.ts
-var opcode8 = 19004;
+var opcode8 = 59534;
 
 // src/packets/generated/definitions/PKTInitEnv.ts
-var opcode9 = 8280;
+var opcode9 = 5818;
 
 // src/packets/generated/definitions/PKTInitPC.ts
-var opcode10 = 23879;
+var opcode10 = 49736;
 
 // src/packets/generated/definitions/PKTInitLocal.ts
-var opcode11 = 48300;
+var opcode11 = 7987;
+
+// src/packets/generated/definitions/PKTMigrationExecute.ts
+var opcode12 = 43659;
 
 // src/packets/generated/definitions/PKTNewNpc.ts
-var opcode12 = 9084;
+var opcode13 = 29519;
 
 // src/packets/generated/definitions/PKTNewNpcSummon.ts
-var opcode13 = 20589;
+var opcode14 = 34300;
 
 // src/packets/generated/definitions/PKTNewPC.ts
-var opcode14 = 42606;
+var opcode15 = 34863;
 
 // src/packets/generated/definitions/PKTNewProjectile.ts
-var opcode15 = 21277;
+var opcode16 = 55720;
 
 // src/packets/generated/definitions/PKTParalyzationStateNotify.ts
-var opcode16 = 39081;
+var opcode17 = 24051;
 
 // src/packets/generated/definitions/PKTPartyInfo.ts
-var opcode17 = 39309;
+var opcode18 = 10839;
 
 // src/packets/generated/definitions/PKTPartyLeaveResult.ts
-var opcode18 = 26884;
+var opcode19 = 41810;
 
 // src/packets/generated/definitions/PKTPartyPassiveStatusEffectAddNotify.ts
-var opcode19 = 50269;
+var opcode20 = 7578;
 
 // src/packets/generated/definitions/PKTPartyPassiveStatusEffectRemoveNotify.ts
-var opcode20 = 34295;
+var opcode21 = 45127;
 
 // src/packets/generated/definitions/PKTPartyStatusEffectAddNotify.ts
-var opcode21 = 19066;
+var opcode22 = 17518;
 
 // src/packets/generated/definitions/PKTPartyStatusEffectRemoveNotify.ts
-var opcode22 = 39897;
+var opcode23 = 35134;
 
 // src/packets/generated/definitions/PKTPartyStatusEffectResultNotify.ts
-var opcode23 = 50964;
+var opcode24 = 7534;
 
 // src/packets/generated/definitions/PKTPassiveStatusEffectAddNotify.ts
-var opcode24 = 15589;
+var opcode25 = 12065;
 
 // src/packets/generated/definitions/PKTPassiveStatusEffectRemoveNotify.ts
-var opcode25 = 23148;
+var opcode26 = 28134;
 
 // src/packets/generated/definitions/PKTRaidBossKillNotify.ts
-var opcode26 = 44655;
+var opcode27 = 845;
 
 // src/packets/generated/definitions/PKTRaidResult.ts
-var opcode27 = 54224;
+var opcode28 = 34049;
 
 // src/packets/generated/definitions/PKTRemoveObject.ts
-var opcode28 = 47607;
+var opcode29 = 57048;
 
 // src/packets/generated/definitions/PKTSkillDamageAbnormalMoveNotify.ts
-var opcode29 = 43771;
+var opcode30 = 15322;
 
 // src/packets/generated/definitions/PKTSkillDamageNotify.ts
-var opcode30 = 17502;
+var opcode31 = 30373;
 
 // src/packets/generated/definitions/PKTSkillStageNotify.ts
-var opcode31 = 29272;
+var opcode32 = 23925;
 
 // src/packets/generated/definitions/PKTSkillStartNotify.ts
-var opcode32 = 37729;
+var opcode33 = 12114;
 
 // src/packets/generated/definitions/PKTStatChangeOriginNotify.ts
-var opcode33 = 19960;
+var opcode34 = 3778;
 
 // src/packets/generated/definitions/PKTStatusEffectAddNotify.ts
-var opcode34 = 22838;
+var opcode35 = 5430;
 
 // src/packets/generated/definitions/PKTStatusEffectRemoveNotify.ts
-var opcode35 = 22139;
+var opcode36 = 17974;
 
 // src/packets/generated/definitions/PKTStatusEffectSyncDataNotify.ts
-var opcode36 = 38506;
+var opcode37 = 30620;
 
 // src/packets/generated/definitions/PKTTriggerBossBattleStatus.ts
-var opcode37 = 42951;
+var opcode38 = 23146;
 
 // src/packets/generated/definitions/PKTTriggerFinishNotify.ts
-var opcode38 = 31636;
+var opcode39 = 17709;
 
 // src/packets/generated/definitions/PKTTriggerStartNotify.ts
-var opcode39 = 59762;
+var opcode40 = 43437;
 
 // src/packets/generated/definitions/PKTTroopMemberUpdateMinNotify.ts
-var opcode40 = 927;
+var opcode41 = 23607;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PKTAbilityChangeNotify,
@@ -195,6 +199,7 @@ var opcode40 = 927;
   PKTInitEnv,
   PKTInitLocal,
   PKTInitPC,
+  PKTMigrationExecute,
   PKTNewNpc,
   PKTNewNpcSummon,
   PKTNewPC,

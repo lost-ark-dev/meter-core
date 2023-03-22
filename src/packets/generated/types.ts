@@ -10,6 +10,7 @@ export { PKTInitAbility } from "./definitions/PKTInitAbility";
 export { PKTInitEnv } from "./definitions/PKTInitEnv";
 export { PKTInitPC } from "./definitions/PKTInitPC";
 export { PKTInitLocal } from "./definitions/PKTInitLocal";
+export { PKTMigrationExecute } from "./definitions/PKTMigrationExecute";
 export { PKTNewNpc } from "./definitions/PKTNewNpc";
 export { PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export { PKTNewPC } from "./definitions/PKTNewPC";

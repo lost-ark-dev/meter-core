@@ -13,6 +13,7 @@ export interface PKTStreamEvents {
   PKTInitEnv: (pkt: PKT<types.PKTInitEnv>) => void;
   PKTInitPC: (pkt: PKT<types.PKTInitPC>) => void;
   PKTInitLocal: (pkt: PKT<types.PKTInitLocal>) => void;
+  PKTMigrationExecute: (pkt: PKT<types.PKTMigrationExecute>) => void;
   PKTNewNpc: (pkt: PKT<types.PKTNewNpc>) => void;
   PKTNewNpcSummon: (pkt: PKT<types.PKTNewNpcSummon>) => void;
   PKTNewPC: (pkt: PKT<types.PKTNewPC>) => void;

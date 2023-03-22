@@ -13,6 +13,7 @@ export type Skill = {
   icon: string;
   summonids?: number[];
   summonsourceskill?: number;
+  sourceskill?: number;
 };
 
 export type SkillBuff = {
@@ -29,7 +30,7 @@ export type SkillBuff = {
   uniquegroup: number;
   overlapFlag: number;
   passiveoption: PassiveOption[];
-  sourceskills?: number[];
+  sourceskill?: number;
   setname?: string; // set nicename when buffcategory === "set"
 };
 
@@ -59,6 +60,7 @@ export type SkillEffect = {
   id: number;
   comment: string;
   stagger: number;
+  sourceskill: number;
   itemname?: string;
   itemdesc?: string;
   icon?: string;

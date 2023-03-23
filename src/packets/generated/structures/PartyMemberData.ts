@@ -16,7 +16,7 @@ export type PartyMemberData = {
   Unk10: number;
   Unk11: number;
   MaxHp: bigint;
-  Unk13: number;
+  GearLevel: number;
   ZoneId: number;
   Unk15: number;
   ClassId: number;
@@ -39,7 +39,7 @@ export function read(reader: Read) {
   data.Unk10 = reader.u16();
   data.Unk11 = reader.u8();
   data.MaxHp = ReadNBytesInt64.read(reader);
-  data.Unk13 = reader.u32();
+  data.GearLevel = reader.u32();
   data.ZoneId = reader.u32();
   data.Unk15 = reader.u8();
   data.ClassId = reader.u16();

@@ -475,7 +475,7 @@ type PartyMemberData = {
     Unk10: number;
     Unk11: number;
     MaxHp: bigint;
-    Unk13: number;
+    GearLevel: number;
     ZoneId: number;
     Unk15: number;
     ClassId: number;

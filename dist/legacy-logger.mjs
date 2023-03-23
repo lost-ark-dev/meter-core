@@ -650,6 +650,13 @@ var LegacyLogger = class extends TypedEmitter {
           this.#wasWipe = true;
           break;
       }
+    }).on("PKTMigrationExecute", (pkt) => {
+      if (this.#localPlayer.characterId !== 0n)
+        return;
+      const parsed = pkt.parsed;
+      if (!parsed)
+        return;
+      this.#localPlayer.characterId = parsed.Account_CharacterId1 > parsed.Account_CharacterId2 ? parsed.Account_CharacterId2 : parsed.Account_CharacterId2;
     });
   }
   #buildLine(id, ...args) {

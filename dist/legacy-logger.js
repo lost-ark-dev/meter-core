@@ -531,7 +531,17 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       }
       PartyTracker.getInstance().removePartyMappings(parsed.PartyInstanceId);
       for (const pm of parsed.MemberDatas) {
-        PartyTracker.getInstance().add(pm.CharacterId, void 0, parsed.PartyInstanceId, parsed.RaidInstanceId);
+        const entityId = PCIdMapper.getInstance().getEntityId(pm.CharacterId);
+        if (entityId) {
+          const ent = this.#currentEncounter.entities.get(entityId);
+          if (ent && ent.entityType === EntityType.Player) {
+            const p = ent;
+            p.gearLevel = pm.GearLevel;
+            p.name = pm.Name;
+            p.class = pm.ClassId;
+          }
+        }
+        PartyTracker.getInstance().add(pm.CharacterId, entityId, parsed.PartyInstanceId, parsed.RaidInstanceId);
       }
     }).on("PKTPartyLeaveResult", (pkt) => {
       const parsed = pkt.parsed;

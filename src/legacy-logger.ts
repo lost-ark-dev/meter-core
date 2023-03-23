@@ -331,7 +331,20 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         }
         PartyTracker.getInstance().removePartyMappings(parsed.PartyInstanceId);
         for (const pm of parsed.MemberDatas) {
-          PartyTracker.getInstance().add(pm.CharacterId, undefined, parsed.PartyInstanceId, parsed.RaidInstanceId);
+          // Update player info based on party info
+          const entityId = PCIdMapper.getInstance().getEntityId(pm.CharacterId);
+          if (entityId) {
+            const ent = this.#currentEncounter.entities.get(entityId);
+            if (ent && ent.entityType === EntityType.Player) {
+              const p = ent as Player;
+              p.gearLevel = pm.GearLevel;
+              p.name = pm.Name;
+              p.class = pm.ClassId;
+            }
+          }
+
+          // Add to party
+          PartyTracker.getInstance().add(pm.CharacterId, entityId, parsed.PartyInstanceId, parsed.RaidInstanceId);
         }
       })
       .on("PKTPartyLeaveResult", (pkt) => {

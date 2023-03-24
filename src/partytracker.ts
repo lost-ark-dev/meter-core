@@ -7,11 +7,13 @@ export class PartyTracker {
     private entityIdToPartyId: Map<bigint, number>;
     private raidInstanceToPartyInstances: Map<number, Set<number>>;
     private ownName: string|undefined;
+    private characterNameToCharacterId: Map<string, bigint>;
 
     private constructor() {
         this.characterIdToPartyId = new Map();
         this.entityIdToPartyId = new Map();
         this.raidInstanceToPartyInstances = new Map();
+        this.characterNameToCharacterId = new Map();
     }
 
     public static getInstance(): PartyTracker {
@@ -21,32 +23,17 @@ export class PartyTracker {
         return PartyTracker.instance;
     }
 
-    public add(characterId: bigint | undefined, entityId: bigint | undefined, partyId: number, raidInstanceId: number) {
+    public add(raidInstanceId: number, partyId: number, characterId: bigint|undefined = undefined, entityId: bigint|undefined = undefined, name: string|undefined = undefined) {
         if (!characterId && !entityId) return;
         if (characterId && !entityId) entityId = PCIdMapper.getInstance().getEntityId(characterId);
         if (entityId && !characterId) characterId = PCIdMapper.getInstance().getEntityId(entityId);
         if (characterId) this.characterIdToPartyId.set(characterId, partyId);
         if (entityId) this.entityIdToPartyId.set(entityId, partyId);
+        if (name && characterId) this.characterNameToCharacterId.set(name, characterId);
         this.registerPartyId(raidInstanceId, partyId);
     }
 
-    public addCharacterId(characterId: bigint) {
-        var entityId = PCIdMapper.getInstance().getEntityId(characterId);
-        if (!entityId) return;
-        var partyId = this.getPartyIdFromEntityId(entityId);
-        if (!partyId) return;
-        this.characterIdToPartyId.set(characterId, partyId);
-    }
-
-    public addEntityId(entityId: bigint) {
-        var characterId = PCIdMapper.getInstance().getCharacterId(entityId);
-        if (!characterId) return;
-        var partyId = this.getPartyIdFromCharacterId(characterId);
-        if (!partyId) return;
-        this.entityIdToPartyId.set(entityId, partyId);
-    }
-
-    public completeEntry(characterId: bigint, entityId: bigint) {
+    public completeEntry(characterId: bigint, entityId: bigint):void {
         var charPartyId = this.getPartyIdFromCharacterId(characterId);
         var entPartyId = this.getPartyIdFromEntityId(entityId);
         if (charPartyId && entPartyId) return;
@@ -58,7 +45,7 @@ export class PartyTracker {
         }
     }
 
-    public changeEntityId(oldEntityId: bigint, newEntityId: bigint) {
+    public changeEntityId(oldEntityId: bigint, newEntityId: bigint):void {
         var partyId = this.getPartyIdFromEntityId(oldEntityId);
         if (partyId) {
             this.entityIdToPartyId.delete(oldEntityId);
@@ -66,12 +53,22 @@ export class PartyTracker {
         }
     }
 
-    public setOwnName(name: string) {
+    public setOwnName(name: string):void {
         this.ownName = name;
     }
 
-    public remove(partyInstanceId: number, name: string) {
-        if (name === this.ownName) this.removePartyMappings(partyInstanceId);
+    public remove(partyInstanceId: number, name: string):void {
+        if (name === this.ownName) {
+            this.removePartyMappings(partyInstanceId);
+            return;
+        }
+
+        let chracterId = this.characterNameToCharacterId.get(name);
+        this.characterNameToCharacterId.delete(name);
+        if (!chracterId) return;
+        this.characterIdToPartyId.delete(chracterId);
+        let objectId = PCIdMapper.getInstance().getEntityId(chracterId);
+        if (objectId) this.characterIdToPartyId.delete(objectId);
     }
 
     public isCharacterInParty(characterId: bigint):boolean {
@@ -90,25 +87,33 @@ export class PartyTracker {
         return this.entityIdToPartyId.get(entityId);
     }
 
-    public removePartyMappings(partyInstanceId: number) {
+    public removePartyMappings(partyInstanceId: number):void {
         const raidId = this.getRaidInstanceId(partyInstanceId);
         const partyIds: Set<number> = raidId ? this.raidInstanceToPartyInstances.get(raidId) ?? new Set([partyInstanceId]) : new Set([partyInstanceId]);
-        for (const e of this.characterIdToPartyId) {
-            if (partyIds.has(e[1])) this.characterIdToPartyId.delete(e[0]);
+        for (const [characterId, partyId] of this.characterIdToPartyId) {
+            if (partyIds.has(partyId)) {
+                this.characterIdToPartyId.delete(characterId);
+                for (const [name, charId] of this.characterNameToCharacterId) {
+                    if (characterId == charId) {
+                        this.characterNameToCharacterId.delete(name);
+                        break;
+                    }
+                }
+            }
         }
-        for (const e of this.entityIdToPartyId) {
-            if (partyIds.has(e[1])) this.entityIdToPartyId.delete(e[0]);
+        for (const [entityId, partyId] of this.entityIdToPartyId) {
+            if (partyIds.has(partyId)) this.entityIdToPartyId.delete(entityId);
         }
     }
 
-    private getRaidInstanceId(partyId: number): number|undefined {
+    private getRaidInstanceId(partyId: number):number|undefined {
         for (const data of this.raidInstanceToPartyInstances) {
             if (data[1].has(partyId)) return data[0];
         }
         return undefined;
     }
 
-    private registerPartyId(raidInstanceId: number, partyId: number) {
+    private registerPartyId(raidInstanceId: number, partyId: number):void {
         var list: Set<number>|undefined = this.raidInstanceToPartyInstances.get(raidInstanceId);
         if (!list) {
             list = new Set();

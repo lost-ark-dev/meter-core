@@ -160,6 +160,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTInitEnv", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
+        if (this.#localPlayer.entityId !== 0n) PartyTracker.getInstance().changeEntityId(this.#localPlayer.entityId, parsed.PlayerId);
         this.#currentEncounter = new Encounter();
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -195,6 +196,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         // console.log("PKTInitPC", this.#localPlayer);
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
+        PartyTracker.getInstance().setOwnName(parsed.Name);
         PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
         for (let se of parsed.statusEffectDatas) {
           const val: number = se.Value ? se.Value.readUInt32LE() : 0;
@@ -270,6 +272,10 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           characterId: parsed.PCStruct.CharacterId,
         };
         this.#currentEncounter.entities.set(player.entityId, player);
+        let oldEntityId = PCIdMapper.getInstance().getEntityId(player.characterId);
+        if (oldEntityId) {
+          PartyTracker.getInstance().changeEntityId(oldEntityId, parsed.PCStruct.PlayerId);
+        }
         PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
         PartyTracker.getInstance().completeEntry(player.characterId, player.entityId);
         for (let se of parsed.PCStruct.statusEffectDatas) {
@@ -333,6 +339,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               p.gearLevel = this.#u32tof32(pm.GearLevel);
               p.name = pm.Name;
               p.class = pm.ClassId;
+              PartyTracker.getInstance().setOwnName(pm.Name);
               if (this.#needEmit) {
                 this.#buildLine(
                   LineId.NewPC,
@@ -351,7 +358,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           }
 
           // Add to party
-          PartyTracker.getInstance().add(pm.CharacterId, entityId, parsed.PartyInstanceId, parsed.RaidInstanceId);
+          PartyTracker.getInstance().add(parsed.RaidInstanceId, parsed.PartyInstanceId, pm.CharacterId, entityId, pm.Name);
         }
       })
       .on("PKTPartyLeaveResult", (pkt) => {
@@ -387,7 +394,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTPartyStatusEffectResultNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        PartyTracker.getInstance().add(parsed.CharacterId, undefined, parsed.PartyInstanceId, parsed.RaidInstanceId);
+        PartyTracker.getInstance().add(parsed.RaidInstanceId, parsed.PartyInstanceId, parsed.CharacterId);
       })
       .on("PKTRaidBossKillNotify", (pkt) => {
         if (this.#needEmit) this.#buildLine(LineId.PhaseTransition, 1);

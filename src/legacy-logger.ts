@@ -673,7 +673,6 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#localPlayer.characterId !== 0n) return;
         const parsed = pkt.parsed;
         if (!parsed) return;
-        console.log(parsed);
         // Found no way to map AccountId & CharacterId, but this should be always ? true
         this.#localPlayer.characterId =
           parsed.Account_CharacterId1 < parsed.Account_CharacterId2

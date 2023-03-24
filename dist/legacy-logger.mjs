@@ -149,6 +149,8 @@ var LegacyLogger = class extends TypedEmitter {
     this.#wasWipe = false;
     this.#wasKill = false;
     this.#localPlayer = {
+      entityId: 0n,
+      entityType: EntityType.Player,
       name: "You",
       class: 0,
       gearLevel: 0,
@@ -206,6 +208,7 @@ var LegacyLogger = class extends TypedEmitter {
         gearLevel: this.#localPlayer.gearLevel,
         characterId: this.#localPlayer.characterId
       };
+      this.#localPlayer = player;
       this.#currentEncounter.entities.set(player.entityId, player);
       PCIdMapper.getInstance().clear();
       StatusTracker.getInstance().Clear();
@@ -219,12 +222,6 @@ var LegacyLogger = class extends TypedEmitter {
       const parsed = pkt.parsed;
       if (!parsed)
         return;
-      this.#localPlayer = {
-        name: parsed.Name,
-        class: parsed.ClassId,
-        gearLevel: this.#u32tof32(parsed.GearLevel),
-        characterId: parsed.CharacterId
-      };
       this.#currentEncounter = new Encounter();
       const player = {
         entityId: parsed.PlayerId,
@@ -234,6 +231,7 @@ var LegacyLogger = class extends TypedEmitter {
         gearLevel: this.#u32tof32(parsed.GearLevel),
         characterId: parsed.CharacterId
       };
+      this.#localPlayer = player;
       this.#currentEncounter.entities.set(player.entityId, player);
       PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
       PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
@@ -366,11 +364,25 @@ var LegacyLogger = class extends TypedEmitter {
         const entityId = PCIdMapper.getInstance().getEntityId(pm.CharacterId);
         if (entityId) {
           const ent = this.#currentEncounter.entities.get(entityId);
-          if (ent && ent.entityType === EntityType.Player) {
+          if (ent && ent.entityType === EntityType.Player && ent.name !== pm.Name) {
             const p = ent;
-            p.gearLevel = pm.GearLevel;
+            p.gearLevel = this.#u32tof32(pm.GearLevel);
             p.name = pm.Name;
             p.class = pm.ClassId;
+            if (this.#needEmit) {
+              this.#buildLine(
+                3 /* NewPC */,
+                p.entityId,
+                p.name,
+                p.class,
+                this.#data.getClassName(p.class),
+                pm.CharacterLevel,
+                p.gearLevel,
+                Number(pm.CurHp),
+                Number(pm.MaxHp),
+                p.characterId
+              );
+            }
           }
         }
         PartyTracker.getInstance().add(pm.CharacterId, entityId, parsed.PartyInstanceId, parsed.RaidInstanceId);
@@ -666,7 +678,8 @@ var LegacyLogger = class extends TypedEmitter {
       const parsed = pkt.parsed;
       if (!parsed)
         return;
-      this.#localPlayer.characterId = parsed.Account_CharacterId1 > parsed.Account_CharacterId2 ? parsed.Account_CharacterId2 : parsed.Account_CharacterId2;
+      console.log(parsed);
+      this.#localPlayer.characterId = parsed.Account_CharacterId1 < parsed.Account_CharacterId2 ? parsed.Account_CharacterId1 : parsed.Account_CharacterId2;
     });
   }
   #buildLine(id, ...args) {

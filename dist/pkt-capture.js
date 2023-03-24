@@ -179,7 +179,6 @@ var TCPSession = class extends import_stream2.EventEmitter {
   send_seqno;
   send_buffers;
   recv_seqno;
-  recv_last_ackno;
   recv_buffers;
   listen_options;
   is_ignored;
@@ -195,7 +194,6 @@ var TCPSession = class extends import_stream2.EventEmitter {
     this.send_seqno = 0;
     this.send_buffers = [];
     this.recv_seqno = 0;
-    this.recv_last_ackno = 0;
     this.recv_buffers = [];
     this.is_ignored = false;
     this.packetBuffer = new PacketBuffer();
@@ -239,6 +237,7 @@ var TCPSession = class extends import_stream2.EventEmitter {
       this.state = "ESTAB";
     }
     if (tcp.info.flags & 4 /* rst */ || tcp.info.flags & 1 /* fin */) {
+      this.ESTAB(buffer, ip, tcp);
       this.emit("end", this);
     } else {
       this.ESTAB(buffer, ip, tcp);
@@ -260,15 +259,12 @@ var TCPSession = class extends import_stream2.EventEmitter {
     if (direction === "recv") {
       if (this.recv_seqno === 0) {
         this.recv_seqno = ackno;
-        this.recv_last_ackno = ackno;
       }
-      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, this.recv_last_ackno);
+      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, ackno);
       if (!flush_payload) {
-        this.recv_last_ackno = ackno;
         return;
       }
-      this.recv_seqno = this.recv_last_ackno;
-      this.recv_last_ackno = ackno;
+      this.recv_seqno = ackno;
       if (this.in_handshake && flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
         this.skip_socks5 = 4;
       if (this.skip_socks5 > 0) {
@@ -277,10 +273,9 @@ var TCPSession = class extends import_stream2.EventEmitter {
       }
       this.in_handshake = false;
       this.packetBuffer.write(flush_payload);
-      let pkt = this.packetBuffer.read();
-      while (pkt) {
+      let pkt;
+      while (pkt = this.packetBuffer.read()) {
         this.emit("payload_recv", pkt);
-        pkt = this.packetBuffer.read();
       }
     } else if (direction === "send") {
     }
@@ -295,11 +290,13 @@ var TCPSession = class extends import_stream2.EventEmitter {
       if (segment.seqno > ackno)
         return true;
       if (segment.seqno < seqno) {
+        if (segment.seqno + segment.payload.length < seqno)
+          return false;
         segment.payload = segment.payload.subarray(seqno - segment.seqno);
         segment.seqno = seqno;
       }
       const flush_offset = segment.seqno - seqno;
-      const len_to_flush = ackno - segment.seqno;
+      const len_to_flush = Math.min(ackno - segment.seqno, segment.payload.length);
       segment.payload.copy(flush_payload, flush_offset, 0, len_to_flush);
       flush_mask.fill(1, flush_offset, flush_offset + len_to_flush);
       if (len_to_flush < segment.payload.length) {
@@ -310,30 +307,9 @@ var TCPSession = class extends import_stream2.EventEmitter {
       return false;
     });
     if (flush_mask.includes(0)) {
-      buffers.length = 0;
-      buffers.push(...newBuffers);
-      console.log(flush_mask.toString("hex"));
-      if (buffers.length >= 10) {
+      if (buffers.length >= 50) {
         console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
         return Buffer.alloc(0);
-      } else {
-        let i = 0;
-        let start_seqno = seqno;
-        let len = 0;
-        for (i; i <= flush_mask.length; i++) {
-          if (flush_mask[i]) {
-            len++;
-            continue;
-          }
-          if (len > 0) {
-            buffers.push({
-              seqno: start_seqno,
-              payload: Buffer.from(flush_payload.subarray(i - len, i))
-            });
-          }
-          start_seqno = seqno + i;
-          len = 0;
-        }
       }
       return null;
     } else {

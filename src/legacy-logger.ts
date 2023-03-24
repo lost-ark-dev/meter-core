@@ -94,12 +94,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
   #wasWipe: boolean;
   #wasKill: boolean;
 
-  #localPlayer: {
-    name: string;
-    class: number;
-    gearLevel: number;
-    characterId: bigint;
-  };
+  #localPlayer: Player;
 
   constructor(stream: PKTStream, data: MeterData, settings: LegacyLoggerSettings = {}) {
     super();
@@ -115,6 +110,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     this.#wasKill = false;
 
     this.#localPlayer = {
+      entityId: 0n,
+      entityType: EntityType.Player,
       name: "You",
       class: 0,
       gearLevel: 0,
@@ -172,6 +169,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           gearLevel: this.#localPlayer.gearLevel,
           characterId: this.#localPlayer.characterId,
         };
+        this.#localPlayer = player;
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().clear();
         StatusTracker.getInstance().Clear();
@@ -184,12 +182,6 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTInitPC", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#localPlayer = {
-          name: parsed.Name,
-          class: parsed.ClassId,
-          gearLevel: this.#u32tof32(parsed.GearLevel),
-          characterId: parsed.CharacterId,
-        };
         this.#currentEncounter = new Encounter();
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -199,6 +191,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           gearLevel: this.#u32tof32(parsed.GearLevel),
           characterId: parsed.CharacterId,
         };
+        this.#localPlayer = player;
         // console.log("PKTInitPC", this.#localPlayer);
         this.#currentEncounter.entities.set(player.entityId, player);
         PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
@@ -335,11 +328,25 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           const entityId = PCIdMapper.getInstance().getEntityId(pm.CharacterId);
           if (entityId) {
             const ent = this.#currentEncounter.entities.get(entityId);
-            if (ent && ent.entityType === EntityType.Player) {
+            if (ent && ent.entityType === EntityType.Player && ent.name !== pm.Name) {
               const p = ent as Player;
-              p.gearLevel = pm.GearLevel;
+              p.gearLevel = this.#u32tof32(pm.GearLevel);
               p.name = pm.Name;
               p.class = pm.ClassId;
+              if (this.#needEmit) {
+                this.#buildLine(
+                  LineId.NewPC,
+                  p.entityId,
+                  p.name,
+                  p.class,
+                  this.#data.getClassName(p.class),
+                  pm.CharacterLevel,
+                  p.gearLevel,
+                  Number(pm.CurHp),
+                  Number(pm.MaxHp),
+                  p.characterId
+                );
+              }
             }
           }
 
@@ -666,11 +673,11 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         if (this.#localPlayer.characterId !== 0n) return;
         const parsed = pkt.parsed;
         if (!parsed) return;
-
+        console.log(parsed);
         // Found no way to map AccountId & CharacterId, but this should be always ? true
         this.#localPlayer.characterId =
-          parsed.Account_CharacterId1 > parsed.Account_CharacterId2
-            ? parsed.Account_CharacterId2
+          parsed.Account_CharacterId1 < parsed.Account_CharacterId2
+            ? parsed.Account_CharacterId1
             : parsed.Account_CharacterId2;
       });
   }

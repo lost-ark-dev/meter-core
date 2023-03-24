@@ -66,7 +66,6 @@ declare class TCPSession extends EventEmitter {
     send_seqno: number;
     send_buffers: TCPSegment[];
     recv_seqno: number;
-    recv_last_ackno: number;
     recv_buffers: TCPSegment[];
     listen_options: ListenOptions;
     is_ignored: boolean;

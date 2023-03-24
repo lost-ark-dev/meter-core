@@ -110,7 +110,6 @@ export class TCPSession extends EventEmitter {
   send_buffers: TCPSegment[];
 
   recv_seqno: number; // Current seq number flushed
-  recv_last_ackno: number;
   recv_buffers: TCPSegment[];
   listen_options: ListenOptions;
 
@@ -132,7 +131,6 @@ export class TCPSession extends EventEmitter {
     this.send_buffers = [];
 
     this.recv_seqno = 0;
-    this.recv_last_ackno = 0;
     this.recv_buffers = [];
     this.is_ignored = false;
     this.packetBuffer = new PacketBuffer();
@@ -196,6 +194,8 @@ export class TCPSession extends EventEmitter {
       //}
     }
     if (tcp.info.flags & TCPFlags.rst || tcp.info.flags & TCPFlags.fin) {
+      //Process last data received
+      this.ESTAB(buffer, ip, tcp);
       this.emit("end", this);
     } else {
       //process estab
@@ -221,19 +221,15 @@ export class TCPSession extends EventEmitter {
       //Update seqno when unknown
       if (this.recv_seqno === 0) {
         this.recv_seqno = ackno;
-        this.recv_last_ackno = ackno;
       }
       //Get ordered buffers
-      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, this.recv_last_ackno);
+      const flush_payload = TCPSession.get_flush(this.recv_buffers, this.recv_seqno, ackno);
 
       if (!flush_payload) {
-        this.recv_last_ackno = ackno;
         //can't flush payload, missing some of it, dropping
         return;
       }
-      //TODO: Here we wait to have 1 more ack before flushing data, this will add delay but may fix raw socket weird order
-      this.recv_seqno = this.recv_last_ackno;
-      this.recv_last_ackno = ackno;
+      this.recv_seqno = ackno;
       if (this.in_handshake && flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
         this.skip_socks5 = 4;
       if (this.skip_socks5 > 0) {
@@ -242,10 +238,9 @@ export class TCPSession extends EventEmitter {
       }
       this.in_handshake = false;
       this.packetBuffer.write(flush_payload);
-      let pkt = this.packetBuffer.read();
-      while (pkt) {
+      let pkt;
+      while ((pkt = this.packetBuffer.read())) {
         this.emit("payload_recv", pkt);
-        pkt = this.packetBuffer.read();
       }
     } else if (direction === "send") {
       //We ignore data sent
@@ -271,6 +266,9 @@ export class TCPSession extends EventEmitter {
     const newBuffers = buffers.filter((segment) => {
       if (segment.seqno > ackno) return true; //Not aknowledged, keep the payload for later
       if (segment.seqno < seqno) {
+        // Our segment is fully outdated, drop it
+        if (segment.seqno + segment.payload.length < seqno) return false;
+
         //Our stored segent contains data that has already been flushed, edit it
         segment.payload = segment.payload.subarray(seqno - segment.seqno);
         segment.seqno = seqno;
@@ -287,7 +285,7 @@ export class TCPSession extends EventEmitter {
        * Early overlap doesn't exist as we drop that data just before, so we always copy segment from 0
        */
       const flush_offset = segment.seqno - seqno;
-      const len_to_flush = ackno - segment.seqno;
+      const len_to_flush = Math.min(ackno - segment.seqno, segment.payload.length);
       segment.payload.copy(flush_payload, flush_offset, 0, len_to_flush);
       flush_mask.fill(1, flush_offset, flush_offset + len_to_flush);
       if (len_to_flush < segment.payload.length) {
@@ -301,39 +299,13 @@ export class TCPSession extends EventEmitter {
     //TODO: use a mask (or anything) to be sure we got all the portions of the payload
     //We apply the mask to remove unknown portions (probably can be fixed by implementing sack)
     if (flush_mask.includes(0)) {
-      buffers.length = 0;
-      buffers.push(...newBuffers);
-
-      console.log(flush_mask.toString("hex"));
-
-      if (buffers.length >= 10) {
+      //console.log(flush_mask.toString("hex"));
+      if (buffers.length >= 50) {
         //TODO: add a fail count for a given ack to not flush that many buffers, and then, only flush buffers in between
 
         console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
-        return Buffer.alloc(0);
+        return Buffer.alloc(0); // We send valid buffer so that it acts as processed data
       }
-      //TODO: recreate buffers from flush mask to not reprocess everything next try
-      else {
-        let i = 0;
-        let start_seqno = seqno;
-        let len = 0;
-        for (i; i <= flush_mask.length; i++) {
-          //<= is intended, to include 1 more loop
-          if (flush_mask[i]) {
-            len++;
-            continue;
-          }
-          if (len > 0) {
-            buffers.push({
-              seqno: start_seqno,
-              payload: Buffer.from(flush_payload.subarray(i - len, i)),
-            });
-          }
-          start_seqno = seqno + i;
-          len = 0;
-        }
-      }
-
       return null;
     } else {
       //TODO: reset fail count as we successfully flushed

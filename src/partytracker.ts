@@ -1,4 +1,3 @@
-import { ReadableStreamDefaultController } from "stream/web";
 import { PCIdMapper } from "./pcidmapper";
 
 export class PartyTracker {
@@ -34,8 +33,8 @@ export class PartyTracker {
     }
 
     public completeEntry(characterId: bigint, entityId: bigint):void {
-        var charPartyId = this.getPartyIdFromCharacterId(characterId);
-        var entPartyId = this.getPartyIdFromEntityId(entityId);
+        const charPartyId = this.getPartyIdFromCharacterId(characterId);
+        const entPartyId = this.getPartyIdFromEntityId(entityId);
         if (charPartyId && entPartyId) return;
         if (!charPartyId && entPartyId) {
             this.characterIdToPartyId.set(characterId, entPartyId);
@@ -46,7 +45,7 @@ export class PartyTracker {
     }
 
     public changeEntityId(oldEntityId: bigint, newEntityId: bigint):void {
-        var partyId = this.getPartyIdFromEntityId(oldEntityId);
+        const partyId = this.getPartyIdFromEntityId(oldEntityId);
         if (partyId) {
             this.entityIdToPartyId.delete(oldEntityId);
             this.entityIdToPartyId.set(newEntityId, partyId);
@@ -63,11 +62,11 @@ export class PartyTracker {
             return;
         }
 
-        let chracterId = this.characterNameToCharacterId.get(name);
+        const chracterId = this.characterNameToCharacterId.get(name);
         this.characterNameToCharacterId.delete(name);
         if (!chracterId) return;
         this.characterIdToPartyId.delete(chracterId);
-        let objectId = PCIdMapper.getInstance().getEntityId(chracterId);
+        const objectId = PCIdMapper.getInstance().getEntityId(chracterId);
         if (objectId) this.characterIdToPartyId.delete(objectId);
     }
 
@@ -94,7 +93,7 @@ export class PartyTracker {
             if (partyIds.has(partyId)) {
                 this.characterIdToPartyId.delete(characterId);
                 for (const [name, charId] of this.characterNameToCharacterId) {
-                    if (characterId == charId) {
+                    if (characterId === charId) {
                         this.characterNameToCharacterId.delete(name);
                         break;
                     }
@@ -114,7 +113,7 @@ export class PartyTracker {
     }
 
     private registerPartyId(raidInstanceId: number, partyId: number):void {
-        var list: Set<number>|undefined = this.raidInstanceToPartyInstances.get(raidInstanceId);
+        let list: Set<number>|undefined = this.raidInstanceToPartyInstances.get(raidInstanceId);
         if (!list) {
             list = new Set();
             this.raidInstanceToPartyInstances.set(raidInstanceId, list);

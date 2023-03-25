@@ -315,6 +315,9 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         }
         PartyTracker.getInstance().removePartyMappings(parsed.PartyInstanceId);
         for (const pm of parsed.MemberDatas) {
+          if (pm.CharacterId === this.#localPlayer.characterId) {
+            PartyTracker.getInstance().setOwnName(pm.Name);
+          }
           // Update player info based on party info
           const entityId = PCIdMapper.getInstance().getEntityId(pm.CharacterId);
           if (entityId) {
@@ -324,7 +327,6 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               p.gearLevel = this.#u32tof32(pm.GearLevel);
               p.name = pm.Name;
               p.class = pm.ClassId;
-              PartyTracker.getInstance().setOwnName(pm.Name);
               if (this.#needEmit) {
                 this.#buildLine(
                   LineId.NewPC,

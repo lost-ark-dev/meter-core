@@ -1,4 +1,4 @@
-import "../../chunk-JG2SZ3LS.mjs";
+import "../../chunk-O6OTV64A.mjs";
 import {
   read,
   read10,
@@ -36,12 +36,13 @@ import {
   read4,
   read40,
   read41,
+  read42,
   read5,
   read6,
   read7,
   read8,
   read9
-} from "../../chunk-DEHA5UKU.mjs";
+} from "../../chunk-KC6KPT6P.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   read as PKTAbilityChangeNotify,
@@ -51,6 +52,7 @@ export {
   read5 as PKTBlockSkillStateNotify,
   read6 as PKTCounterAttackNotify,
   read7 as PKTDeathNotify,
+  read42 as PKTIdentityGaugeChangeNotify,
   read8 as PKTInitAbility,
   read9 as PKTInitEnv,
   read11 as PKTInitLocal,

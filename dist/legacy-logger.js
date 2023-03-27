@@ -846,7 +846,6 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       const parsed = pkt.parsed;
       if (!parsed)
         return;
-      console.log(parsed);
       this.#localPlayer.characterId = parsed.Account_CharacterId1 < parsed.Account_CharacterId2 ? parsed.Account_CharacterId1 : parsed.Account_CharacterId2;
     });
   }

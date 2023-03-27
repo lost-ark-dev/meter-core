@@ -1264,6 +1264,20 @@ function read64(buf) {
 var name41 = "PKTTroopMemberUpdateMinNotify";
 var opcode41 = 23607;
 
+// src/packets/generated/definitions/PKTIdentityGaugeChangeNotify.ts
+function read65(buf) {
+  const reader = new Read(buf);
+  const data = {};
+  reader.skip(1);
+  data.PlayerId = reader.u64();
+  data.IdentityGauge1 = reader.i32();
+  data.IdentityGauge2 = reader.i32();
+  data.IdentityGauge3 = reader.i32();
+  return data;
+}
+var name42 = "PKTIdentityGaugeChangeNotify";
+var opcode42 = 45217;
+
 export {
   read2 as read,
   name,
@@ -1387,5 +1401,8 @@ export {
   opcode40,
   read64 as read41,
   name41,
-  opcode41
+  opcode41,
+  read65 as read42,
+  name42,
+  opcode42
 };

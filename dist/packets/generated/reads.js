@@ -27,6 +27,7 @@ __export(reads_exports, {
   PKTBlockSkillStateNotify: () => read7,
   PKTCounterAttackNotify: () => read8,
   PKTDeathNotify: () => read9,
+  PKTIdentityGaugeChangeNotify: () => read65,
   PKTInitAbility: () => read10,
   PKTInitEnv: () => read12,
   PKTInitLocal: () => read18,
@@ -1247,6 +1248,18 @@ function read64(buf) {
   data.Unk0_m = reader.u32();
   return data;
 }
+
+// src/packets/generated/definitions/PKTIdentityGaugeChangeNotify.ts
+function read65(buf) {
+  const reader = new Read(buf);
+  const data = {};
+  reader.skip(1);
+  data.PlayerId = reader.u64();
+  data.IdentityGauge1 = reader.i32();
+  data.IdentityGauge2 = reader.i32();
+  data.IdentityGauge3 = reader.i32();
+  return data;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PKTAbilityChangeNotify,
@@ -1256,6 +1269,7 @@ function read64(buf) {
   PKTBlockSkillStateNotify,
   PKTCounterAttackNotify,
   PKTDeathNotify,
+  PKTIdentityGaugeChangeNotify,
   PKTInitAbility,
   PKTInitEnv,
   PKTInitLocal,

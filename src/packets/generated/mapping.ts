@@ -68,4 +68,5 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTTriggerFinishNotify, [names.PKTTriggerFinishNotify, reads.PKTTriggerFinishNotify]],
   [codes.PKTTriggerStartNotify, [names.PKTTriggerStartNotify, reads.PKTTriggerStartNotify]],
   [codes.PKTTroopMemberUpdateMinNotify, [names.PKTTroopMemberUpdateMinNotify, reads.PKTTroopMemberUpdateMinNotify]],
+  [codes.PKTIdentityGaugeChangeNotify, [names.PKTIdentityGaugeChangeNotify, reads.PKTIdentityGaugeChangeNotify]],
 ]);

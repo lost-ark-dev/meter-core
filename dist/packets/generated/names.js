@@ -4,8 +4,8 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name42 in all)
-    __defProp(target, name42, { get: all[name42], enumerable: true });
+  for (var name43 in all)
+    __defProp(target, name43, { get: all[name43], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -27,6 +27,7 @@ __export(names_exports, {
   PKTBlockSkillStateNotify: () => name5,
   PKTCounterAttackNotify: () => name6,
   PKTDeathNotify: () => name7,
+  PKTIdentityGaugeChangeNotify: () => name42,
   PKTInitAbility: () => name8,
   PKTInitEnv: () => name9,
   PKTInitLocal: () => name11,
@@ -186,6 +187,9 @@ var name40 = "PKTTriggerStartNotify";
 
 // src/packets/generated/definitions/PKTTroopMemberUpdateMinNotify.ts
 var name41 = "PKTTroopMemberUpdateMinNotify";
+
+// src/packets/generated/definitions/PKTIdentityGaugeChangeNotify.ts
+var name42 = "PKTIdentityGaugeChangeNotify";
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PKTAbilityChangeNotify,
@@ -195,6 +199,7 @@ var name41 = "PKTTroopMemberUpdateMinNotify";
   PKTBlockSkillStateNotify,
   PKTCounterAttackNotify,
   PKTDeathNotify,
+  PKTIdentityGaugeChangeNotify,
   PKTInitAbility,
   PKTInitEnv,
   PKTInitLocal,

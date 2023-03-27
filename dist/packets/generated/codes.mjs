@@ -1,4 +1,4 @@
-import "../../chunk-NM75XT3T.mjs";
+import "../../chunk-3I66HENF.mjs";
 import {
   opcode,
   opcode10,
@@ -36,12 +36,13 @@ import {
   opcode4,
   opcode40,
   opcode41,
+  opcode42,
   opcode5,
   opcode6,
   opcode7,
   opcode8,
   opcode9
-} from "../../chunk-DEHA5UKU.mjs";
+} from "../../chunk-KC6KPT6P.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   opcode as PKTAbilityChangeNotify,
@@ -51,6 +52,7 @@ export {
   opcode5 as PKTBlockSkillStateNotify,
   opcode6 as PKTCounterAttackNotify,
   opcode7 as PKTDeathNotify,
+  opcode42 as PKTIdentityGaugeChangeNotify,
   opcode8 as PKTInitAbility,
   opcode9 as PKTInitEnv,
   opcode11 as PKTInitLocal,

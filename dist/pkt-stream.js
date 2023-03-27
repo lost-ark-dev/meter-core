@@ -4,8 +4,8 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name42 in all)
-    __defProp(target, name42, { get: all[name42], enumerable: true });
+  for (var name43 in all)
+    __defProp(target, name43, { get: all[name43], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -1292,6 +1292,20 @@ function read64(buf) {
 var name41 = "PKTTroopMemberUpdateMinNotify";
 var opcode41 = 23607;
 
+// src/packets/generated/definitions/PKTIdentityGaugeChangeNotify.ts
+function read65(buf) {
+  const reader = new Read(buf);
+  const data = {};
+  reader.skip(1);
+  data.PlayerId = reader.u64();
+  data.IdentityGauge1 = reader.i32();
+  data.IdentityGauge2 = reader.i32();
+  data.IdentityGauge3 = reader.i32();
+  return data;
+}
+var name42 = "PKTIdentityGaugeChangeNotify";
+var opcode42 = 45217;
+
 // src/packets/generated/mapping.ts
 var mapping = /* @__PURE__ */ new Map([
   [opcode, [name, read2]],
@@ -1358,7 +1372,8 @@ var mapping = /* @__PURE__ */ new Map([
   [opcode38, [name38, read61]],
   [opcode39, [name39, read62]],
   [opcode40, [name40, read63]],
-  [opcode41, [name41, read64]]
+  [opcode41, [name41, read64]],
+  [opcode42, [name42, read65]]
 ]);
 
 // src/pkt-stream.ts
@@ -1379,16 +1394,16 @@ var PKTStream = class extends import_tiny_typed_emitter.TypedEmitter {
       if (compression > 3)
         return false;
       const data = buf.subarray(6);
-      const opcode42 = buf.readUInt16LE(2);
-      const pkt = mapping.get(opcode42);
+      const opcode43 = buf.readUInt16LE(2);
+      const pkt = mapping.get(opcode43);
       if (pkt) {
-        const [name42, read65] = pkt;
+        const [name43, read66] = pkt;
         this.emit(
-          name42,
-          new PKT(data, opcode42, compression, Boolean(xor), this.#decompressor, read65)
+          name43,
+          new PKT(data, opcode43, compression, Boolean(xor), this.#decompressor, read66)
         );
       }
-      this.emit("*", data, opcode42, compression, Boolean(xor));
+      this.emit("*", data, opcode43, compression, Boolean(xor));
     } catch (e) {
       return false;
     }
@@ -1401,13 +1416,13 @@ var PKT = class {
   #xor;
   #decompressor;
   #read;
-  constructor(data, opcode42, compression, xor, decompressor, read65) {
+  constructor(data, opcode43, compression, xor, decompressor, read66) {
     this.#data = data;
-    this.#opcode = opcode42;
+    this.#opcode = opcode43;
     this.#compression = compression;
     this.#xor = xor;
     this.#decompressor = decompressor;
-    this.#read = read65;
+    this.#read = read66;
   }
   #cached;
   get parsed() {

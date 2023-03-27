@@ -1,4 +1,4 @@
-import "../../chunk-CCAHII2X.mjs";
+import "../../chunk-M2GHQKHQ.mjs";
 import {
   name,
   name10,
@@ -36,12 +36,13 @@ import {
   name4,
   name40,
   name41,
+  name42,
   name5,
   name6,
   name7,
   name8,
   name9
-} from "../../chunk-DEHA5UKU.mjs";
+} from "../../chunk-KC6KPT6P.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   name as PKTAbilityChangeNotify,
@@ -51,6 +52,7 @@ export {
   name5 as PKTBlockSkillStateNotify,
   name6 as PKTCounterAttackNotify,
   name7 as PKTDeathNotify,
+  name42 as PKTIdentityGaugeChangeNotify,
   name8 as PKTInitAbility,
   name9 as PKTInitEnv,
   name11 as PKTInitLocal,

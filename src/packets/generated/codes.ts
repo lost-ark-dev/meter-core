@@ -40,3 +40,4 @@ export { opcode as PKTTriggerBossBattleStatus } from "./definitions/PKTTriggerBo
 export { opcode as PKTTriggerFinishNotify } from "./definitions/PKTTriggerFinishNotify";
 export { opcode as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNotify";
 export { opcode as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
+export { opcode as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";

@@ -27,6 +27,7 @@ __export(codes_exports, {
   PKTBlockSkillStateNotify: () => opcode5,
   PKTCounterAttackNotify: () => opcode6,
   PKTDeathNotify: () => opcode7,
+  PKTIdentityGaugeChangeNotify: () => opcode42,
   PKTInitAbility: () => opcode8,
   PKTInitEnv: () => opcode9,
   PKTInitLocal: () => opcode11,
@@ -186,6 +187,9 @@ var opcode40 = 43437;
 
 // src/packets/generated/definitions/PKTTroopMemberUpdateMinNotify.ts
 var opcode41 = 23607;
+
+// src/packets/generated/definitions/PKTIdentityGaugeChangeNotify.ts
+var opcode42 = 45217;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PKTAbilityChangeNotify,
@@ -195,6 +199,7 @@ var opcode41 = 23607;
   PKTBlockSkillStateNotify,
   PKTCounterAttackNotify,
   PKTDeathNotify,
+  PKTIdentityGaugeChangeNotify,
   PKTInitAbility,
   PKTInitEnv,
   PKTInitLocal,

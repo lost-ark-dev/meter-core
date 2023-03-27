@@ -40,3 +40,4 @@ export { name as PKTTriggerBossBattleStatus } from "./definitions/PKTTriggerBoss
 export { name as PKTTriggerFinishNotify } from "./definitions/PKTTriggerFinishNotify";
 export { name as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNotify";
 export { name as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
+export { name as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";

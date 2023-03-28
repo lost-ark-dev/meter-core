@@ -1,19 +1,39 @@
 import { PartyTracker } from "./partytracker";
 
-export enum StatusEffecType {
+export enum StatusEffectTargetType {
     Party = 0,
     Local = 1,
 }
+export enum StatusEffectCategory {
+    Other = 0,
+    Debuff = 1,
+}
+
+export enum StatusEffectBuffCategory {
+    Other = 0,
+    Bracelet = 1,
+    Etc = 2,
+    Battleitem = 3,
+}
+
+export enum StatusEffectShowType {
+    Other = 0,
+    All = 1,
+}
+
 export interface StatusEffect {
     instanceId: number;
     statusEffectId: number;
     targetId: TargetId;
     sourceId: TargetId;
     started: Date;
-    type: StatusEffecType;
+    type: StatusEffectTargetType;
     value: number;
-
+    category: StatusEffectCategory;
+    buffCategory: StatusEffectBuffCategory;
+    showType: StatusEffectShowType;
 }
+
 type StatusEffectInstanceId = number;
 type TargetId = bigint;
 type StatusEffectRegistry = Map<StatusEffectInstanceId, StatusEffect>;
@@ -36,32 +56,30 @@ export class StatusTracker {
         return StatusTracker.instance;
     }
 
-    private getStatusEffectRegistryForPlayer(id: TargetId, t: StatusEffecType) : StatusEffectRegistry {
-        var registry: PlayerStatusEffectRegistry = this.getPlayerRegistry(t);
-        if (registry.has(id)) return registry.get(id)!;
-        var newEntry : StatusEffectRegistry = new Map();
+    private getStatusEffectRegistryForPlayer(id: TargetId, t: StatusEffectTargetType) : StatusEffectRegistry {
+        const registry: PlayerStatusEffectRegistry = this.getPlayerRegistry(t);
+        const ser = registry.get(id);
+        if (ser) return ser;
+        const newEntry : StatusEffectRegistry = new Map();
         registry.set(id, newEntry);
         return newEntry;
     }
 
-    private getPlayerRegistry(t: StatusEffecType) : PlayerStatusEffectRegistry {
+    private hasStatusEffectRegistryForPlayer(id: TargetId, t: StatusEffectTargetType): boolean {
+        const registry: PlayerStatusEffectRegistry = this.getPlayerRegistry(t);
+        return registry.has(id);
+    }
+
+    private getPlayerRegistry(t: StatusEffectTargetType) : PlayerStatusEffectRegistry {
         switch (t) {
-            case StatusEffecType.Local:
+            case StatusEffectTargetType.Local:
                 return this.LocalStatusEffectRegistry;
-            case StatusEffecType.Party:
+            case StatusEffectTargetType.Party:
                 return this.PartyStatusEffectRegistry;
             default:
                 break;
         }
         return this.LocalStatusEffectRegistry;
-    }
-
-    private sendCancelEffectInfo(seNew: StatusEffect, seOld: StatusEffect) {
-        // TODO: Implement some callback or something
-    }
-
-    public RegisterValueUpdate(se: StatusEffect) {
-        // TODO: Implement
     }
 
     public RemoveLocalObject(objectId: bigint) {
@@ -73,54 +91,67 @@ export class StatusTracker {
     }
 
     public RegisterStatusEffect(se: StatusEffect) {
-        var registry = this.getStatusEffectRegistryForPlayer(se.targetId, se.type);
-        // look if this effect already in on the target by instance id
-        var effect = registry.get(se.instanceId);
-        if (effect) {
-            this.sendCancelEffectInfo(se, effect);
-        }
+        const registry = this.getStatusEffectRegistryForPlayer(se.targetId, se.type);
         registry.set(se.instanceId, se);
     }
 
-    public HasAnyStatusEffect(id: TargetId, t: StatusEffecType, statusEffectIds:number[]) : boolean {
-        var registry: StatusEffectRegistry = this.getStatusEffectRegistryForPlayer(id, t);
-        for (const effectId of registry) {
+    public HasAnyStatusEffect(id: TargetId, t: StatusEffectTargetType, statusEffectIds:number[]) : boolean {
+        if (!this.hasStatusEffectRegistryForPlayer(id, t)) return false;
+        const registry: StatusEffectRegistry = this.getStatusEffectRegistryForPlayer(id, t);
+        for (const [, se] of registry) {
             for (const key of statusEffectIds) {
-                if (key == effectId[1].statusEffectId)
+                if (key === se.statusEffectId)
                     return true;
             }
         }
         return false;
     }
 
-    public HasAnyStatusEffectFromParty(targetId: TargetId, et: StatusEffecType, partyId: number, statusEffectIds:number[]) : boolean {
-        var registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    public HasAnyStatusEffectFromParty(targetId: TargetId, et: StatusEffectTargetType, partyId: number, statusEffectIds:number[]) : boolean {
+        if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return false;
+        const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
         for (const effect of registry) {
             if (statusEffectIds.includes(effect[1].statusEffectId)) {
-                var partyIdOfSource = PartyTracker.getInstance().getPartyIdFromEntityId(effect[1].sourceId);
+                // Dagger and Expose Weakness are for the whole raid
+                if (this.ValidForWholeRaid(effect[1]))
+                    return true;
+                const partyIdOfSource = PartyTracker.getInstance().getPartyIdFromEntityId(effect[1].sourceId);
                 if (partyIdOfSource === partyId) return true;
             }
         }
         return false;
     }
 
-    public RemoveStatusEffect(targetId: TargetId, statusEffectId: number, et: StatusEffecType) {
-        var registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    public RemoveStatusEffect(targetId: TargetId, statusEffectId: number, et: StatusEffectTargetType) {
+        if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return;
+        const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
         registry.delete(statusEffectId);
     }
-    public GetStatusEffects(targetId: TargetId, et: StatusEffecType): Array<StatusEffect> {
+    public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType): Array<StatusEffect> {
+        if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];
         const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
         return [...registry.values()];
     }
 
-    public GetStatusEffectsFromParty(targetId: TargetId, et:StatusEffecType, partyId: number): Array<StatusEffect> {
+    public GetStatusEffectsFromParty(targetId: TargetId, et:StatusEffectTargetType, partyId: number): Array<StatusEffect> {
+        if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];
         const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
-        return [...registry.values()].filter((value, _index, _array) => { return partyId == PartyTracker.getInstance().getPartyIdFromEntityId(value.sourceId); });
+        return [...registry.values()].filter((value) => {
+            // Dagger and Expose Weakness are for the whole raid
+            if (this.ValidForWholeRaid(value)) return true;
+            return partyId === PartyTracker.getInstance().getPartyIdFromEntityId(value.sourceId);
+        });
     }
 
     public Clear() {
         this.LocalStatusEffectRegistry.clear();
         this.PartyStatusEffectRegistry.clear();
+    }
+
+    private ValidForWholeRaid(se: StatusEffect): boolean {
+        return ((se.buffCategory === StatusEffectBuffCategory.Battleitem || se.buffCategory === StatusEffectBuffCategory.Bracelet || se.buffCategory === StatusEffectBuffCategory.Etc)
+            && se.category === StatusEffectCategory.Debuff
+            && se.showType === StatusEffectShowType.All)
     }
 
 }

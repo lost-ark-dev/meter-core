@@ -67,10 +67,12 @@ var _PartyTracker = class {
   entityIdToPartyId;
   raidInstanceToPartyInstances;
   ownName;
+  characterNameToCharacterId;
   constructor() {
     this.characterIdToPartyId = /* @__PURE__ */ new Map();
     this.entityIdToPartyId = /* @__PURE__ */ new Map();
     this.raidInstanceToPartyInstances = /* @__PURE__ */ new Map();
+    this.characterNameToCharacterId = /* @__PURE__ */ new Map();
   }
   static getInstance() {
     if (!_PartyTracker.instance) {
@@ -78,7 +80,7 @@ var _PartyTracker = class {
     }
     return _PartyTracker.instance;
   }
-  add(characterId, entityId, partyId, raidInstanceId) {
+  add(raidInstanceId, partyId, characterId = void 0, entityId = void 0, name = void 0) {
     if (!characterId && !entityId)
       return;
     if (characterId && !entityId)
@@ -89,29 +91,13 @@ var _PartyTracker = class {
       this.characterIdToPartyId.set(characterId, partyId);
     if (entityId)
       this.entityIdToPartyId.set(entityId, partyId);
+    if (name && characterId)
+      this.characterNameToCharacterId.set(name, characterId);
     this.registerPartyId(raidInstanceId, partyId);
   }
-  addCharacterId(characterId) {
-    var entityId = PCIdMapper.getInstance().getEntityId(characterId);
-    if (!entityId)
-      return;
-    var partyId = this.getPartyIdFromEntityId(entityId);
-    if (!partyId)
-      return;
-    this.characterIdToPartyId.set(characterId, partyId);
-  }
-  addEntityId(entityId) {
-    var characterId = PCIdMapper.getInstance().getCharacterId(entityId);
-    if (!characterId)
-      return;
-    var partyId = this.getPartyIdFromCharacterId(characterId);
-    if (!partyId)
-      return;
-    this.entityIdToPartyId.set(entityId, partyId);
-  }
   completeEntry(characterId, entityId) {
-    var charPartyId = this.getPartyIdFromCharacterId(characterId);
-    var entPartyId = this.getPartyIdFromEntityId(entityId);
+    const charPartyId = this.getPartyIdFromCharacterId(characterId);
+    const entPartyId = this.getPartyIdFromEntityId(entityId);
     if (charPartyId && entPartyId)
       return;
     if (!charPartyId && entPartyId) {
@@ -122,7 +108,7 @@ var _PartyTracker = class {
     }
   }
   changeEntityId(oldEntityId, newEntityId) {
-    var partyId = this.getPartyIdFromEntityId(oldEntityId);
+    const partyId = this.getPartyIdFromEntityId(oldEntityId);
     if (partyId) {
       this.entityIdToPartyId.delete(oldEntityId);
       this.entityIdToPartyId.set(newEntityId, partyId);
@@ -132,8 +118,18 @@ var _PartyTracker = class {
     this.ownName = name;
   }
   remove(partyInstanceId, name) {
-    if (name === this.ownName)
+    if (name === this.ownName) {
       this.removePartyMappings(partyInstanceId);
+      return;
+    }
+    const chracterId = this.characterNameToCharacterId.get(name);
+    this.characterNameToCharacterId.delete(name);
+    if (!chracterId)
+      return;
+    this.characterIdToPartyId.delete(chracterId);
+    const objectId = PCIdMapper.getInstance().getEntityId(chracterId);
+    if (objectId)
+      this.characterIdToPartyId.delete(objectId);
   }
   isCharacterInParty(characterId) {
     return this.characterIdToPartyId.has(characterId);
@@ -150,13 +146,20 @@ var _PartyTracker = class {
   removePartyMappings(partyInstanceId) {
     const raidId = this.getRaidInstanceId(partyInstanceId);
     const partyIds = raidId ? this.raidInstanceToPartyInstances.get(raidId) ?? /* @__PURE__ */ new Set([partyInstanceId]) : /* @__PURE__ */ new Set([partyInstanceId]);
-    for (const e of this.characterIdToPartyId) {
-      if (partyIds.has(e[1]))
-        this.characterIdToPartyId.delete(e[0]);
+    for (const [characterId, partyId] of this.characterIdToPartyId) {
+      if (partyIds.has(partyId)) {
+        this.characterIdToPartyId.delete(characterId);
+        for (const [name, charId] of this.characterNameToCharacterId) {
+          if (characterId === charId) {
+            this.characterNameToCharacterId.delete(name);
+            break;
+          }
+        }
+      }
     }
-    for (const e of this.entityIdToPartyId) {
-      if (partyIds.has(e[1]))
-        this.entityIdToPartyId.delete(e[0]);
+    for (const [entityId, partyId] of this.entityIdToPartyId) {
+      if (partyIds.has(partyId))
+        this.entityIdToPartyId.delete(entityId);
     }
   }
   getRaidInstanceId(partyId) {
@@ -167,7 +170,7 @@ var _PartyTracker = class {
     return void 0;
   }
   registerPartyId(raidInstanceId, partyId) {
-    var list = this.raidInstanceToPartyInstances.get(raidInstanceId);
+    let list = this.raidInstanceToPartyInstances.get(raidInstanceId);
     if (!list) {
       list = /* @__PURE__ */ new Set();
       this.raidInstanceToPartyInstances.set(raidInstanceId, list);

@@ -4,11 +4,10 @@ declare class PartyTracker {
     private entityIdToPartyId;
     private raidInstanceToPartyInstances;
     private ownName;
+    private characterNameToCharacterId;
     private constructor();
     static getInstance(): PartyTracker;
-    add(characterId: bigint | undefined, entityId: bigint | undefined, partyId: number, raidInstanceId: number): void;
-    addCharacterId(characterId: bigint): void;
-    addEntityId(entityId: bigint): void;
+    add(raidInstanceId: number, partyId: number, characterId?: bigint | undefined, entityId?: bigint | undefined, name?: string | undefined): void;
     completeEntry(characterId: bigint, entityId: bigint): void;
     changeEntityId(oldEntityId: bigint, newEntityId: bigint): void;
     setOwnName(name: string): void;

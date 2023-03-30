@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 export type Npc = {
   id: number;
   name: string;
@@ -68,6 +70,9 @@ export type SkillEffect = {
 };
 
 export class MeterData {
+  dbPath: string = "";
+  modulePath: string;
+
   enums: Map<string, Map<string, string>>;
   npc: Map<number, Npc>;
   PCData: Map<number, string>;
@@ -76,7 +81,8 @@ export class MeterData {
   skillEffect: Map<number, SkillEffect>;
   combatEffect: Map<number, CombatEffect>;
 
-  constructor() {
+  constructor(meterDataPath: string = "./meter-core/data") {
+    this.modulePath = meterDataPath;
     this.enums = new Map();
     this.npc = new Map();
     this.PCData = new Map();
@@ -167,5 +173,16 @@ export class MeterData {
 
   getBattleItemName(id: number) {
     return this.skillEffect.get(id)?.itemname || "";
+  }
+  loadDbs(basePath: string) {
+    this.dbPath = basePath;
+
+    this.processEnumData(JSON.parse(readFileSync(join(basePath, "Enums.json"), "utf-8")));
+    this.processNpcData(JSON.parse(readFileSync(join(basePath, "Npc.json"), "utf-8")));
+    this.processPCData(JSON.parse(readFileSync(join(basePath, "PCData.json"), "utf-8")));
+    this.processSkillData(JSON.parse(readFileSync(join(basePath, "Skill.json"), "utf-8")));
+    this.processSkillBuffData(JSON.parse(readFileSync(join(basePath, "SkillBuff.json"), "utf-8")));
+    this.processSkillBuffEffectData(JSON.parse(readFileSync(join(basePath, "SkillEffect.json"), "utf-8")));
+    this.processCombatEffectData(JSON.parse(readFileSync(join(basePath, "CombatEffect.json"), "utf-8")));
   }
 }

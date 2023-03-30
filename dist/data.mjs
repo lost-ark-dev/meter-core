@@ -1,7 +1,11 @@
 import "./chunk-NHABU752.mjs";
 
 // src/data.ts
+import { readFileSync } from "fs";
+import { join } from "path";
 var MeterData = class {
+  dbPath = "";
+  modulePath;
   enums;
   npc;
   PCData;
@@ -9,7 +13,8 @@ var MeterData = class {
   skillBuff;
   skillEffect;
   combatEffect;
-  constructor() {
+  constructor(meterDataPath = "./meter-core/data") {
+    this.modulePath = meterDataPath;
     this.enums = /* @__PURE__ */ new Map();
     this.npc = /* @__PURE__ */ new Map();
     this.PCData = /* @__PURE__ */ new Map();
@@ -89,6 +94,16 @@ var MeterData = class {
   }
   getBattleItemName(id) {
     return this.skillEffect.get(id)?.itemname || "";
+  }
+  loadDbs(basePath) {
+    this.dbPath = basePath;
+    this.processEnumData(JSON.parse(readFileSync(join(basePath, "Enums.json"), "utf-8")));
+    this.processNpcData(JSON.parse(readFileSync(join(basePath, "Npc.json"), "utf-8")));
+    this.processPCData(JSON.parse(readFileSync(join(basePath, "PCData.json"), "utf-8")));
+    this.processSkillData(JSON.parse(readFileSync(join(basePath, "Skill.json"), "utf-8")));
+    this.processSkillBuffData(JSON.parse(readFileSync(join(basePath, "SkillBuff.json"), "utf-8")));
+    this.processSkillBuffEffectData(JSON.parse(readFileSync(join(basePath, "SkillEffect.json"), "utf-8")));
+    this.processCombatEffectData(JSON.parse(readFileSync(join(basePath, "CombatEffect.json"), "utf-8")));
   }
 };
 export {

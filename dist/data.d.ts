@@ -62,6 +62,8 @@ type SkillEffect = {
     itemcategory?: string;
 };
 declare class MeterData {
+    dbPath: string;
+    modulePath: string;
     enums: Map<string, Map<string, string>>;
     npc: Map<number, Npc>;
     PCData: Map<number, string>;
@@ -69,7 +71,7 @@ declare class MeterData {
     skillBuff: Map<number, SkillBuff>;
     skillEffect: Map<number, SkillEffect>;
     combatEffect: Map<number, CombatEffect>;
-    constructor();
+    constructor(meterDataPath?: string);
     processEnumData(data: {
         [key: string]: {
             [key: string]: string;
@@ -101,6 +103,7 @@ declare class MeterData {
     isSupportClassId(id: number): boolean;
     isBattleItem(id: number, type?: "attack" | "buff" | "function"): boolean;
     getBattleItemName(id: number): string;
+    loadDbs(basePath: string): void;
 }
 
 export { CombatEffect, CombatEffectActions, CombatEffectCondition, MeterData, Npc, PassiveOption, Skill, SkillBuff, SkillEffect };

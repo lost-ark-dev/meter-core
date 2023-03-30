@@ -23,7 +23,11 @@ __export(data_exports, {
   MeterData: () => MeterData
 });
 module.exports = __toCommonJS(data_exports);
+var import_fs = require("fs");
+var import_path = require("path");
 var MeterData = class {
+  dbPath = "";
+  modulePath;
   enums;
   npc;
   PCData;
@@ -31,7 +35,8 @@ var MeterData = class {
   skillBuff;
   skillEffect;
   combatEffect;
-  constructor() {
+  constructor(meterDataPath = "./meter-core/data") {
+    this.modulePath = meterDataPath;
     this.enums = /* @__PURE__ */ new Map();
     this.npc = /* @__PURE__ */ new Map();
     this.PCData = /* @__PURE__ */ new Map();
@@ -111,6 +116,16 @@ var MeterData = class {
   }
   getBattleItemName(id) {
     return this.skillEffect.get(id)?.itemname || "";
+  }
+  loadDbs(basePath) {
+    this.dbPath = basePath;
+    this.processEnumData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "Enums.json"), "utf-8")));
+    this.processNpcData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "Npc.json"), "utf-8")));
+    this.processPCData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "PCData.json"), "utf-8")));
+    this.processSkillData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "Skill.json"), "utf-8")));
+    this.processSkillBuffData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "SkillBuff.json"), "utf-8")));
+    this.processSkillBuffEffectData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "SkillEffect.json"), "utf-8")));
+    this.processCombatEffectData(JSON.parse((0, import_fs.readFileSync)((0, import_path.join)(basePath, "CombatEffect.json"), "utf-8")));
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

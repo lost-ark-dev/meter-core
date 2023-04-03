@@ -6,7 +6,14 @@ import type { StatusEffectData } from "./packets/generated/structures/StatusEffe
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
 import type { PKTStream } from "./pkt-stream";
-import { StatusEffect, StatusEffectTargetType, StatusEffectBuffCategory, StatusEffectCategory, StatusEffectShowType, StatusTracker } from "./statustracker";
+import {
+  StatusEffect,
+  StatusEffectTargetType,
+  StatusEffectBuffCategory,
+  StatusEffectCategory,
+  StatusEffectShowType,
+  StatusTracker,
+} from "./statustracker";
 
 export const enum LineId {
   InitEnv = 1,
@@ -161,7 +168,8 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       .on("PKTInitEnv", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        if (this.#localPlayer.entityId !== 0n) PartyTracker.getInstance().changeEntityId(this.#localPlayer.entityId, parsed.PlayerId);
+        if (this.#localPlayer.entityId !== 0n)
+          PartyTracker.getInstance().changeEntityId(this.#localPlayer.entityId, parsed.PlayerId);
         this.#currentEncounter = new Encounter();
         const player: Player = {
           entityId: parsed.PlayerId,
@@ -201,7 +209,9 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
         const tracker = StatusTracker.getInstance();
         for (const se of parsed.statusEffectDatas) {
-          tracker.RegisterStatusEffect(this.#buildStatusEffect(se, parsed.PlayerId, se.SourceId, StatusEffectTargetType.Local));
+          tracker.RegisterStatusEffect(
+            this.#buildStatusEffect(se, parsed.PlayerId, se.SourceId, StatusEffectTargetType.Local)
+          );
         }
 
         if (this.#needEmit) {
@@ -231,7 +241,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         };
         this.#currentEncounter.entities.set(npc.entityId, npc);
         if (this.#needEmit) {
-          const statsMap = this.#getStatPairMap(pkt.parsed.NpcStruct.statPair);
+          const statsMap = this.#getStatPairMap(parsed.NpcStruct.statPair);
           this.#buildLine(
             LineId.NewNpc,
             npc.entityId,
@@ -251,6 +261,22 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           name: parsed.NpcData.ObjectId.toString(16),
           ownerId: parsed.OwnerId,
         };
+        if (this.#needEmit) {
+          const owner = this.#currentEncounter.entities.get(parsed.OwnerId);
+          if (owner && owner.entityType === EntityType.Npc) {
+            // Consider npc summons as npcs. And log it (it'll be used for valtan ghost phase for ex)
+            summon.name = this.#data.getNpcName(parsed.NpcData.TypeId);
+            const statsMap = this.#getStatPairMap(parsed.NpcData.statPair);
+            this.#buildLine(
+              LineId.NewNpc,
+              summon.entityId,
+              parsed.NpcData.TypeId,
+              summon.name,
+              Number(statsMap.get(stattype.hp)) || 0,
+              Number(statsMap.get(stattype.max_hp)) || 0
+            );
+          }
+        }
         this.#currentEncounter.entities.set(summon.entityId, summon);
       })
       .on("PKTNewPC", (pkt) => {
@@ -273,7 +299,9 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         PartyTracker.getInstance().completeEntry(player.characterId, player.entityId);
         const tracker = StatusTracker.getInstance();
         for (const se of parsed.PCStruct.statusEffectDatas) {
-          tracker.RegisterStatusEffect(this.#buildStatusEffect(se, parsed.PCStruct.PlayerId, se.SourceId, StatusEffectTargetType.Local))
+          tracker.RegisterStatusEffect(
+            this.#buildStatusEffect(se, parsed.PCStruct.PlayerId, se.SourceId, StatusEffectTargetType.Local)
+          );
         }
         if (this.#needEmit) {
           const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
@@ -345,7 +373,13 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           }
 
           // Add to party
-          PartyTracker.getInstance().add(parsed.RaidInstanceId, parsed.PartyInstanceId, pm.CharacterId, entityId, pm.Name);
+          PartyTracker.getInstance().add(
+            parsed.RaidInstanceId,
+            parsed.PartyInstanceId,
+            pm.CharacterId,
+            entityId,
+            pm.Name
+          );
         }
       })
       .on("PKTPartyLeaveResult", (pkt) => {
@@ -360,7 +394,9 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         for (const effect of parsed.statusEffectDatas) {
           const sourceId: bigint = parsed.PlayerIdOnRefresh !== 0n ? parsed.PlayerIdOnRefresh : effect.SourceId;
           const sourceEnt = this.#getSourceEntity(sourceId);
-          tracker.RegisterStatusEffect(this.#buildStatusEffect(effect, parsed.CharacterId, sourceEnt.entityId, StatusEffectTargetType.Party));
+          tracker.RegisterStatusEffect(
+            this.#buildStatusEffect(effect, parsed.CharacterId, sourceEnt.entityId, StatusEffectTargetType.Party)
+          );
         }
       })
       .on("PKTPartyStatusEffectRemoveNotify", (pkt) => {
@@ -408,7 +444,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               skillName = "Bleed";
 
             const targetEntity = this.#currentEncounter.entities.get(event.skillDamageEvent.TargetId);
-            const [statusEffectsOnSource, statusEffectsOnTarget] = this.#getStatusEffects(sourceEntity, targetEntity)
+            const [statusEffectsOnSource, statusEffectsOnTarget] = this.#getStatusEffects(sourceEntity, targetEntity);
             // Override skillEffect for battleitems (this way we know the real item used: slendid or not)
             let skillEffectId = parsedDmg.SkillEffectId;
             let skillEffect: string | undefined;
@@ -465,7 +501,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
               skillName = "Bleed";
 
             const targetEntity = this.#currentEncounter.entities.get(event.TargetId);
-            const [statusEffectsOnSource, statusEffectsOnTarget] = this.#getStatusEffects(sourceEntity, targetEntity)
+            const [statusEffectsOnSource, statusEffectsOnTarget] = this.#getStatusEffects(sourceEntity, targetEntity);
 
             // Override skillEffect for battleitems (this way we know the real item used: slendid or not)
             let skillEffectId = parsedDmg.SkillEffectId;
@@ -553,7 +589,14 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         const sourceEnt = this.#getSourceEntity(parsed.statusEffectData.SourceId);
-        StatusTracker.getInstance().RegisterStatusEffect(this.#buildStatusEffect(parsed.statusEffectData, parsed.ObjectId, sourceEnt.entityId, StatusEffectTargetType.Local));
+        StatusTracker.getInstance().RegisterStatusEffect(
+          this.#buildStatusEffect(
+            parsed.statusEffectData,
+            parsed.ObjectId,
+            sourceEnt.entityId,
+            StatusEffectTargetType.Local
+          )
+        );
       })
       .on("PKTStatusEffectRemoveNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -731,19 +774,24 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     return PartyTracker.getInstance().isCharacterInParty(player.characterId);
   }
 
-  #buildStatusEffect(se: StatusEffectData, targetId: bigint, sourceId: bigint, targetType: StatusEffectTargetType): StatusEffect {
+  #buildStatusEffect(
+    se: StatusEffectData,
+    targetId: bigint,
+    sourceId: bigint,
+    targetType: StatusEffectTargetType
+  ): StatusEffect {
     const val: number = se.Value ? se.Value.readUInt32LE() : 0;
     let statusEffectCategory = StatusEffectCategory.Other;
     let statusEffectBuffCategory = StatusEffectBuffCategory.Other;
     let showType = StatusEffectShowType.Other;
     const effectInfo = this.#data.skillBuff.get(se.StatusEffectId);
     if (effectInfo) {
-      switch(effectInfo.category) {
+      switch (effectInfo.category) {
         case "debuff":
           statusEffectCategory = StatusEffectCategory.Debuff;
           break;
       }
-      switch(effectInfo.buffcategory) {
+      switch (effectInfo.buffcategory) {
         case "bracelet":
           statusEffectBuffCategory = StatusEffectBuffCategory.Bracelet;
           break;
@@ -754,7 +802,7 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           statusEffectBuffCategory = StatusEffectBuffCategory.Battleitem;
           break;
       }
-      switch(effectInfo.iconshowtype) {
+      switch (effectInfo.iconshowtype) {
         case "all":
           showType = StatusEffectShowType.All;
           break;
@@ -774,32 +822,35 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     };
   }
 
-  #getStatusEffects(sourceEntity: Entity, targetEntity: Entity|undefined): [[number, bigint][], [number, bigint][]] {
+  #getStatusEffects(sourceEntity: Entity, targetEntity: Entity | undefined): [[number, bigint][], [number, bigint][]] {
     const statusEffectsOnTarget: [number, bigint][] = [];
     const statusEffectsOnSource: [number, bigint][] = [];
 
     const shouldUsePartyBuffForSource = this.#shouldUsePartyStatusEffectForEntity(sourceEntity);
-    const sourceEffects =  StatusTracker.getInstance().GetStatusEffects(
+    const sourceEffects = StatusTracker.getInstance().GetStatusEffects(
       shouldUsePartyBuffForSource ? (sourceEntity as Player).characterId : sourceEntity.entityId,
       shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
     );
-    for(const se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
+    for (const se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
 
     if (targetEntity) {
       const shouldUsePartyBuffForTarget = this.#shouldUsePartyStatusEffectForEntity(targetEntity);
       const sourceIsInParty = this.#isEntityInParty(sourceEntity);
-      const sourcePartyId = sourceIsInParty ? PartyTracker.getInstance().getPartyIdFromEntityId(sourceEntity.entityId) : undefined;
-      const targetEffects = sourceIsInParty && sourcePartyId
-      ? StatusTracker.getInstance().GetStatusEffectsFromParty(
-        shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
-        shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
-        sourcePartyId
-      )
-      : StatusTracker.getInstance().GetStatusEffects(
-        shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
-        shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
-      );
-      for(const se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
+      const sourcePartyId = sourceIsInParty
+        ? PartyTracker.getInstance().getPartyIdFromEntityId(sourceEntity.entityId)
+        : undefined;
+      const targetEffects =
+        sourceIsInParty && sourcePartyId
+          ? StatusTracker.getInstance().GetStatusEffectsFromParty(
+              shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
+              shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
+              sourcePartyId
+            )
+          : StatusTracker.getInstance().GetStatusEffects(
+              shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
+              shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+            );
+      for (const se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
     }
     return [statusEffectsOnSource, statusEffectsOnTarget];
   }

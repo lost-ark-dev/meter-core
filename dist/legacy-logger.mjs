@@ -254,7 +254,9 @@ var LegacyLogger = class extends TypedEmitter {
       PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
       const tracker = StatusTracker.getInstance();
       for (const se of parsed.statusEffectDatas) {
-        tracker.RegisterStatusEffect(this.#buildStatusEffect(se, parsed.PlayerId, se.SourceId, 1 /* Local */));
+        tracker.RegisterStatusEffect(
+          this.#buildStatusEffect(se, parsed.PlayerId, se.SourceId, 1 /* Local */)
+        );
       }
       if (this.#needEmit) {
         const statsMap = this.#getStatPairMap(pkt.parsed.statPair);
@@ -283,7 +285,7 @@ var LegacyLogger = class extends TypedEmitter {
       };
       this.#currentEncounter.entities.set(npc.entityId, npc);
       if (this.#needEmit) {
-        const statsMap = this.#getStatPairMap(pkt.parsed.NpcStruct.statPair);
+        const statsMap = this.#getStatPairMap(parsed.NpcStruct.statPair);
         this.#buildLine(
           4 /* NewNpc */,
           npc.entityId,
@@ -303,6 +305,21 @@ var LegacyLogger = class extends TypedEmitter {
         name: parsed.NpcData.ObjectId.toString(16),
         ownerId: parsed.OwnerId
       };
+      if (this.#needEmit) {
+        const owner = this.#currentEncounter.entities.get(parsed.OwnerId);
+        if (owner && owner.entityType === EntityType.Npc) {
+          summon.name = this.#data.getNpcName(parsed.NpcData.TypeId);
+          const statsMap = this.#getStatPairMap(parsed.NpcData.statPair);
+          this.#buildLine(
+            4 /* NewNpc */,
+            summon.entityId,
+            parsed.NpcData.TypeId,
+            summon.name,
+            Number(statsMap.get(1 /* hp */)) || 0,
+            Number(statsMap.get(27 /* max_hp */)) || 0
+          );
+        }
+      }
       this.#currentEncounter.entities.set(summon.entityId, summon);
     }).on("PKTNewPC", (pkt) => {
       const parsed = pkt.parsed;
@@ -325,7 +342,9 @@ var LegacyLogger = class extends TypedEmitter {
       PartyTracker.getInstance().completeEntry(player.characterId, player.entityId);
       const tracker = StatusTracker.getInstance();
       for (const se of parsed.PCStruct.statusEffectDatas) {
-        tracker.RegisterStatusEffect(this.#buildStatusEffect(se, parsed.PCStruct.PlayerId, se.SourceId, 1 /* Local */));
+        tracker.RegisterStatusEffect(
+          this.#buildStatusEffect(se, parsed.PCStruct.PlayerId, se.SourceId, 1 /* Local */)
+        );
       }
       if (this.#needEmit) {
         const statsMap = this.#getStatPairMap(pkt.parsed.PCStruct.statPair);
@@ -393,7 +412,13 @@ var LegacyLogger = class extends TypedEmitter {
             }
           }
         }
-        PartyTracker.getInstance().add(parsed.RaidInstanceId, parsed.PartyInstanceId, pm.CharacterId, entityId, pm.Name);
+        PartyTracker.getInstance().add(
+          parsed.RaidInstanceId,
+          parsed.PartyInstanceId,
+          pm.CharacterId,
+          entityId,
+          pm.Name
+        );
       }
     }).on("PKTPartyLeaveResult", (pkt) => {
       const parsed = pkt.parsed;
@@ -408,7 +433,9 @@ var LegacyLogger = class extends TypedEmitter {
       for (const effect of parsed.statusEffectDatas) {
         const sourceId = parsed.PlayerIdOnRefresh !== 0n ? parsed.PlayerIdOnRefresh : effect.SourceId;
         const sourceEnt = this.#getSourceEntity(sourceId);
-        tracker.RegisterStatusEffect(this.#buildStatusEffect(effect, parsed.CharacterId, sourceEnt.entityId, 0 /* Party */));
+        tracker.RegisterStatusEffect(
+          this.#buildStatusEffect(effect, parsed.CharacterId, sourceEnt.entityId, 0 /* Party */)
+        );
       }
     }).on("PKTPartyStatusEffectRemoveNotify", (pkt) => {
       const parsed = pkt.parsed;
@@ -563,7 +590,14 @@ var LegacyLogger = class extends TypedEmitter {
       if (!parsed)
         return;
       const sourceEnt = this.#getSourceEntity(parsed.statusEffectData.SourceId);
-      StatusTracker.getInstance().RegisterStatusEffect(this.#buildStatusEffect(parsed.statusEffectData, parsed.ObjectId, sourceEnt.entityId, 1 /* Local */));
+      StatusTracker.getInstance().RegisterStatusEffect(
+        this.#buildStatusEffect(
+          parsed.statusEffectData,
+          parsed.ObjectId,
+          sourceEnt.entityId,
+          1 /* Local */
+        )
+      );
     }).on("PKTStatusEffectRemoveNotify", (pkt) => {
       const parsed = pkt.parsed;
       if (!parsed)

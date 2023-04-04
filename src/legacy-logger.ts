@@ -691,6 +691,11 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         StatusTracker.getInstance().RemoveLocalObject(parsed.ObjectId);
+      })
+      .on("PKTStatusEffectDurationNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        StatusTracker.getInstance().UpdateDuration(parsed.EffectInstanceId, parsed.TargetId, parsed.ExpirationTick, StatusEffectTargetType.Local);
       });
   }
 
@@ -833,8 +838,10 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
     let statusEffectCategory = StatusEffectCategory.Other;
     let statusEffectBuffCategory = StatusEffectBuffCategory.Other;
     let showType = StatusEffectShowType.Other;
+    let seName = "Unknown";
     const effectInfo = this.#data.skillBuff.get(se.StatusEffectId);
     if (effectInfo) {
+      seName = effectInfo.name;
       switch (effectInfo.category) {
         case "debuff":
           statusEffectCategory = StatusEffectCategory.Debuff;
@@ -868,6 +875,12 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
       showType: showType,
+      expirationDelay: se.TotalTime,
+      expirationTimer: undefined,
+      timestamp: se.EndTick,
+      expireAt: undefined,
+      occurTime: se.OccurTime,
+      name: seName,
     };
   }
 

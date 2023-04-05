@@ -63,6 +63,7 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTStatChangeOriginNotify, [names.PKTStatChangeOriginNotify, reads.PKTStatChangeOriginNotify]],
   [codes.PKTStatusEffectAddNotify, [names.PKTStatusEffectAddNotify, reads.PKTStatusEffectAddNotify]],
   [codes.PKTStatusEffectRemoveNotify, [names.PKTStatusEffectRemoveNotify, reads.PKTStatusEffectRemoveNotify]],
+  [codes.PKTStatusEffectDurationNotify, [names.PKTStatusEffectDurationNotify, reads.PKTStatusEffectDurationNotify]],
   [codes.PKTStatusEffectSyncDataNotify, [names.PKTStatusEffectSyncDataNotify, reads.PKTStatusEffectSyncDataNotify]],
   [codes.PKTTriggerBossBattleStatus, [names.PKTTriggerBossBattleStatus, reads.PKTTriggerBossBattleStatus]],
   [codes.PKTTriggerFinishNotify, [names.PKTTriggerFinishNotify, reads.PKTTriggerFinishNotify]],

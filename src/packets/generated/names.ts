@@ -35,6 +35,7 @@ export { name as PKTSkillStartNotify } from "./definitions/PKTSkillStartNotify";
 export { name as PKTStatChangeOriginNotify } from "./definitions/PKTStatChangeOriginNotify";
 export { name as PKTStatusEffectAddNotify } from "./definitions/PKTStatusEffectAddNotify";
 export { name as PKTStatusEffectRemoveNotify } from "./definitions/PKTStatusEffectRemoveNotify";
+export { name as PKTStatusEffectDurationNotify } from "./definitions/PKTStatusEffectDurationNotify";
 export { name as PKTStatusEffectSyncDataNotify } from "./definitions/PKTStatusEffectSyncDataNotify";
 export { name as PKTTriggerBossBattleStatus } from "./definitions/PKTTriggerBossBattleStatus";
 export { name as PKTTriggerFinishNotify } from "./definitions/PKTTriggerFinishNotify";

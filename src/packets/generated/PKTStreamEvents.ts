@@ -38,6 +38,7 @@ export interface PKTStreamEvents {
   PKTStatChangeOriginNotify: (pkt: PKT<types.PKTStatChangeOriginNotify>) => void;
   PKTStatusEffectAddNotify: (pkt: PKT<types.PKTStatusEffectAddNotify>) => void;
   PKTStatusEffectRemoveNotify: (pkt: PKT<types.PKTStatusEffectRemoveNotify>) => void;
+  PKTStatusEffectDurationNotify: (pkt: PKT<types.PKTStatusEffectDurationNotify>) => void;
   PKTStatusEffectSyncDataNotify: (pkt: PKT<types.PKTStatusEffectSyncDataNotify>) => void;
   PKTTriggerBossBattleStatus: (pkt: PKT<types.PKTTriggerBossBattleStatus>) => void;
   PKTTriggerFinishNotify: (pkt: PKT<types.PKTTriggerFinishNotify>) => void;

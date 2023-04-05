@@ -208,9 +208,16 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         PartyTracker.getInstance().setOwnName(parsed.Name);
         PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
         const tracker = StatusTracker.getInstance();
+        tracker.RemoveLocalObject(parsed.PlayerId);
         for (const se of parsed.statusEffectDatas) {
+          const sourceEntity = this.#getSourceEntity(se.SourceId);
           tracker.RegisterStatusEffect(
-            this.#buildStatusEffect(se, parsed.PlayerId, se.SourceId, StatusEffectTargetType.Local)
+            this.#buildStatusEffect(
+              se,
+              parsed.PlayerId,
+              sourceEntity.entityId,
+              StatusEffectTargetType.Local
+            )
           );
         }
 
@@ -240,6 +247,19 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           typeId: parsed.NpcStruct.TypeId,
         };
         this.#currentEncounter.entities.set(npc.entityId, npc);
+        const tracker = StatusTracker.getInstance();
+        tracker.RemoveLocalObject(parsed.NpcStruct.ObjectId);
+        for (const se of parsed.NpcStruct.statusEffectDatas) {
+          const sourceEntity = this.#getSourceEntity(se.SourceId);
+          tracker.RegisterStatusEffect(
+            this.#buildStatusEffect(
+              se,
+              parsed.NpcStruct.ObjectId,
+              sourceEntity.entityId,
+              StatusEffectTargetType.Local
+            )
+          );
+        }
         if (this.#needEmit) {
           const statsMap = this.#getStatPairMap(parsed.NpcStruct.statPair);
           this.#buildLine(
@@ -261,6 +281,19 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           name: parsed.NpcData.ObjectId.toString(16),
           ownerId: parsed.OwnerId,
         };
+        const tracker = StatusTracker.getInstance();
+        tracker.RemoveLocalObject(parsed.NpcData.ObjectId);
+        for (const se of parsed.NpcData.statusEffectDatas) {
+          const sourceEntity = this.#getSourceEntity(se.SourceId);
+          tracker.RegisterStatusEffect(
+            this.#buildStatusEffect(
+              se,
+              parsed.NpcData.ObjectId,
+              sourceEntity.entityId,
+              StatusEffectTargetType.Local
+            )
+          );
+        }
         if (this.#needEmit) {
           const owner = this.#currentEncounter.entities.get(parsed.OwnerId);
           if (owner && owner.entityType === EntityType.Npc) {
@@ -298,9 +331,20 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
         PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
         PartyTracker.getInstance().completeEntry(player.characterId, player.entityId);
         const tracker = StatusTracker.getInstance();
+        const shouldUsePartyStatusEffects = this.#shouldUsePartyStatusEffect(player.characterId);
+        if (shouldUsePartyStatusEffects) {
+          tracker.RemovePartyObject(parsed.PCStruct.CharacterId)
+        } else {
+          tracker.RemoveLocalObject(parsed.PCStruct.PlayerId);
+        }
         for (const se of parsed.PCStruct.statusEffectDatas) {
           tracker.RegisterStatusEffect(
-            this.#buildStatusEffect(se, parsed.PCStruct.PlayerId, se.SourceId, StatusEffectTargetType.Local)
+            this.#buildStatusEffect(
+              se,
+              shouldUsePartyStatusEffects ? player.characterId : player.entityId,
+              se.SourceId,
+              shouldUsePartyStatusEffects ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+            )
           );
         }
         if (this.#needEmit) {

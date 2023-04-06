@@ -686,6 +686,11 @@ export class LegacyLogger extends TypedEmitter<LegacyLoggerEvents> {
           parsed.Account_CharacterId1 < parsed.Account_CharacterId2
             ? parsed.Account_CharacterId1
             : parsed.Account_CharacterId2;
+      })
+      .on("PKTZoneObjectUnpublishNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        StatusTracker.getInstance().RemoveLocalObject(parsed.ObjectId);
       });
   }
 

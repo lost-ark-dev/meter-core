@@ -71,4 +71,9 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTTroopMemberUpdateMinNotify, [names.PKTTroopMemberUpdateMinNotify, reads.PKTTroopMemberUpdateMinNotify]],
   [codes.PKTIdentityGaugeChangeNotify, [names.PKTIdentityGaugeChangeNotify, reads.PKTIdentityGaugeChangeNotify]],
   [codes.PKTZoneObjectUnpublishNotify, [names.PKTZoneObjectUnpublishNotify, reads.PKTZoneObjectUnpublishNotify]],
+  [codes.PKTZoneStatusEffectAddNotify, [names.PKTZoneStatusEffectAddNotify, reads.PKTZoneStatusEffectAddNotify]],
+  [
+    codes.PKTZoneStatusEffectRemoveNotify,
+    [names.PKTZoneStatusEffectRemoveNotify, reads.PKTZoneStatusEffectRemoveNotify],
+  ],
 ]);

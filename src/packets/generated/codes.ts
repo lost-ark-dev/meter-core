@@ -43,3 +43,5 @@ export { opcode as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNo
 export { opcode as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
 export { opcode as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";
 export { opcode as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
+export { opcode as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
+export { opcode as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";

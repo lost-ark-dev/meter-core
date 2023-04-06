@@ -46,5 +46,7 @@ export interface PKTStreamEvents {
   PKTTroopMemberUpdateMinNotify: (pkt: PKT<types.PKTTroopMemberUpdateMinNotify>) => void;
   PKTIdentityGaugeChangeNotify: (pkt: PKT<types.PKTIdentityGaugeChangeNotify>) => void;
   PKTZoneObjectUnpublishNotify: (pkt: PKT<types.PKTZoneObjectUnpublishNotify>) => void;
+  PKTZoneStatusEffectAddNotify: (pkt: PKT<types.PKTZoneStatusEffectAddNotify>) => void;
+  PKTZoneStatusEffectRemoveNotify: (pkt: PKT<types.PKTZoneStatusEffectRemoveNotify>) => void;
   "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }

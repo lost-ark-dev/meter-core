@@ -660,3 +660,10 @@ export enum statuseffectcategory {
   buff = 0,
   debuff = 1,
 }
+export enum zonebufftarget {
+  none = 0,
+  pc = 1,
+  monster = 2,
+  npc = 3,
+  all = 4,
+}

@@ -43,3 +43,5 @@ export { name as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNoti
 export { name as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
 export { name as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";
 export { name as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
+export { name as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
+export { name as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";

@@ -12,7 +12,7 @@ export type ProjectileInfo = {
   Unk6: number;
   ProjectileId: bigint;
   SkillId: number;
-  Unk9: bigint;
+  TargetObjectId: bigint;
   Unk10_0?: number;
   Unk11: number;
   SkillEffect: number;
@@ -36,7 +36,7 @@ export function read(reader: Read) {
   data.Unk6 = reader.u16();
   data.ProjectileId = reader.u64();
   data.SkillId = reader.u32();
-  data.Unk9 = reader.u64();
+  data.TargetObjectId = reader.u64();
   if (reader.bool()) data.Unk10_0 = reader.u32();
   data.Unk11 = reader.u32();
   data.SkillEffect = reader.u32();

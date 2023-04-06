@@ -42,3 +42,4 @@ export { read as PKTTriggerFinishNotify } from "./definitions/PKTTriggerFinishNo
 export { read as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNotify";
 export { read as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
 export { read as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";
+export { read as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";

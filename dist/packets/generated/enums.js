@@ -29,7 +29,8 @@ __export(enums_exports, {
   npctype: () => npctype,
   stattype: () => stattype,
   statuseffectcategory: () => statuseffectcategory,
-  triggersignaltype: () => triggersignaltype
+  triggersignaltype: () => triggersignaltype,
+  zonebufftarget: () => zonebufftarget
 });
 module.exports = __toCommonJS(enums_exports);
 var triggersignaltype = /* @__PURE__ */ ((triggersignaltype2) => {
@@ -704,6 +705,14 @@ var statuseffectcategory = /* @__PURE__ */ ((statuseffectcategory2) => {
   statuseffectcategory2[statuseffectcategory2["debuff"] = 1] = "debuff";
   return statuseffectcategory2;
 })(statuseffectcategory || {});
+var zonebufftarget = /* @__PURE__ */ ((zonebufftarget2) => {
+  zonebufftarget2[zonebufftarget2["none"] = 0] = "none";
+  zonebufftarget2[zonebufftarget2["pc"] = 1] = "pc";
+  zonebufftarget2[zonebufftarget2["monster"] = 2] = "monster";
+  zonebufftarget2[zonebufftarget2["npc"] = 3] = "npc";
+  zonebufftarget2[zonebufftarget2["all"] = 4] = "all";
+  return zonebufftarget2;
+})(zonebufftarget || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   blockskilltype,
@@ -715,5 +724,6 @@ var statuseffectcategory = /* @__PURE__ */ ((statuseffectcategory2) => {
   npctype,
   stattype,
   statuseffectcategory,
-  triggersignaltype
+  triggersignaltype,
+  zonebufftarget
 });

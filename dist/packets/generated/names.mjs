@@ -1,4 +1,4 @@
-import "../../chunk-M2GHQKHQ.mjs";
+import "../../chunk-VWA7NXJP.mjs";
 import {
   name,
   name10,
@@ -37,12 +37,16 @@ import {
   name40,
   name41,
   name42,
+  name43,
+  name44,
+  name45,
+  name46,
   name5,
   name6,
   name7,
   name8,
   name9
-} from "../../chunk-KC6KPT6P.mjs";
+} from "../../chunk-RMBZ7YH7.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   name as PKTAbilityChangeNotify,
@@ -52,7 +56,7 @@ export {
   name5 as PKTBlockSkillStateNotify,
   name6 as PKTCounterAttackNotify,
   name7 as PKTDeathNotify,
-  name42 as PKTIdentityGaugeChangeNotify,
+  name43 as PKTIdentityGaugeChangeNotify,
   name8 as PKTInitAbility,
   name9 as PKTInitEnv,
   name11 as PKTInitLocal,
@@ -81,10 +85,14 @@ export {
   name33 as PKTSkillStartNotify,
   name34 as PKTStatChangeOriginNotify,
   name35 as PKTStatusEffectAddNotify,
+  name37 as PKTStatusEffectDurationNotify,
   name36 as PKTStatusEffectRemoveNotify,
-  name37 as PKTStatusEffectSyncDataNotify,
-  name38 as PKTTriggerBossBattleStatus,
-  name39 as PKTTriggerFinishNotify,
-  name40 as PKTTriggerStartNotify,
-  name41 as PKTTroopMemberUpdateMinNotify
+  name38 as PKTStatusEffectSyncDataNotify,
+  name39 as PKTTriggerBossBattleStatus,
+  name40 as PKTTriggerFinishNotify,
+  name41 as PKTTriggerStartNotify,
+  name42 as PKTTroopMemberUpdateMinNotify,
+  name44 as PKTZoneObjectUnpublishNotify,
+  name45 as PKTZoneStatusEffectAddNotify,
+  name46 as PKTZoneStatusEffectRemoveNotify
 };

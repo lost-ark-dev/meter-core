@@ -5,6 +5,7 @@ import { Decompressor } from "./decompressor";
 import { LegacyLogger } from "./legacy-logger";
 import { PktCaptureAll, PktCaptureMode } from "./pkt-capture";
 import { PKTStream } from "./pkt-stream";
+inspect.defaultOptions.depth = null; //Use to console log full objects for debug
 
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
 const xorTable = readFileSync("./meter-data/xor.bin");
@@ -30,20 +31,30 @@ meterData.processSkillData(JSON.parse(readFileSync("meter-data/databases/Skill.j
 meterData.processSkillBuffData(JSON.parse(readFileSync("meter-data/databases/SkillBuff.json", "utf-8")));
 meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databases/SkillEffect.json", "utf-8")));
 
+/*
 const legacyLogger = new LegacyLogger(stream, meterData);
 legacyLogger.on("line", (line) => {
   console.log(line);
 });
-/*
+*/
+const opcodes: { [key: number]: string } = {};
+try {
+  readFileSync("../dump/opcodes.map", "utf-8")
+    .split("\n")
+    .forEach((line) => {
+      const split = line.split(" ");
+      if (split.length == 2) opcodes[parseInt(split[1]!)] = split[0]!;
+    });
+} catch (e) {
+  console.error(`Couldn't find opcodes map file, using id instead of names`);
+}
 stream.on("*", (data, opcode, compression, xor) => {
   try {
-    const dec = compressor.decrypt(data, opcode, compression, xor);
-    console.log(dec.toString("hex"));
+    const decomp = compressor.decrypt(data, opcode, compression, xor);
+    console.log(`${opcodes[opcode] ?? opcode} <- ${decomp.toString("hex")}`);
   } catch (e) {
     console.error(e);
   }
 });
-*/
-inspect.defaultOptions.depth = null;
 
 console.log("Logging");

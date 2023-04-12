@@ -1,4 +1,4 @@
-import "../../chunk-3I66HENF.mjs";
+import "../../chunk-6ON36PWD.mjs";
 import {
   opcode,
   opcode10,
@@ -37,12 +37,16 @@ import {
   opcode40,
   opcode41,
   opcode42,
+  opcode43,
+  opcode44,
+  opcode45,
+  opcode46,
   opcode5,
   opcode6,
   opcode7,
   opcode8,
   opcode9
-} from "../../chunk-KC6KPT6P.mjs";
+} from "../../chunk-RMBZ7YH7.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   opcode as PKTAbilityChangeNotify,
@@ -52,7 +56,7 @@ export {
   opcode5 as PKTBlockSkillStateNotify,
   opcode6 as PKTCounterAttackNotify,
   opcode7 as PKTDeathNotify,
-  opcode42 as PKTIdentityGaugeChangeNotify,
+  opcode43 as PKTIdentityGaugeChangeNotify,
   opcode8 as PKTInitAbility,
   opcode9 as PKTInitEnv,
   opcode11 as PKTInitLocal,
@@ -81,10 +85,14 @@ export {
   opcode33 as PKTSkillStartNotify,
   opcode34 as PKTStatChangeOriginNotify,
   opcode35 as PKTStatusEffectAddNotify,
+  opcode37 as PKTStatusEffectDurationNotify,
   opcode36 as PKTStatusEffectRemoveNotify,
-  opcode37 as PKTStatusEffectSyncDataNotify,
-  opcode38 as PKTTriggerBossBattleStatus,
-  opcode39 as PKTTriggerFinishNotify,
-  opcode40 as PKTTriggerStartNotify,
-  opcode41 as PKTTroopMemberUpdateMinNotify
+  opcode38 as PKTStatusEffectSyncDataNotify,
+  opcode39 as PKTTriggerBossBattleStatus,
+  opcode40 as PKTTriggerFinishNotify,
+  opcode41 as PKTTriggerStartNotify,
+  opcode42 as PKTTroopMemberUpdateMinNotify,
+  opcode44 as PKTZoneObjectUnpublishNotify,
+  opcode45 as PKTZoneStatusEffectAddNotify,
+  opcode46 as PKTZoneStatusEffectRemoveNotify
 };

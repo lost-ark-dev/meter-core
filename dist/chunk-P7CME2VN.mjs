@@ -36,6 +36,10 @@ import {
   name40,
   name41,
   name42,
+  name43,
+  name44,
+  name45,
+  name46,
   name5,
   name6,
   name7,
@@ -78,6 +82,10 @@ import {
   opcode40,
   opcode41,
   opcode42,
+  opcode43,
+  opcode44,
+  opcode45,
+  opcode46,
   opcode5,
   opcode6,
   opcode7,
@@ -120,12 +128,16 @@ import {
   read40,
   read41,
   read42,
+  read43,
+  read44,
+  read45,
+  read46,
   read5,
   read6,
   read7,
   read8,
   read9
-} from "./chunk-KC6KPT6P.mjs";
+} from "./chunk-RMBZ7YH7.mjs";
 
 // src/packets/generated/mapping.ts
 var mapping = /* @__PURE__ */ new Map([
@@ -194,7 +206,14 @@ var mapping = /* @__PURE__ */ new Map([
   [opcode39, [name39, read39]],
   [opcode40, [name40, read40]],
   [opcode41, [name41, read41]],
-  [opcode42, [name42, read42]]
+  [opcode42, [name42, read42]],
+  [opcode43, [name43, read43]],
+  [opcode44, [name44, read44]],
+  [opcode45, [name45, read45]],
+  [
+    opcode46,
+    [name46, read46]
+  ]
 ]);
 
 export {

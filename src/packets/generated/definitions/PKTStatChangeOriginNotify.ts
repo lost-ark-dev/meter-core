@@ -4,9 +4,9 @@ import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 export type PKTStatChangeOriginNotify = {
   Unk0: { StatType: number; Value: bigint }[];
   Unk1: { StatType: number; Value: bigint }[];
-  Unk2: number;
+  Unk2_0?: number;
+  Unk3: number;
   ObjectId: bigint;
-  Unk4_0?: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -31,10 +31,10 @@ export function read(buf: Buffer) {
     },
     152
   );
-  data.Unk2 = reader.u8();
+  if (reader.bool()) data.Unk2_0 = reader.u32();
+  data.Unk3 = reader.u8();
   data.ObjectId = reader.u64();
-  if (reader.bool()) data.Unk4_0 = reader.u32();
   return data;
 }
 export const name = "PKTStatChangeOriginNotify";
-export const opcode = 3778;
+export const opcode = 6051;

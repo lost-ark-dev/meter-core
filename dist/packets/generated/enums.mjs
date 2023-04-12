@@ -8,8 +8,9 @@ import {
   npctype,
   stattype,
   statuseffectcategory,
-  triggersignaltype
-} from "../../chunk-DXWTQAIV.mjs";
+  triggersignaltype,
+  zonebufftarget
+} from "../../chunk-EIQHRD3L.mjs";
 import "../../chunk-NHABU752.mjs";
 export {
   blockskilltype,
@@ -21,5 +22,6 @@ export {
   npctype,
   stattype,
   statuseffectcategory,
-  triggersignaltype
+  triggersignaltype,
+  zonebufftarget
 };

@@ -188,9 +188,12 @@ __publicField(PartyTracker, "instance");
 var _StatusTracker = class {
   PartyStatusEffectRegistry;
   LocalStatusEffectRegistry;
-  constructor() {
+  debug;
+  trace = false;
+  constructor(debug = Boolean(process.env["DEV"])) {
     this.PartyStatusEffectRegistry = /* @__PURE__ */ new Map();
     this.LocalStatusEffectRegistry = /* @__PURE__ */ new Map();
+    this.debug = debug;
   }
   static getInstance() {
     if (!_StatusTracker.instance) {
@@ -223,14 +226,34 @@ var _StatusTracker = class {
     return this.LocalStatusEffectRegistry;
   }
   RemoveLocalObject(objectId) {
+    const registry = this.LocalStatusEffectRegistry.get(objectId);
+    if (registry) {
+      for (const [, se] of registry) {
+        this.RemoveStatusEffect(objectId, se.instanceId, 1 /* Local */);
+      }
+    }
     this.LocalStatusEffectRegistry.delete(objectId);
   }
   RemovePartyObject(objectId) {
+    const registry = this.PartyStatusEffectRegistry.get(objectId);
+    if (registry) {
+      for (const [, se] of registry) {
+        this.RemoveStatusEffect(objectId, se.instanceId, 0 /* Party */);
+      }
+    }
     this.PartyStatusEffectRegistry.delete(objectId);
   }
   RegisterStatusEffect(se) {
     const registry = this.getStatusEffectRegistryForPlayer(se.targetId, se.type);
+    const oldEffect = registry.get(se.instanceId);
+    if (oldEffect) {
+      if (oldEffect.expirationTimer) {
+        clearTimeout(oldEffect.expirationTimer);
+        oldEffect.expirationTimer = void 0;
+      }
+    }
     registry.set(se.instanceId, se);
+    this.SetupStatusEffectTimeout(se);
   }
   HasAnyStatusEffect(id, t, statusEffectIds) {
     if (!this.hasStatusEffectRegistryForPlayer(id, t))
@@ -263,7 +286,12 @@ var _StatusTracker = class {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et))
       return;
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
-    registry.delete(statusEffectId);
+    const statusEffect = registry.get(statusEffectId);
+    if (statusEffect) {
+      clearTimeout(statusEffect.expirationTimer);
+      statusEffect.expirationTimer = void 0;
+      registry.delete(statusEffectId);
+    }
   }
   GetStatusEffects(targetId, et) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et))
@@ -282,14 +310,77 @@ var _StatusTracker = class {
     });
   }
   Clear() {
+    let seCountInLocal = 0;
+    for (const [, reg] of this.LocalStatusEffectRegistry) {
+      for (const [, se] of reg) {
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+      }
+      seCountInLocal += reg.size;
+    }
+    let seCountInParty = 0;
+    for (const [, reg] of this.PartyStatusEffectRegistry) {
+      for (const [, se] of reg) {
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+      }
+      seCountInParty += reg.size;
+    }
+    if (this.trace)
+      console.log("On Clear SE in local", seCountInLocal, "in party", seCountInParty);
     this.LocalStatusEffectRegistry.clear();
     this.PartyStatusEffectRegistry.clear();
+  }
+  UpdateDuration(instanceId, targetId, timestamp, et) {
+    const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    const se = registry.get(instanceId);
+    if (se) {
+      const durationExtensionMs = timestamp - se.timestamp;
+      if (this.trace)
+        console.log("Clearing timeout for", se.instanceId, "because of duration change");
+      if (se.expirationTimer) {
+        clearTimeout(se.expirationTimer);
+        se.expirationTimer = void 0;
+      }
+      if (se.expireAt) {
+        const timeoutTime = se.expireAt.getTime() + Number(durationExtensionMs);
+        const now = new Date();
+        const timeoutDelay = timeoutTime - now.getTime();
+        if (timeoutDelay > 0) {
+          if (this.trace)
+            console.log("Extending duration by", durationExtensionMs, "ms", "New timeout delay", timeoutDelay, "from", se.expireAt.toISOString(), "to", new Date(timeoutTime).toISOString());
+          se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
+          se.expireAt = new Date(timeoutTime);
+          se.timestamp = timestamp;
+        } else {
+          se.expireAt = void 0;
+        }
+      }
+    } else if (this.debug) {
+      console.error("Tried to update duration for SE with instanceId", instanceId, " on target", targetId, "but where is no such SE registered");
+    }
   }
   ValidForWholeRaid(se) {
     return (se.buffCategory === 3 /* Battleitem */ || se.buffCategory === 1 /* Bracelet */ || se.buffCategory === 2 /* Etc */) && se.category === 1 /* Debuff */ && se.showType === 1 /* All */;
   }
+  SetupStatusEffectTimeout(se) {
+    if (se.expirationDelay > 0 && se.expirationDelay < 604800) {
+      const startDate = se.started.getTime() > se.occurTime.getTime() ? se.started : se.occurTime;
+      const expirationDelayInMs = Math.ceil(se.expirationDelay * 1e3);
+      const now = new Date();
+      const timeoutDelay = startDate.getTime() + expirationDelayInMs + _StatusTracker.TIMEOUT_DELAY_MS - now.getTime();
+      se.expireAt = new Date(now.getTime() + timeoutDelay);
+      if (this.trace)
+        console.log("Setting up statuseffect expiration timer for", se.name, se.instanceId, "with delay", timeoutDelay);
+      se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
+    }
+  }
+  ExpireStatusEffectByTimeout(se) {
+    if (this.debug)
+      console.error("Triggered timeout on", se.name, "with iid", se.instanceId);
+    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+  }
 };
 var StatusTracker = _StatusTracker;
+__publicField(StatusTracker, "TIMEOUT_DELAY_MS", 1e3);
 __publicField(StatusTracker, "instance");
 
 // src/legacy-logger.ts
@@ -424,9 +515,16 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       PartyTracker.getInstance().setOwnName(parsed.Name);
       PartyTracker.getInstance().completeEntry(player.characterId, parsed.PlayerId);
       const tracker = StatusTracker.getInstance();
+      tracker.RemoveLocalObject(parsed.PlayerId);
       for (const se of parsed.statusEffectDatas) {
+        const sourceEntity = this.#getSourceEntity(se.SourceId);
         tracker.RegisterStatusEffect(
-          this.#buildStatusEffect(se, parsed.PlayerId, se.SourceId, 1 /* Local */)
+          this.#buildStatusEffect(
+            se,
+            parsed.PlayerId,
+            sourceEntity.entityId,
+            1 /* Local */
+          )
         );
       }
       if (this.#needEmit) {
@@ -455,6 +553,19 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
         typeId: parsed.NpcStruct.TypeId
       };
       this.#currentEncounter.entities.set(npc.entityId, npc);
+      const tracker = StatusTracker.getInstance();
+      tracker.RemoveLocalObject(parsed.NpcStruct.ObjectId);
+      for (const se of parsed.NpcStruct.statusEffectDatas) {
+        const sourceEntity = this.#getSourceEntity(se.SourceId);
+        tracker.RegisterStatusEffect(
+          this.#buildStatusEffect(
+            se,
+            parsed.NpcStruct.ObjectId,
+            sourceEntity.entityId,
+            1 /* Local */
+          )
+        );
+      }
       if (this.#needEmit) {
         const statsMap = this.#getStatPairMap(parsed.NpcStruct.statPair);
         this.#buildLine(
@@ -476,6 +587,19 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
         name: parsed.NpcData.ObjectId.toString(16),
         ownerId: parsed.OwnerId
       };
+      const tracker = StatusTracker.getInstance();
+      tracker.RemoveLocalObject(parsed.NpcData.ObjectId);
+      for (const se of parsed.NpcData.statusEffectDatas) {
+        const sourceEntity = this.#getSourceEntity(se.SourceId);
+        tracker.RegisterStatusEffect(
+          this.#buildStatusEffect(
+            se,
+            parsed.NpcData.ObjectId,
+            sourceEntity.entityId,
+            1 /* Local */
+          )
+        );
+      }
       if (this.#needEmit) {
         const owner = this.#currentEncounter.entities.get(parsed.OwnerId);
         if (owner && owner.entityType === EntityType.Npc) {
@@ -512,9 +636,20 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       PCIdMapper.getInstance().addMapping(player.characterId, player.entityId);
       PartyTracker.getInstance().completeEntry(player.characterId, player.entityId);
       const tracker = StatusTracker.getInstance();
+      const shouldUsePartyStatusEffects = this.#shouldUsePartyStatusEffect(player.characterId);
+      if (shouldUsePartyStatusEffects) {
+        tracker.RemovePartyObject(parsed.PCStruct.CharacterId);
+      } else {
+        tracker.RemoveLocalObject(parsed.PCStruct.PlayerId);
+      }
       for (const se of parsed.PCStruct.statusEffectDatas) {
         tracker.RegisterStatusEffect(
-          this.#buildStatusEffect(se, parsed.PCStruct.PlayerId, se.SourceId, 1 /* Local */)
+          this.#buildStatusEffect(
+            se,
+            shouldUsePartyStatusEffects ? player.characterId : player.entityId,
+            se.SourceId,
+            shouldUsePartyStatusEffects ? 0 /* Party */ : 1 /* Local */
+          )
         );
       }
       if (this.#needEmit) {
@@ -810,6 +945,16 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       if (!parsed)
         return;
       this.#localPlayer.characterId = parsed.Account_CharacterId1 < parsed.Account_CharacterId2 ? parsed.Account_CharacterId1 : parsed.Account_CharacterId2;
+    }).on("PKTZoneObjectUnpublishNotify", (pkt) => {
+      const parsed = pkt.parsed;
+      if (!parsed)
+        return;
+      StatusTracker.getInstance().RemoveLocalObject(parsed.ObjectId);
+    }).on("PKTStatusEffectDurationNotify", (pkt) => {
+      const parsed = pkt.parsed;
+      if (!parsed)
+        return;
+      StatusTracker.getInstance().UpdateDuration(parsed.EffectInstanceId, parsed.TargetId, parsed.ExpirationTick, 1 /* Local */);
     });
   }
   #buildLine(id, ...args) {
@@ -933,8 +1078,10 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
     let statusEffectCategory = 0 /* Other */;
     let statusEffectBuffCategory = 0 /* Other */;
     let showType = 0 /* Other */;
+    let seName = "Unknown";
     const effectInfo = this.#data.skillBuff.get(se.StatusEffectId);
     if (effectInfo) {
+      seName = effectInfo.name;
       switch (effectInfo.category) {
         case "debuff":
           statusEffectCategory = 1 /* Debuff */;
@@ -967,7 +1114,13 @@ var LegacyLogger = class extends import_tiny_typed_emitter.TypedEmitter {
       value: val,
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
-      showType
+      showType,
+      expirationDelay: se.TotalTime,
+      expirationTimer: void 0,
+      timestamp: se.EndTick,
+      expireAt: void 0,
+      occurTime: se.OccurTime,
+      name: seName
     };
   }
   #getStatusEffects(sourceEntity, targetEntity) {

@@ -5,8 +5,8 @@ export type PKTPartyStatusEffectAddNotify = {
   Unk0: bigint;
   CharacterId: bigint;
   statusEffectDatas: StatusEffectData.StatusEffectData[];
+  Unk3: number;
   PlayerIdOnRefresh: bigint;
-  Unk4: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -14,9 +14,9 @@ export function read(buf: Buffer) {
   data.Unk0 = reader.u64();
   data.CharacterId = reader.u64();
   data.statusEffectDatas = reader.array(reader.u16(), () => StatusEffectData.read(reader), 80);
+  data.Unk3 = reader.u8();
   data.PlayerIdOnRefresh = reader.u64();
-  data.Unk4 = reader.u8();
   return data;
 }
 export const name = "PKTPartyStatusEffectAddNotify";
-export const opcode = 17518;
+export const opcode = 12206;

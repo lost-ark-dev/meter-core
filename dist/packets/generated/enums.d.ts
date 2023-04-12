@@ -660,5 +660,12 @@ declare enum statuseffectcategory {
     buff = 0,
     debuff = 1
 }
+declare enum zonebufftarget {
+    none = 0,
+    pc = 1,
+    monster = 2,
+    npc = 3,
+    all = 4
+}
 
-export { blockskilltype, buffshowprioritycategory, hitflag, hitoption, itemcategory, npcgrade, npctype, stattype, statuseffectcategory, triggersignaltype };
+export { blockskilltype, buffshowprioritycategory, hitflag, hitoption, itemcategory, npcgrade, npctype, stattype, statuseffectcategory, triggersignaltype, zonebufftarget };

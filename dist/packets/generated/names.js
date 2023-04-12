@@ -4,8 +4,8 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name43 in all)
-    __defProp(target, name43, { get: all[name43], enumerable: true });
+  for (var name47 in all)
+    __defProp(target, name47, { get: all[name47], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -27,7 +27,7 @@ __export(names_exports, {
   PKTBlockSkillStateNotify: () => name5,
   PKTCounterAttackNotify: () => name6,
   PKTDeathNotify: () => name7,
-  PKTIdentityGaugeChangeNotify: () => name42,
+  PKTIdentityGaugeChangeNotify: () => name43,
   PKTInitAbility: () => name8,
   PKTInitEnv: () => name9,
   PKTInitLocal: () => name11,
@@ -56,12 +56,16 @@ __export(names_exports, {
   PKTSkillStartNotify: () => name33,
   PKTStatChangeOriginNotify: () => name34,
   PKTStatusEffectAddNotify: () => name35,
+  PKTStatusEffectDurationNotify: () => name37,
   PKTStatusEffectRemoveNotify: () => name36,
-  PKTStatusEffectSyncDataNotify: () => name37,
-  PKTTriggerBossBattleStatus: () => name38,
-  PKTTriggerFinishNotify: () => name39,
-  PKTTriggerStartNotify: () => name40,
-  PKTTroopMemberUpdateMinNotify: () => name41
+  PKTStatusEffectSyncDataNotify: () => name38,
+  PKTTriggerBossBattleStatus: () => name39,
+  PKTTriggerFinishNotify: () => name40,
+  PKTTriggerStartNotify: () => name41,
+  PKTTroopMemberUpdateMinNotify: () => name42,
+  PKTZoneObjectUnpublishNotify: () => name44,
+  PKTZoneStatusEffectAddNotify: () => name45,
+  PKTZoneStatusEffectRemoveNotify: () => name46
 });
 module.exports = __toCommonJS(names_exports);
 
@@ -173,23 +177,35 @@ var name35 = "PKTStatusEffectAddNotify";
 // src/packets/generated/definitions/PKTStatusEffectRemoveNotify.ts
 var name36 = "PKTStatusEffectRemoveNotify";
 
+// src/packets/generated/definitions/PKTStatusEffectDurationNotify.ts
+var name37 = "PKTStatusEffectDurationNotify";
+
 // src/packets/generated/definitions/PKTStatusEffectSyncDataNotify.ts
-var name37 = "PKTStatusEffectSyncDataNotify";
+var name38 = "PKTStatusEffectSyncDataNotify";
 
 // src/packets/generated/definitions/PKTTriggerBossBattleStatus.ts
-var name38 = "PKTTriggerBossBattleStatus";
+var name39 = "PKTTriggerBossBattleStatus";
 
 // src/packets/generated/definitions/PKTTriggerFinishNotify.ts
-var name39 = "PKTTriggerFinishNotify";
+var name40 = "PKTTriggerFinishNotify";
 
 // src/packets/generated/definitions/PKTTriggerStartNotify.ts
-var name40 = "PKTTriggerStartNotify";
+var name41 = "PKTTriggerStartNotify";
 
 // src/packets/generated/definitions/PKTTroopMemberUpdateMinNotify.ts
-var name41 = "PKTTroopMemberUpdateMinNotify";
+var name42 = "PKTTroopMemberUpdateMinNotify";
 
 // src/packets/generated/definitions/PKTIdentityGaugeChangeNotify.ts
-var name42 = "PKTIdentityGaugeChangeNotify";
+var name43 = "PKTIdentityGaugeChangeNotify";
+
+// src/packets/generated/definitions/PKTZoneObjectUnpublishNotify.ts
+var name44 = "PKTZoneObjectUnpublishNotify";
+
+// src/packets/generated/definitions/PKTZoneStatusEffectAddNotify.ts
+var name45 = "PKTZoneStatusEffectAddNotify";
+
+// src/packets/generated/definitions/PKTZoneStatusEffectRemoveNotify.ts
+var name46 = "PKTZoneStatusEffectRemoveNotify";
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PKTAbilityChangeNotify,
@@ -228,10 +244,14 @@ var name42 = "PKTIdentityGaugeChangeNotify";
   PKTSkillStartNotify,
   PKTStatChangeOriginNotify,
   PKTStatusEffectAddNotify,
+  PKTStatusEffectDurationNotify,
   PKTStatusEffectRemoveNotify,
   PKTStatusEffectSyncDataNotify,
   PKTTriggerBossBattleStatus,
   PKTTriggerFinishNotify,
   PKTTriggerStartNotify,
-  PKTTroopMemberUpdateMinNotify
+  PKTTroopMemberUpdateMinNotify,
+  PKTZoneObjectUnpublishNotify,
+  PKTZoneStatusEffectAddNotify,
+  PKTZoneStatusEffectRemoveNotify
 });

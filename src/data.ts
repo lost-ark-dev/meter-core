@@ -155,7 +155,7 @@ export class MeterData {
     return this.skillEffect.get(id)?.comment || "";
   }
   isSupportClassId(id: number) {
-    return id === 105 || id === 204 || id === 603;
+    return id === 105 || id === 204 || id === 602;
   }
   isBattleItem(id: number, type?: "attack" | "buff" | "function") {
     const itemcategory = this.skillEffect.get(id)?.itemcategory;

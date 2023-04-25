@@ -1,11 +1,10 @@
 import {
   mapping
-} from "./chunk-P7CME2VN.mjs";
-import "./chunk-6ON36PWD.mjs";
+} from "./chunk-PG4NBSXY.mjs";
 import "./chunk-VWA7NXJP.mjs";
 import "./chunk-MASEY4FK.mjs";
-import "./chunk-RMBZ7YH7.mjs";
-import "./chunk-NHABU752.mjs";
+import "./chunk-6ON36PWD.mjs";
+import "./chunk-HSPAHD2L.mjs";
 
 // src/pkt-stream.ts
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -32,7 +31,7 @@ var PKTStream = class extends TypedEmitter {
         const [name, read] = pkt;
         this.emit(
           name,
-          new PKT(data, opcode, compression, Boolean(xor), this.#decompressor, read)
+          new PKT(Buffer.from(data), opcode, compression, Boolean(xor), this.#decompressor, read)
         );
       }
       this.emit("*", data, opcode, compression, Boolean(xor));

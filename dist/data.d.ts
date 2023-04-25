@@ -1,3 +1,40 @@
+import { stattype } from './packets/generated/enums.js';
+
+declare enum StatusEffectTarget {
+    OTHER = 0,
+    PARTY = 1,
+    SELF = 2
+}
+declare enum StatusEffectBuffTypeFlags {
+    NONE = 0,
+    DMG = 1,
+    CRIT = 2,
+    ATKSPEED = 4,
+    MOVESPEED = 8,
+    HP = 16,
+    DEFENSE = 32,
+    RESOURCE = 64,
+    COOLDOWN = 128,
+    STAGGER = 256,
+    SHIELD = 512,
+    ANY = 262144
+}
+interface StatusEffect {
+    target: StatusEffectTarget;
+    category: "buff" | "debuff";
+    buffcategory: string;
+    bufftype: StatusEffectBuffTypeFlags;
+    uniquegroup: number;
+    source: StatusEffectSource;
+}
+interface StatusEffectSource {
+    name: string;
+    desc: string;
+    icon: string;
+    skill?: Skill;
+    setname?: string;
+}
+
 type Npc = {
     id: number;
     name: string;
@@ -56,6 +93,7 @@ type SkillEffect = {
     comment: string;
     stagger: number;
     sourceskill: number;
+    directionalmask: number;
     itemname?: string;
     itemdesc?: string;
     icon?: string;
@@ -100,6 +138,13 @@ declare class MeterData {
     getSkillName(id: number): string;
     getSkillClassId(id: number): number;
     getSkillEffectComment(id: number): string;
+    getSkillEffectDirectionalMask(id: number): number;
+    getStatusEffectHeaderData(buffId: number): StatusEffect | undefined;
+    getStatusEffectBuffTypeFlags(buff: SkillBuff): StatusEffectBuffTypeFlags;
+    getStatPairMap(statpair: {
+        StatType: number;
+        Value: bigint;
+    }[]): Map<stattype, bigint>;
     isSupportClassId(id: number): boolean;
     isBattleItem(id: number, type?: "attack" | "buff" | "function"): boolean;
     getBattleItemName(id: number): string;

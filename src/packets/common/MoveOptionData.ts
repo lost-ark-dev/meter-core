@@ -10,7 +10,7 @@ export type MoveOptionData = {
   flag40?: Buffer;
 };
 
-export function read(reader: Read) {
+export function read(reader: Read, version: number = 0) {
   const data: MoveOptionData = {};
   const flag = reader.u8();
   if (flag & 1) data.Mod = reader.u8();

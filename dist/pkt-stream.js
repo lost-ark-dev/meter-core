@@ -274,7 +274,7 @@ function bigintToDate(value) {
   }
   return new Date(Date.UTC(year <= 99 ? year + 1900 : year, month - 1, day, h, m, s, ms));
 }
-function read11(reader) {
+function read11(reader, version = 0) {
   const s = reader.u16();
   if ((s & 4095) < 2079) {
     reader.o -= 2;
@@ -321,7 +321,7 @@ function bytesToInt64(value) {
   value.copy(buf);
   return buf.readBigInt64LE();
 }
-function read13(reader) {
+function read13(reader, version = 0) {
   const flag = reader.u8();
   const bytes = reader.bytes(flag >> 1 & 7);
   const result = bytesToInt64(bytes) << 4n | BigInt(flag >> 4);
@@ -539,7 +539,7 @@ function i21(n) {
     return -((~n >>> 0) + 1 & 2097151);
   return n;
 }
-function read22(reader) {
+function read22(reader, version = 0) {
   let b = reader.u64();
   return {
     x: i21(Number(b & 0x1fffffn)),
@@ -549,7 +549,7 @@ function read22(reader) {
 }
 
 // src/packets/common/Angle.ts
-function read23(reader) {
+function read23(reader, version = 0) {
   return reader.u16() * (2 * Math.PI) / 65536;
 }
 
@@ -754,7 +754,7 @@ var name15 = "PKTNewPC";
 var opcode15 = 15971;
 
 // src/packets/common/TripodIndex.ts
-function read30(reader) {
+function read30(reader, version = 0) {
   return {
     first: reader.u8(),
     second: reader.u8(),
@@ -763,7 +763,7 @@ function read30(reader) {
 }
 
 // src/packets/common/TripodLevel.ts
-function read31(reader) {
+function read31(reader, version = 0) {
   return {
     first: reader.u16(),
     second: reader.u16(),
@@ -926,7 +926,7 @@ function read41(buf) {
   data.CharacterId = reader.u64();
   data.Unk1 = reader.u64();
   data.statusEffectIds = reader.array(reader.u16(), () => reader.u32(), 80);
-  data.Unk3 = reader.u8();
+  data.Reason = reader.u8();
   return data;
 }
 var name23 = "PKTPartyStatusEffectRemoveNotify";
@@ -1024,7 +1024,7 @@ var name29 = "PKTRemoveObject";
 var opcode29 = 25018;
 
 // src/packets/common/SkillMoveOptionData.ts
-function read49(reader) {
+function read49(reader, version = 0) {
   const data = {};
   const flag = reader.u8();
   if (flag & 1)
@@ -1118,7 +1118,7 @@ var name32 = "PKTSkillStageNotify";
 var opcode32 = 44221;
 
 // src/packets/common/SkillOptionData.ts
-function read55(reader) {
+function read55(reader, version = 0) {
   const data = {};
   const flag = reader.u8();
   if (flag & 1)
@@ -1294,12 +1294,12 @@ var opcode41 = 49092;
 function read65(buf) {
   const reader = new Read(buf);
   const data = {};
-  data.Unk0 = read13(reader);
-  data.Unk1 = reader.u64();
+  data.MaxHp = read13(reader);
+  data.CharacterId = reader.u64();
   data.Unk0_m = reader.u32();
   data.statusEffectDatas = reader.array(reader.u16(), () => read14(reader), 80);
-  data.Unk4 = reader.u64();
-  data.Unk5 = read13(reader);
+  data.Position = reader.u64();
+  data.CurHp = read13(reader);
   return data;
 }
 var name42 = "PKTTroopMemberUpdateMinNotify";
@@ -1465,7 +1465,7 @@ var PKTStream = class extends import_tiny_typed_emitter.TypedEmitter {
         const [name47, read71] = pkt;
         this.emit(
           name47,
-          new PKT(data, opcode47, compression, Boolean(xor), this.#decompressor, read71)
+          new PKT(Buffer.from(data), opcode47, compression, Boolean(xor), this.#decompressor, read71)
         );
       }
       this.emit("*", data, opcode47, compression, Boolean(xor));

@@ -34,7 +34,7 @@ export function read(reader: Read, version: number) {
   return data;
 }
 export function write(writer: Write, data: InitPC | PKTInitPC) {
-  writer.array(data.statPair, { maxLen: 152, lenType: "u8" }, (obj: { StatType: number; Value: bigint }) => {
+  writer.array(data.statPair, { maxLen: 152, lenType: "u16" }, (obj: { StatType: number; Value: bigint }) => {
     writer.u8(obj.StatType);
     ReadNBytesInt64.write(writer, obj.Value);
   });

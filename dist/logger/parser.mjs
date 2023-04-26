@@ -647,7 +647,7 @@ var GameTracker = class extends TypedEmitter {
           m.delete(k);
         }
       });
-      if (this.options.dontResetOnZoneChange === false && this.resetTimer == null) {
+      if (this.options.dontResetOnZoneChange === false && this.resetTimer === null) {
         this.resetTimer = setTimeout(() => {
           this.resetState(+time + 6e3);
         }, 6e3);
@@ -659,7 +659,7 @@ var GameTracker = class extends TypedEmitter {
     }
   }
   splitEncounter(time) {
-    if (this.#game.fightStartedOn != 0 && (this.#game.damageStatistics.totalDamageDealt != 0 || this.#game.damageStatistics.totalDamageTaken)) {
+    if (this.#game.fightStartedOn !== 0 && (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0)) {
       const curState = structuredClone(this.#game);
       this.encounters.push(curState);
     }
@@ -673,6 +673,7 @@ var GameTracker = class extends TypedEmitter {
     return void 0;
   }
   resetState(curTime) {
+    this.cancelReset();
     this.#game = {
       startedOn: +curTime,
       lastCombatPacket: +curTime,

@@ -1817,7 +1817,7 @@ function read82(reader, version2) {
   return data;
 }
 function write20(writer, data) {
-  writer.array(data.statPair, { maxLen: 152, lenType: "u8" }, (obj) => {
+  writer.array(data.statPair, { maxLen: 152, lenType: "u16" }, (obj) => {
     writer.u8(obj.StatType);
     write2(writer, obj.Value);
   });

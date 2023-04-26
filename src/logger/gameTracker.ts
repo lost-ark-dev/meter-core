@@ -85,7 +85,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         }
       });
 
-      if (this.options.dontResetOnZoneChange === false && this.resetTimer == null) {
+      if (this.options.dontResetOnZoneChange === false && this.resetTimer === null) {
         //Then
         this.resetTimer = setTimeout(() => {
           this.resetState(+time + 6000);
@@ -99,8 +99,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
   splitEncounter(time: Date) {
     if (
-      this.#game.fightStartedOn != 0 && // no combat packets
-      (this.#game.damageStatistics.totalDamageDealt != 0 || this.#game.damageStatistics.totalDamageTaken) // no player damage dealt OR taken
+      this.#game.fightStartedOn !== 0 && // no combat packets
+      (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0) // no player damage dealt OR taken
     ) {
       const curState = structuredClone(this.#game);
       this.encounters.push(curState);
@@ -115,6 +115,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     return undefined;
   }
   resetState(curTime: number) {
+    this.cancelReset();
     this.#game = {
       startedOn: +curTime,
       lastCombatPacket: +curTime,

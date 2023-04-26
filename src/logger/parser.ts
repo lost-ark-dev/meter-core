@@ -1,7 +1,7 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "../data";
 import { stattype, triggersignaltype } from "../packets/generated/enums";
-import type { GameState } from "./data";
+import type { GameState, GameTrackerOptions } from "./data";
 import { Entity, EntityTracker, EntityType, Projectile } from "./entityTracker";
 import { GameTracker } from "./gameTracker";
 import type { Logger } from "./logger";
@@ -23,9 +23,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
   #wasWipe: boolean;
   #wasKill: boolean;
 
-  #isLive: boolean;
-
-  constructor(logger: Logger, data: MeterData, isLive = false) {
+  constructor(logger: Logger, data: MeterData, options: Partial<GameTrackerOptions>) {
     super();
     this.#logger = logger;
     this.#data = data;
@@ -34,15 +32,18 @@ export class Parser extends TypedEmitter<ParserEvent> {
     this.#partyTracker = new PartyTracker(this.#pcIdMapper);
     this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data);
     this.#entityTracker = new EntityTracker(this.#pcIdMapper, this.#partyTracker, this.#statusTracker, this.#data);
-    this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#data, {});
-    this.#gameTracker.emit = this.emit; //forward emits
+    this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#data, options);
+    this.#gameTracker.emit = this.emit.bind(this); //forward emits
+    /*
+    this.#gameTracker.emit = <U extends keyof ParserEvent>(event: U, ...args: Parameters<ParserEvent[U]>): boolean => {
+      return this.emit(event, ...args);
+    };
+    */
 
     this.#wasWipe = false;
     this.#wasKill = false;
 
-    this.#isLive = isLive;
-
-    if (this.#isLive) {
+    if (this.#gameTracker.options.isLive) {
       setInterval(this.broadcastStateChange.bind(this), 100);
     }
 
@@ -116,11 +117,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (npcEntity && pkt.parsed) {
           const statsMap = this.#data.getStatPairMap(pkt.parsed.NpcStruct.statPair);
 
-          let isBoss = false;
-          const npc = this.#data.npc.get(npcEntity.typeId);
-          if (npc && ["boss", "raid", "epic_raid", "commander"].includes(npc.grade)) {
-            isBoss = true;
-          }
           this.#gameTracker.updateOrCreateEntity(
             npcEntity,
             {
@@ -128,7 +124,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
               name: npcEntity.name,
               npcId: npcEntity.typeId,
               isPlayer: false,
-              isBoss,
+              isBoss: npcEntity.isBoss,
               currentHp: Number(statsMap.get(stattype.hp)) || 0,
               maxHp: Number(statsMap.get(stattype.max_hp)) || 0,
             },
@@ -142,11 +138,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (npcEntity && pkt.parsed) {
           const statsMap = this.#data.getStatPairMap(pkt.parsed.NpcData.statPair);
 
-          let isBoss = false;
-          const npc = this.#data.npc.get(npcEntity.typeId);
-          if (npc && ["boss", "raid", "epic_raid", "commander"].includes(npc.grade)) {
-            isBoss = true;
-          }
           this.#gameTracker.updateOrCreateEntity(
             npcEntity,
             {
@@ -154,7 +145,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
               name: npcEntity.name,
               npcId: npcEntity.typeId,
               isPlayer: false,
-              isBoss,
+              isBoss: npcEntity.isBoss,
               currentHp: Number(statsMap.get(stattype.hp)) || 0,
               maxHp: Number(statsMap.get(stattype.max_hp)) || 0,
             },
@@ -385,6 +376,9 @@ export class Parser extends TypedEmitter<ParserEvent> {
   }
   cancelReset() {
     this.#gameTracker.cancelReset();
+  }
+  updateOptions(options: Partial<GameTrackerOptions>) {
+    this.#gameTracker.updateOptions(options);
   }
   get encounters() {
     //TODO: parse only ?

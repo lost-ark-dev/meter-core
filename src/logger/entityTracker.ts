@@ -115,11 +115,17 @@ export class EntityTracker {
     const parsed = pkt.parsed;
     if (!parsed) return;
 
+    let isBoss = false;
+    const npcData = this.#data.npc.get(parsed.NpcStruct.TypeId);
+    if (npcData && ["boss", "raid", "epic_raid", "commander"].includes(npcData.grade)) {
+      isBoss = true;
+    }
     const npc: Npc = {
       entityId: parsed.NpcStruct.ObjectId,
       entityType: EntityType.Npc,
-      name: this.#data.getNpcName(parsed.NpcStruct.TypeId),
+      name: npcData?.name ?? parsed.NpcStruct.ObjectId.toString(16),
       typeId: parsed.NpcStruct.TypeId,
+      isBoss,
     };
     this.entities.set(npc.entityId, npc);
     this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId);
@@ -141,12 +147,18 @@ export class EntityTracker {
     const parsed = pkt.parsed;
     if (!parsed) return;
 
+    let isBoss = false;
+    const npc = this.#data.npc.get(parsed.NpcData.TypeId);
+    if (npc && ["boss", "raid", "epic_raid", "commander"].includes(npc.grade)) {
+      isBoss = true;
+    }
     const summon: Summon = {
       entityId: parsed.NpcData.ObjectId,
       entityType: EntityType.Summon,
-      name: parsed.NpcData.ObjectId.toString(16),
+      name: npc?.name ?? parsed.NpcData.ObjectId.toString(16),
       ownerId: parsed.OwnerId,
       typeId: parsed.NpcData.TypeId,
+      isBoss,
     };
     this.#statusTracker.RemoveLocalObject(parsed.NpcData.ObjectId);
     for (const se of parsed.NpcData.statusEffectDatas) {
@@ -246,6 +258,7 @@ export type Player = Entity & {
 export type Npc = Entity & {
   entityType: EntityType.Npc | EntityType.Summon;
   typeId: number;
+  isBoss: boolean;
 };
 
 export type Summon = Npc & {

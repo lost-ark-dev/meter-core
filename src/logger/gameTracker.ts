@@ -2,19 +2,13 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "../data";
 import { hitflag, hitoption } from "../packets/generated/enums";
 import type { InitEnv } from "../packets/log/types";
-import { Breakdown, EntitySkills, EntityState, GameState, StatusEffectTarget } from "./data";
+import { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions, StatusEffectTarget } from "./data";
 import { Entity, EntityTracker, EntityType, Npc, Player, Projectile } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
 import type { StatusTracker } from "./statustracker";
 import type { ParserEvent } from "./parser";
 
 export const PARSED_LOG_VERSION = 16;
-export type GameTrackerOptions = {
-  isLive: boolean;
-  dontResetOnZoneChange: boolean;
-  resetAfterPhaseTransition: boolean;
-  splitOnPhaseTransition: boolean;
-};
 const defaultOptions: GameTrackerOptions = {
   isLive: true,
   dontResetOnZoneChange: false,
@@ -28,7 +22,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   #entityTracker: EntityTracker;
   #statusTracker: StatusTracker;
   #data: MeterData;
-  #options: GameTrackerOptions;
+  options: GameTrackerOptions;
 
   resetTimer: NodeJS.Timeout | null;
 
@@ -45,7 +39,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     this.#entityTracker = entityTracker;
     this.#statusTracker = statusTracker;
     this.#data = data;
-    this.#options = { ...defaultOptions, ...options };
+    this.options = { ...defaultOptions, ...options };
 
     this.resetTimer = null;
 
@@ -76,20 +70,14 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
 
   onCounterAttack(source: Entity, time: Date) {
-    const entity = this.updateEntity(
-      source,
-      {
-        name: source.name,
-      },
-      time
-    );
+    const entity = this.updateEntity(source, {}, time);
 
     // TODO: Add skill name from logger
     entity.hits.counter += 1;
   }
 
   onInitEnv(pkt: LogEvent<InitEnv>, time: Date) {
-    if (this.#options.isLive) {
+    if (this.options.isLive) {
       //Cleanup entities that are not displayed (we keep others in case user want to keep his previous encounter)
       this.#game.entities.forEach((e, k, m) => {
         if (e.hits.total === 0) {
@@ -97,7 +85,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         }
       });
 
-      if (this.#options.dontResetOnZoneChange === false && this.resetTimer == null) {
+      if (this.options.dontResetOnZoneChange === false && this.resetTimer == null) {
         //Then
         this.resetTimer = setTimeout(() => {
           this.resetState(+time + 6000);
@@ -155,21 +143,21 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
   onPhaseTransition(phaseCode: number, time: Date) {
     //TODO: rework
-    if (this.#options.isLive) {
+    if (this.options.isLive) {
       this.emit("message", `phase-transition-${phaseCode}`);
 
-      if (this.#options.resetAfterPhaseTransition) {
+      if (this.options.resetAfterPhaseTransition) {
         this.phaseTransitionResetRequest = true;
         this.phaseTransitionResetRequestTime = +time;
       }
     }
 
-    if (!this.#options.isLive && this.#options.splitOnPhaseTransition) {
+    if (!this.options.isLive && this.options.splitOnPhaseTransition) {
       this.splitEncounter(time);
     }
   }
   updateOptions(options: Partial<GameTrackerOptions>) {
-    this.#options = { ...this.#options, ...options };
+    this.options = { ...this.options, ...options };
   }
   onDeath(target: Entity, time: Date) {
     const entity = this.#game.entities.get(target.name);
@@ -210,12 +198,10 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         damageData.skillEffectId = proj.skillEffectId;
       }
     }
-    const damageOwner = this.updateEntity(owner, { id: owner.entityId.toString(16), name: owner.name }, time);
+    const damageOwner = this.updateEntity(owner, {}, time);
     const damageTarget = this.updateEntity(
       target,
       {
-        id: target.entityId.toString(16),
-        name: target.name,
         currentHp: damageData.targetCurHp,
         maxHp: damageData.targetMaxHp,
       },
@@ -277,11 +263,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     // Directional update
     let isFrontAttack = false,
       isBackAttack = false;
+    //TODO: check if target can be back attacked
     const directionalmask = this.#data.getSkillEffectDirectionalMask(damageData.skillEffectId) - 1;
     if (directionalmask === hitoption.back_attack || directionalmask === hitoption.flank_attack) {
       isBackAttack = hitOption === hitoption.back_attack;
       const backAttackCount = isBackAttack ? 1 : 0;
       damageOwner.hits.backAttack += backAttackCount;
+      damageOwner.hits.totalBackAttack += 1;
       skill.hits.backAttack += backAttackCount;
       skill.hits.totalBackAttack += 1;
     }
@@ -289,6 +277,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       isFrontAttack = hitOption === hitoption.frontal_attack;
       const frontAttackCount = isFrontAttack ? 1 : 0;
       damageOwner.hits.frontAttack += frontAttackCount;
+      damageOwner.hits.totalFrontAttack += 1;
       skill.hits.frontAttack += frontAttackCount;
       skill.hits.totalFrontAttack += 1;
     }
@@ -415,7 +404,6 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     const entity = this.updateEntity(
       owner,
       {
-        name: owner.name,
         isDead: false,
       },
       time
@@ -496,13 +484,15 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         extraInfo = { classId: player.class, gearScore: player.gearLevel, isPlayer: true };
       } else if (entity.entityType === EntityType.Npc) {
         const npc = entity as Npc;
-        extraInfo = { npcId: npc.typeId };
+        extraInfo = { npcId: npc.typeId, isBoss: npc.isBoss };
       }
       entityState = {
         ...this.createEntity(),
         ...values,
         ...updateTime,
         ...extraInfo,
+        ...{ name: entity.name },
+        ...{ id: entity.entityId.toString(16) },
       };
       this.#game.entities.set(entity.name, entityState);
     }

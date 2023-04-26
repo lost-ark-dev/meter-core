@@ -1,28 +1,5 @@
-"use strict";
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name47 in all)
-    __defProp(target, name47, { get: all[name47], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/packets/generated/mapping.ts
-var mapping_exports = {};
-__export(mapping_exports, {
-  mapping: () => mapping
-});
-module.exports = __toCommonJS(mapping_exports);
+// src/pkt-stream.ts
+import { TypedEmitter } from "tiny-typed-emitter";
 
 // src/packets/stream.ts
 var Read = class {
@@ -102,6 +79,84 @@ var Read = class {
     if (maxLength && length > maxLength)
       return [];
     return new Array(length).fill(void 0).map(callbackfn);
+  }
+};
+var Write = class {
+  b;
+  o;
+  constructor(max = 65535) {
+    this.b = Buffer.allocUnsafe(max);
+    this.o = 0;
+  }
+  get value() {
+    return this.b.subarray(0, this.o);
+  }
+  skip(length = 0) {
+    this.o += length;
+  }
+  bool(value = false) {
+    this.u8(value ? 1 : 0);
+    return value;
+  }
+  u8(value = 0) {
+    this.b.writeUInt8(value, this.o++);
+  }
+  i8(value = 0) {
+    this.b.writeInt8(value, this.o++);
+  }
+  u16(value = 0) {
+    this.o = this.b.writeUInt16LE(value, this.o);
+  }
+  i16(value = 0) {
+    this.o = this.b.writeInt16LE(value, this.o);
+  }
+  u32(value = 0) {
+    this.o = this.b.writeUInt32LE(value, this.o);
+  }
+  i32(value = 0) {
+    this.o = this.b.writeInt32LE(value, this.o);
+  }
+  f32(value = 0) {
+    this.o = this.b.writeFloatLE(value, this.o);
+  }
+  u64(value = 0n) {
+    this.o = this.b.writeBigUInt64LE(BigInt(value), this.o);
+  }
+  i64(value = 0n) {
+    this.o = this.b.writeBigInt64LE(BigInt(value), this.o);
+  }
+  string(value = "", maxLength = 0) {
+    this.u16(value.length);
+    if (value.length <= maxLength)
+      this.o += this.b.write(value, this.o, "utf16le");
+  }
+  bytes(value = Buffer.alloc(0), opts = {}) {
+    if (opts.maxLen) {
+      const chunkSize = opts.multiplier ?? 1;
+      if (value.length % chunkSize)
+        throw new Error(
+          `Error writing bytes, chunkSize should be a multiple of intut value size, got ${value.length}%${chunkSize}`
+        );
+      const count = value.length / chunkSize;
+      if (count > opts.maxLen)
+        throw new Error(`Error writing bytes, input value size exceeded maxLen, got ${count} > ${opts.maxLen}`);
+      if (!opts.lenType)
+        throw new Error(`Error writing bytes, invalid lenType when writing chunks, got ${opts.lenType}`);
+      this[opts.lenType](count);
+    } else if (opts.length && value.length !== opts.length) {
+      throw new Error(
+        `Error writing bytes, input value size doesn't match opts.length, ${value.length} !== ${opts.lenType}`
+      );
+    }
+    this.o += value.copy(this.b, this.o);
+  }
+  array(value = [], opts, callbackfn) {
+    if (value === void 0 || value.length > opts.maxLen) {
+      this[opts.lenType](0);
+      return;
+    }
+    this[opts.lenType](value.length);
+    value.forEach(callbackfn);
   }
 };
 
@@ -272,6 +327,17 @@ function bigintToDate(value) {
   }
   return new Date(Date.UTC(year <= 99 ? year + 1900 : year, month - 1, day, h, m, s, ms));
 }
+function dateToBigint(date) {
+  let result = 0n;
+  result |= BigInt(date.getUTCMilliseconds()) << 38n;
+  result |= BigInt(date.getUTCSeconds()) << 32n;
+  result |= BigInt(date.getUTCMinutes()) << 26n;
+  result |= BigInt(date.getUTCHours()) << 21n;
+  result |= BigInt(date.getUTCDate()) << 16n;
+  result |= BigInt(date.getUTCMonth() + 1) << 12n;
+  result |= BigInt(date.getUTCFullYear() < 2e3 ? date.getUTCFullYear() - 1900 : date.getUTCFullYear());
+  return result;
+}
 function read11(reader, version = 0) {
   const s = reader.u16();
   if ((s & 4095) < 2079) {
@@ -280,6 +346,12 @@ function read11(reader, version = 0) {
   } else {
     return bigintToDate(BigInt(s) & 0xfffn | 0x11000n);
   }
+}
+function write(writer, date = bigintToDate(0x1181fn)) {
+  if (date.getUTCFullYear() >= 2079) {
+    writer.u16(Number(dateToBigint(date) & 0xffffn));
+  } else
+    writer.i64(dateToBigint(date));
 }
 
 // src/packets/generated/definitions/PKTInitEnv.ts
@@ -324,6 +396,20 @@ function read13(reader, version = 0) {
   const bytes = reader.bytes(flag >> 1 & 7);
   const result = bytesToInt64(bytes) << 4n | BigInt(flag >> 4);
   return (flag & 1) === 0 ? result : -result;
+}
+function write2(writer, value = 0n) {
+  const tempBuf = Buffer.alloc(8);
+  const negative = value < 0n;
+  tempBuf.writeBigInt64LE((negative ? -value : value) >> 4n);
+  let size = 0;
+  for (const [i, byte] of tempBuf.entries()) {
+    if (byte != 0)
+      size = i + 1;
+  }
+  if (size > 7)
+    throw new Error("Value is too large");
+  writer.u8(Number((negative ? -value : value) & 0xfn) << 4 | (size & 7) << 1 | (negative ? 1 : 0));
+  writer.bytes(tempBuf.subarray(0, size), { length: size });
 }
 
 // src/packets/generated/structures/StatusEffectData.ts
@@ -545,10 +631,18 @@ function read22(reader, version = 0) {
     z: i21(Number(b >> 42n & 0x1fffffn))
   };
 }
+function write3(writer, data = { x: 0, y: 0, z: 0 }) {
+  writer.u64(
+    BigInt(Math.round(data.x ?? 0) >>> 0 & 2097151) | BigInt(Math.round(data.y ?? 0) >>> 0 & 2097151) << 21n | BigInt(Math.round(data.z ?? 0) >>> 0 & 2097151) << 42n
+  );
+}
 
 // src/packets/common/Angle.ts
 function read23(reader, version = 0) {
   return reader.u16() * (2 * Math.PI) / 65536;
+}
+function write4(writer, data = 0) {
+  writer.u16(Math.round(data * 65536 / (2 * Math.PI)) % 65536);
 }
 
 // src/packets/generated/structures/NpcData.ts
@@ -759,6 +853,11 @@ function read30(reader, version = 0) {
     third: reader.u8()
   };
 }
+function write5(writer, data) {
+  writer.u8(data.first);
+  writer.u8(data.second);
+  writer.u8(data.third);
+}
 
 // src/packets/common/TripodLevel.ts
 function read31(reader, version = 0) {
@@ -767,6 +866,11 @@ function read31(reader, version = 0) {
     second: reader.u16(),
     third: reader.u16()
   };
+}
+function write6(writer, data) {
+  writer.u16(data.first);
+  writer.u16(data.second);
+  writer.u16(data.third);
 }
 
 // src/packets/generated/structures/ProjectileInfo.ts
@@ -1041,6 +1145,24 @@ function read49(reader, version = 0) {
     data.flag40 = reader.bytes(reader.u16(), 6);
   return data;
 }
+function write7(writer, data) {
+  const flag = (data.MoveTime === void 0 ? 0 : 1 << 0) | (data.StandUpTime === void 0 ? 0 : 1 << 1) | (data.DownTime === void 0 ? 0 : 1 << 2) | (data.FreezeTime === void 0 ? 0 : 1 << 3) | (data.MoveHeight === void 0 ? 0 : 1 << 4) | (data.FarmostDist === void 0 ? 0 : 1 << 5) | (data.flag40 === void 0 ? 0 : 1 << 6);
+  writer.u8(flag);
+  if (flag & 1)
+    writer.u32(data.MoveTime);
+  if (flag & 2)
+    writer.u32(data.StandUpTime);
+  if (flag & 4)
+    writer.u32(data.DownTime);
+  if (flag & 8)
+    writer.u32(data.FreezeTime);
+  if (flag & 16)
+    writer.u32(data.MoveHeight);
+  if (flag & 32)
+    writer.u32(data.FarmostDist);
+  if (flag & 64)
+    writer.bytes(data.flag40, { maxLen: 6, lenType: "u16" });
+}
 
 // src/packets/generated/structures/SkillDamageEvent.ts
 function read50(reader) {
@@ -1134,6 +1256,24 @@ function read55(reader, version = 0) {
   if (flag & 64)
     data.TripodLevel = read31(reader);
   return data;
+}
+function write8(writer, data) {
+  const flag = (data.LayerIndex === void 0 ? 0 : 1 << 0) | (data.StartStageIndex === void 0 ? 0 : 1 << 1) | (data.TransitIndex === void 0 ? 0 : 1 << 2) | (data.StageStartTime === void 0 ? 0 : 1 << 3) | (data.FarmostDistance === void 0 ? 0 : 1 << 4) | (data.TripodIndex === void 0 ? 0 : 1 << 5) | (data.TripodLevel === void 0 ? 0 : 1 << 6);
+  writer.u8(flag);
+  if (flag & 1)
+    writer.u8(data.LayerIndex);
+  if (flag & 2)
+    writer.u8(data.StartStageIndex);
+  if (flag & 4)
+    writer.u32(data.TransitIndex);
+  if (flag & 8)
+    writer.u32(data.StageStartTime);
+  if (flag & 16)
+    writer.u32(data.FarmostDistance);
+  if (flag & 32)
+    write5(writer, data.TripodIndex);
+  if (flag & 64)
+    write6(writer, data.TripodLevel);
 }
 
 // src/packets/generated/definitions/PKTSkillStartNotify.ts
@@ -1438,7 +1578,133 @@ var mapping = /* @__PURE__ */ new Map([
     [name46, read70]
   ]
 ]);
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  mapping
-});
+
+// src/pkt-stream.ts
+var PKTStream = class extends TypedEmitter {
+  #decompressor;
+  constructor(decompressor) {
+    super();
+    this.#decompressor = decompressor;
+  }
+  read(buf) {
+    try {
+      if (buf.length < 6)
+        return false;
+      const xor = buf.readUInt8(5);
+      if (xor > 2)
+        return false;
+      const compression = buf.readUInt8(4);
+      if (compression > 3)
+        return false;
+      const data = buf.subarray(6);
+      const opcode47 = buf.readUInt16LE(2);
+      const pkt = mapping.get(opcode47);
+      if (pkt) {
+        const [name47, read71] = pkt;
+        this.emit(
+          name47,
+          new PKT(Buffer.from(data), opcode47, compression, Boolean(xor), this.#decompressor, read71)
+        );
+      }
+      this.emit("*", data, opcode47, compression, Boolean(xor));
+    } catch (e) {
+      return false;
+    }
+  }
+};
+var PKT = class {
+  #data;
+  #opcode;
+  #compression;
+  #xor;
+  #decompressor;
+  #read;
+  constructor(data, opcode47, compression, xor, decompressor, read71) {
+    this.#data = data;
+    this.#opcode = opcode47;
+    this.#compression = compression;
+    this.#xor = xor;
+    this.#decompressor = decompressor;
+    this.#read = read71;
+  }
+  #cached;
+  get parsed() {
+    if (!this.#cached) {
+      try {
+        this.#cached = this.#read(this.#decompressor.decrypt(this.#data, this.#opcode, this.#compression, this.#xor));
+      } catch (e) {
+        console.error(`[meter-core/pkt-stream] - ${e}`);
+        return void 0;
+      }
+    }
+    return this.#cached;
+  }
+};
+
+export {
+  Read,
+  Write,
+  opcode,
+  opcode2,
+  opcode3,
+  opcode5 as opcode4,
+  opcode6 as opcode5,
+  opcode7 as opcode6,
+  opcode8 as opcode7,
+  read11 as read,
+  write,
+  opcode9 as opcode8,
+  read13 as read2,
+  write2,
+  opcode10 as opcode9,
+  opcode11 as opcode10,
+  opcode12 as opcode11,
+  read22 as read3,
+  write3,
+  read23 as read4,
+  write4,
+  opcode13 as opcode12,
+  opcode14 as opcode13,
+  opcode15 as opcode14,
+  read30 as read5,
+  write5,
+  read31 as read6,
+  write6,
+  opcode16 as opcode15,
+  opcode17 as opcode16,
+  opcode18 as opcode17,
+  opcode19 as opcode18,
+  opcode20 as opcode19,
+  opcode21 as opcode20,
+  opcode22 as opcode21,
+  opcode23 as opcode22,
+  opcode24 as opcode23,
+  opcode25 as opcode24,
+  opcode26 as opcode25,
+  opcode27 as opcode26,
+  opcode28 as opcode27,
+  opcode29 as opcode28,
+  read49 as read7,
+  write7,
+  opcode30 as opcode29,
+  opcode31 as opcode30,
+  opcode32 as opcode31,
+  read55 as read8,
+  write8,
+  opcode33 as opcode32,
+  opcode35 as opcode33,
+  opcode36 as opcode34,
+  opcode37 as opcode35,
+  opcode38 as opcode36,
+  opcode39 as opcode37,
+  opcode40 as opcode38,
+  opcode41 as opcode39,
+  opcode42 as opcode40,
+  opcode43 as opcode41,
+  opcode44 as opcode42,
+  opcode45 as opcode43,
+  opcode46 as opcode44,
+  mapping,
+  PKTStream,
+  PKT
+};

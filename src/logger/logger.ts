@@ -73,18 +73,31 @@ export class ReplayLogger extends Logger {
   readLogByChunk(filepath: string) {
     const pktBuffer = new PacketBuffer();
     const logReader = createReadStream(filepath);
-    let version: number | undefined;
-    logReader.on("data", (chunk: Buffer) => {
-      if (version === undefined) {
-        version = this.readVersion(chunk);
-        chunk = chunk.subarray(HEADER_VERSION_SIZE);
-      }
-      pktBuffer.write(chunk);
-      let pkt: Buffer | undefined;
-      while ((pkt = pktBuffer.read())) {
-        this.readLogChunk(pkt, version);
-      }
-    });
+    let end = false;
+    let ver: number | undefined;
+    logReader
+      .on("data", (chunk: Buffer) => {
+        if (ver === undefined) {
+          ver = this.readVersion(chunk);
+          if (ver > version) {
+            logReader.destroy();
+            return;
+          }
+          chunk = chunk.subarray(HEADER_VERSION_SIZE);
+        }
+        pktBuffer.write(chunk);
+        let pkt: Buffer | undefined;
+        while ((pkt = pktBuffer.read())) {
+          this.readLogChunk(pkt, ver);
+        }
+      })
+      .on("end", () => {
+        end = true;
+        this.emit("fileEnd", "end");
+      })
+      .on("close", () => {
+        if (!end) this.emit("fileEnd", "closed");
+      });
   }
   readLogChunk(buf: Buffer, version: number): false | void {
     try {

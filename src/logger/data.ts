@@ -135,3 +135,10 @@ export interface Hits {
   hitsBuffedBy: Map<number, number>;
   hitsDebuffedBy: Map<number, number>;
 }
+
+export type GameTrackerOptions = {
+  isLive: boolean;
+  dontResetOnZoneChange: boolean;
+  resetAfterPhaseTransition: boolean;
+  splitOnPhaseTransition: boolean;
+};

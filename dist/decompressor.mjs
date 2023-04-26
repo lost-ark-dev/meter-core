@@ -1,3 +1,5 @@
+import "./chunk-NZTU4WRF.mjs";
+
 // src/decompressor.ts
 import { uncompressSync as lz4UncompressSync } from "lz4-napi";
 import oodle from "oodle";

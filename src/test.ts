@@ -34,17 +34,19 @@ meterData.processSkillData(JSON.parse(readFileSync("meter-data/databases/Skill.j
 meterData.processSkillBuffData(JSON.parse(readFileSync("meter-data/databases/SkillBuff.json", "utf-8")));
 meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databases/SkillEffect.json", "utf-8")));
 
-function logEvent(name: string, pkt: LogEvent<Object>) {
+function logEvent(name: string, pkt: LogEvent<any>) {
   console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
 }
-const testLive = true;
+const testLive = false;
 if (testLive) {
   const logger = new LiveLogger(stream, decompressor, path.resolve("test.raw"));
   //const parser = new Parser(logger, meterData);
   logger.on("*", logEvent);
 } else {
   const logger = new ReplayLogger();
-  logger.on("*", logEvent);
+  logger.on("InitPC", (pkt) => {
+    logEvent("InitPC", pkt);
+  });
   logger.readLogByChunk(path.resolve("test.raw"));
 }
 

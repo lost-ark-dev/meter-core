@@ -1,4 +1,4 @@
-import type { Read } from "../stream";
+import type { Read, Write } from "../stream";
 
 const daysInMonths = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -48,7 +48,17 @@ function bigintToDate(value: bigint): LostArkDateTime {
   }
   return new Date(Date.UTC(year <= 99 ? year + 1900 : year, month - 1, day, h, m, s, ms));
 }
-
+function dateToBigint(date: LostArkDateTime): bigint {
+  let result = 0n;
+  result |= BigInt(date.getUTCMilliseconds()) << 38n;
+  result |= BigInt(date.getUTCSeconds()) << 32n;
+  result |= BigInt(date.getUTCMinutes()) << 26n;
+  result |= BigInt(date.getUTCHours()) << 21n;
+  result |= BigInt(date.getUTCDate()) << 16n;
+  result |= BigInt(date.getUTCMonth() + 1) << 12n;
+  result |= BigInt(date.getUTCFullYear() < 2000 ? date.getUTCFullYear() - 1900 : date.getUTCFullYear());
+  return result;
+}
 export type LostArkDateTime = Date;
 
 /*bigintBits
@@ -57,7 +67,7 @@ ssssssssssssssSSSSSSmmmmmmhhhhhDDDDDMMMMYYYYYYYYYYYY -> 52bit
 14bit         6bit  6bit  5bit 5bit 4bit    12bit
 */
 //TODO: in some cases, there is data in the 12 first bits -> understand what
-export function read(reader: Read): LostArkDateTime {
+export function read(reader: Read, version: number = 0): LostArkDateTime {
   const s = reader.u16();
   if ((s & 0xfff) < 0x81f) {
     reader.o -= 2;
@@ -65,4 +75,14 @@ export function read(reader: Read): LostArkDateTime {
   } else {
     return bigintToDate((BigInt(s) & 0xfffn) | 0x11000n); //1st jan [Year]
   }
+}
+export function write(writer: Write, date: LostArkDateTime = bigintToDate(0x1181fn)) {
+  if (date.getUTCFullYear() >= 2079) {
+    /**
+     * We should be writing:
+     * writer.u16(date.getUTCFullYear()  & 0xfffn));
+     * here, as this is what the game processes, But the servers seems to do that mistake, so we'll do the same
+     */
+    writer.u16(Number(dateToBigint(date) & 0xffffn));
+  } else writer.i64(dateToBigint(date)); //TODO: hotfixed to signed, we might need to check the output
 }

@@ -1,17 +1,20 @@
-import { readFileSync } from "fs";
+import { createReadStream, createWriteStream, readFileSync } from "fs";
 import { inspect } from "util";
 import { MeterData } from "./data";
 import { Decompressor } from "./decompressor";
-import { LegacyLogger } from "./legacy-logger";
+import { LiveLogger, Logger, ReplayLogger } from "./logger/logger";
 import { PktCaptureAll, PktCaptureMode } from "./pkt-capture";
 import { PKTStream } from "./pkt-stream";
+import { Parser } from "./logger/parser";
+import path from "path";
+import type { LogEvent } from "./logger/logEvent";
 inspect.defaultOptions.depth = null; //Use to console log full objects for debug
 
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
 const xorTable = readFileSync("./meter-data/xor.bin");
 
-const compressor = new Decompressor(oodle_state, xorTable);
-const stream = new PKTStream(compressor);
+const decompressor = new Decompressor(oodle_state, xorTable);
+const stream = new PKTStream(decompressor);
 
 const capture = new PktCaptureAll(PktCaptureMode.MODE_PCAP, 6040);
 capture.on("packet", (buf) => {
@@ -31,12 +34,23 @@ meterData.processSkillData(JSON.parse(readFileSync("meter-data/databases/Skill.j
 meterData.processSkillBuffData(JSON.parse(readFileSync("meter-data/databases/SkillBuff.json", "utf-8")));
 meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databases/SkillEffect.json", "utf-8")));
 
+function logEvent(name: string, pkt: LogEvent<any>) {
+  console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
+}
+const testLive = false;
+if (testLive) {
+  const logger = new LiveLogger(stream, decompressor, path.resolve("test.raw"));
+  //const parser = new Parser(logger, meterData);
+  logger.on("*", logEvent);
+} else {
+  const logger = new ReplayLogger();
+  logger.on("InitPC", (pkt) => {
+    logEvent("InitPC", pkt);
+  });
+  logger.readLogByChunk(path.resolve("test.raw"));
+}
+
 /*
-const legacyLogger = new LegacyLogger(stream, meterData);
-legacyLogger.on("line", (line) => {
-  console.log(line);
-});
-*/
 const opcodes: { [key: number]: string } = {};
 try {
   readFileSync("../dump/opcodes.map", "utf-8")
@@ -50,11 +64,11 @@ try {
 }
 stream.on("*", (data, opcode, compression, xor) => {
   try {
-    const decomp = compressor.decrypt(data, opcode, compression, xor);
+    const decomp = decompressor.decrypt(data, opcode, compression, xor);
     console.log(`${opcodes[opcode] ?? opcode} <- ${decomp.toString("hex")}`);
   } catch (e) {
     console.error(e);
   }
 });
-
+*/
 console.log("Logging");

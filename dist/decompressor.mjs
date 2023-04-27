@@ -1,4 +1,4 @@
-import "./chunk-NHABU752.mjs";
+import "./chunk-NZTU4WRF.mjs";
 
 // src/decompressor.ts
 import { uncompressSync as lz4UncompressSync } from "lz4-napi";

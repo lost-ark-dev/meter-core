@@ -20,10 +20,12 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/logger/data.ts
 var data_exports = {};
 __export(data_exports, {
+  PARSED_LOG_VERSION: () => PARSED_LOG_VERSION,
   StatusEffectBuffTypeFlags: () => StatusEffectBuffTypeFlags,
   StatusEffectTarget: () => StatusEffectTarget
 });
 module.exports = __toCommonJS(data_exports);
+var PARSED_LOG_VERSION = 16;
 var StatusEffectTarget = /* @__PURE__ */ ((StatusEffectTarget2) => {
   StatusEffectTarget2[StatusEffectTarget2["OTHER"] = 0] = "OTHER";
   StatusEffectTarget2[StatusEffectTarget2["PARTY"] = 1] = "PARTY";
@@ -47,6 +49,7 @@ var StatusEffectBuffTypeFlags = /* @__PURE__ */ ((StatusEffectBuffTypeFlags2) =>
 })(StatusEffectBuffTypeFlags || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  PARSED_LOG_VERSION,
   StatusEffectBuffTypeFlags,
   StatusEffectTarget
 });

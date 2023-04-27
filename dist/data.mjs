@@ -1,7 +1,7 @@
 import {
   stattype
 } from "./chunk-BMDL2WLM.mjs";
-import "./chunk-3JXVLIUX.mjs";
+import "./chunk-3WPW5BAN.mjs";
 import "./chunk-NZTU4WRF.mjs";
 
 // src/data.ts

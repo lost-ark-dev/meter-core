@@ -8,7 +8,6 @@ import type { LogEvent } from "./logEvent";
 import type { StatusTracker } from "./statustracker";
 import type { ParserEvent } from "./parser";
 
-export const PARSED_LOG_VERSION = 16;
 const defaultOptions: GameTrackerOptions = {
   isLive: true,
   dontResetOnZoneChange: false,

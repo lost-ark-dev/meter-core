@@ -47,6 +47,12 @@ export interface DamageStatistics {
   topShieldDone: number;
   debuffs: Map<number, StatusEffect>;
   buffs: Map<number, StatusEffect>;
+  topShieldGotten: number;
+  totalEffectiveShieldingDone: number;
+  topEffectiveShieldingDone: number;
+  topEffectiveShieldingUsed: number;
+  effectiveShieldingBuffs: Map<number, StatusEffect>;
+  appliedShieldingBuffs: Map<number, StatusEffect>;
 }
 export interface GameState {
   startedOn: number;
@@ -93,6 +99,13 @@ export interface EntityState {
   hits: Hits;
   damageDealtDebuffedBy: Map<number, number>;
   damageDealtBuffedBy: Map<number, number>;
+  shieldReceived: number;
+  damagePreventedWithShieldOnOthers: number;
+  damagePreventedByShield: number;
+  damagePreventedWithShieldOnOthersBy: Map<number, number>;
+  damagePreventedByShieldBy: Map<number, number>
+  shieldDoneBy: Map<number, number>;
+  shieldReceivedBy: Map<number, number>;
 }
 
 export interface Breakdown {

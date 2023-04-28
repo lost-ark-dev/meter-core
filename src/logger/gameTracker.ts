@@ -64,6 +64,12 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         topShieldDone: 0,
         debuffs: new Map(),
         buffs: new Map(),
+        topShieldGotten: 0,
+        totalEffectiveShieldingDone: 0,
+        topEffectiveShieldingDone: 0,
+        topEffectiveShieldingUsed: 0,
+        effectiveShieldingBuffs: new Map(),
+        appliedShieldingBuffs: new Map(),
       },
     };
   }
@@ -133,6 +139,12 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         topShieldDone: 0,
         debuffs: new Map(),
         buffs: new Map(),
+        appliedShieldingBuffs: new Map(),
+        effectiveShieldingBuffs: new Map(),
+        topEffectiveShieldingDone: 0,
+        topEffectiveShieldingUsed: 0,
+        topShieldGotten: 0,
+        totalEffectiveShieldingDone: 0,
       },
     };
     this.emit("reset-state", this.#game);
@@ -426,6 +438,82 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       skill.hits.casts += 1;
     }
   }
+  onShieldUsed(targetEntity: Entity, sourceEntity: Entity, statusEffectId: number, shieldAmountRemoved: number): void {
+    if (shieldAmountRemoved < 0) {
+      console.error("Shield change values was negative, shield ammount increased");
+    }
+
+    if (targetEntity.entityType === EntityType.Player && sourceEntity.entityType === EntityType.Player) {
+      if (!this.#game.damageStatistics.effectiveShieldingBuffs.has(statusEffectId)) {
+        const statusEffect = this.#data.getStatusEffectHeaderData(statusEffectId);
+        if (statusEffect) {
+          this.#game.damageStatistics.effectiveShieldingBuffs.set(statusEffectId, statusEffect);
+        }
+      }
+      const now = new Date();
+      const targetEntityState = this.updateEntity(targetEntity, {}, now);
+
+      const sourceEntityState = this.updateEntity(sourceEntity, {}, now);
+
+      targetEntityState.damagePreventedByShield += shieldAmountRemoved;
+
+      const oldDmgPreventedBy = targetEntityState.damagePreventedByShieldBy.get(statusEffectId) ?? 0;
+      targetEntityState.damagePreventedByShieldBy.set(statusEffectId, oldDmgPreventedBy + shieldAmountRemoved);
+
+      this.#game.damageStatistics.topEffectiveShieldingUsed = Math.max(
+        targetEntityState.damagePreventedByShield,
+        this.#game.damageStatistics.topEffectiveShieldingUsed
+      );
+
+      sourceEntityState.damagePreventedWithShieldOnOthers += shieldAmountRemoved;
+
+      const oldDmgPreventedWith = sourceEntityState.damagePreventedWithShieldOnOthersBy.get(statusEffectId) ?? 0;
+      sourceEntityState.damagePreventedWithShieldOnOthersBy.set(
+        statusEffectId,
+        oldDmgPreventedWith + shieldAmountRemoved
+      );
+
+      this.#game.damageStatistics.topEffectiveShieldingDone = Math.max(
+        sourceEntityState.damagePreventedWithShieldOnOthers,
+        this.#game.damageStatistics.topEffectiveShieldingDone
+      );
+
+      this.#game.damageStatistics.totalEffectiveShieldingDone += shieldAmountRemoved;
+    }
+  }
+  onShieldApplied(targetEntity: Entity, sourceEntity: Entity, statusEffectId: number, amount: number) {
+    const now = new Date();
+    const targetEntityState = this.updateEntity(targetEntity, {}, now);
+    const sourceEntityState = this.updateEntity(sourceEntity, {}, now);
+
+    if (sourceEntityState.isPlayer && targetEntityState.isPlayer) {
+      if (!this.#game.damageStatistics.appliedShieldingBuffs.has(statusEffectId)) {
+        const statusEffect = this.#data.getStatusEffectHeaderData(statusEffectId);
+        if (statusEffect) {
+          this.#game.damageStatistics.appliedShieldingBuffs.set(statusEffectId, statusEffect);
+        }
+      }
+
+      targetEntityState.shieldReceived += amount;
+      sourceEntityState.shieldDone += amount;
+
+      const oldDoneByValue = sourceEntityState.shieldDoneBy.get(statusEffectId) ?? 0;
+      sourceEntityState.shieldDoneBy.set(statusEffectId, oldDoneByValue + amount);
+
+      const oldReceivedByValue = targetEntityState.shieldReceivedBy.get(statusEffectId) ?? 0;
+      targetEntityState.shieldReceivedBy.set(statusEffectId, oldReceivedByValue + amount);
+
+      this.#game.damageStatistics.topShieldDone = Math.max(
+        sourceEntityState.shieldDone,
+        this.#game.damageStatistics.topShieldDone
+      );
+      this.#game.damageStatistics.topShieldGotten = Math.max(
+        sourceEntityState.shieldReceived,
+        this.#game.damageStatistics.topShieldGotten
+      );
+      this.#game.damageStatistics.totalShieldDone += amount;
+    }
+  }
   getSkillNameIcon(skillId: number, skillEffectId: number): { name: string; icon?: string } {
     if (skillId === 0 && skillEffectId === 0) {
       //TODO: check if we get only hit hitflag.dot or hitflag.dot_critical
@@ -580,6 +668,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       },
       damageDealtDebuffedBy: new Map(),
       damageDealtBuffedBy: new Map(),
+      damagePreventedByShieldBy: new Map(),
+      damagePreventedWithShieldOnOthersBy: new Map(),
+      shieldDoneBy: new Map(),
+      shieldReceivedBy: new Map(),
+      damagePreventedWithShieldOnOthers: 0,
+      damagePreventedByShield: 0,
+      shieldReceived: 0,
     };
     return newEntity;
   }

@@ -7,7 +7,7 @@ import { GameTracker } from "./gameTracker";
 import type { Logger } from "./logger";
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
-import { StatusEffectTargetType, StatusTracker } from "./statustracker";
+import { StatusEffect, StatusEffectTargetType, StatusTracker } from "./statustracker";
 
 export class Parser extends TypedEmitter<ParserEvent> {
   #logger: Logger;
@@ -62,16 +62,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         const target = this.#entityTracker.entities.get(parsed.TargetId);
-        if (this.#partyTracker.isEntityInParty(parsed.TargetId)) {
-          if (target?.name === this.#entityTracker.localPlayer.name) {
-            this.#statusTracker.RemoveLocalObject(parsed.TargetId);
-          } else {
-            const charId = this.#pcIdMapper.getCharacterId(parsed.TargetId);
-            if (charId) this.#statusTracker.RemovePartyObject(charId);
-          }
-        } else {
-          this.#statusTracker.RemoveLocalObject(parsed.TargetId);
-        }
         if (target) this.#gameTracker.onDeath(target, pkt.time);
       })
       .on("IdentityGaugeChangeNotify", (pkt) => {})
@@ -218,7 +208,12 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         for (const effectId of parsed.statusEffectIds)
-          this.#statusTracker.RemoveStatusEffect(parsed.CharacterId, effectId, StatusEffectTargetType.Party);
+          this.#statusTracker.RemoveStatusEffect(
+            parsed.CharacterId,
+            effectId,
+            StatusEffectTargetType.Party,
+            parsed.Reason
+          );
       })
       .on("PartyStatusEffectResultNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -326,7 +321,12 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         for (const effectId of parsed.statusEffectIds)
-          this.#statusTracker.RemoveStatusEffect(parsed.ObjectId, effectId, StatusEffectTargetType.Local);
+          this.#statusTracker.RemoveStatusEffect(
+            parsed.ObjectId,
+            effectId,
+            StatusEffectTargetType.Local,
+            parsed.Reason
+          );
       })
       .on("StatusEffectSyncDataNotify", (pkt) => {})
       .on("TriggerBossBattleStatus", (pkt) => {
@@ -364,7 +364,59 @@ export class Parser extends TypedEmitter<ParserEvent> {
         this.#statusTracker.RemoveLocalObject(parsed.ObjectId);
       })
       .on("ZoneStatusEffectAddNotify", (pkt) => {})
+      .on("StatusEffectSyncDataNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        this.#statusTracker.SyncStatusEffect(
+          parsed.EffectInstanceId,
+          parsed.CharacterId,
+          parsed.ObjectId,
+          parsed.Value,
+          this.#entityTracker.localPlayer.characterId
+        );
+      })
+      .on("TroopMemberUpdateMinNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        if (parsed.statusEffectDatas.length > 0) {
+          for (const se of parsed.statusEffectDatas) {
+            const objectId = this.#pcIdMapper.getEntityId(parsed.CharacterId);
+            const newValCandidate1: number = se.Value ? se.Value.readUInt32LE() : 0;
+            const newValCandidate2: number = se.Value ? se.Value.readUInt32LE(8) : 0;
+            const newVal = newValCandidate1 < newValCandidate2 ? newValCandidate1 : newValCandidate2;
+            this.#statusTracker.SyncStatusEffect(
+              se.EffectInstanceId,
+              parsed.CharacterId,
+              objectId,
+              newVal,
+              this.#entityTracker.localPlayer.characterId
+            );
+          }
+        }
+      })
       .on("ZoneStatusEffectRemoveNotify", (pkt) => {});
+
+    this.#statusTracker
+      .on("shieldApplied", (se: StatusEffect) => {
+        let targetObjectId: bigint|undefined = se.targetId;
+        if (se.type === StatusEffectTargetType.Party) {
+          targetObjectId = this.#pcIdMapper.getEntityId(se.targetId) ?? targetObjectId;
+        }
+        if (targetObjectId === undefined) return;
+        const sourceEntity = this.#entityTracker.getSourceEntity(se.sourceId);
+        const targetEntity = this.#entityTracker.getOrCreateEntity(targetObjectId);
+        this.#gameTracker.onShieldApplied(targetEntity, sourceEntity, se.statusEffectId, se.value);
+      })
+      .on("shieldChanged", (se: StatusEffect, oldValue: number, newVal: number) => {
+        let targetObjectId: bigint|undefined = se.targetId;
+        if (se.type === StatusEffectTargetType.Party) {
+          targetObjectId = this.#pcIdMapper.getEntityId(se.targetId) ?? targetObjectId;
+        }
+        if (targetObjectId === undefined) return;
+        const sourceEntity = this.#entityTracker.getSourceEntity(se.sourceId);
+        const targetEntity = this.#entityTracker.getOrCreateEntity(targetObjectId);
+        this.#gameTracker.onShieldUsed(targetEntity, sourceEntity, se.statusEffectId, oldValue - newVal);
+      });
   }
 
   //TODO: method to change broadcast interval (without restart)

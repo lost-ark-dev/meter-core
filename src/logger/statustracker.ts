@@ -1,8 +1,10 @@
+import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "../data";
 import type { StatusEffectDataLog } from "../packets/log/structures/StatusEffectData";
 import type { NewPC } from "../packets/log/types";
 import { Entity, EntityType, Player } from "./entityTracker";
 import type { PartyTracker } from "./partytracker";
+import { statuseffectexpiredreasontype } from "../packets/generated/enums";
 
 export enum StatusEffectTargetType {
   Party = 0,
@@ -25,6 +27,11 @@ export enum StatusEffectShowType {
   All = 1,
 }
 
+export enum StatusEffectType {
+  Shield = 0,
+  Other = 1,
+}
+
 export interface StatusEffect {
   instanceId: number;
   statusEffectId: number;
@@ -36,6 +43,7 @@ export interface StatusEffect {
   category: StatusEffectCategory;
   buffCategory: StatusEffectBuffCategory;
   showType: StatusEffectShowType;
+  effectType: StatusEffectType;
   expirationDelay: number;
   expirationTimer: NodeJS.Timer | undefined;
   expireAt: Date | undefined;
@@ -45,11 +53,16 @@ export interface StatusEffect {
   pktTime: Date;
 }
 
+interface StatusTrackerEvents {
+  shieldChanged: (se: StatusEffect, oldValue: number, newValue: number) => void;
+  shieldApplied: (se: StatusEffect) => void;
+}
+
 type StatusEffectInstanceId = number;
 type TargetId = bigint;
 type StatusEffectRegistry = Map<StatusEffectInstanceId, StatusEffect>;
 type PlayerStatusEffectRegistry = Map<TargetId, StatusEffectRegistry>;
-export class StatusTracker {
+export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
   static TIMEOUT_DELAY_MS = 1000;
 
   PartyStatusEffectRegistry: PlayerStatusEffectRegistry;
@@ -62,6 +75,7 @@ export class StatusTracker {
   private trace = false;
 
   constructor(partyTracker: PartyTracker, data: MeterData, debug = Boolean(process.env["DEV"])) {
+    super();
     this.PartyStatusEffectRegistry = new Map();
     this.LocalStatusEffectRegistry = new Map();
     this.debug = debug;
@@ -99,7 +113,7 @@ export class StatusTracker {
     const registry = this.LocalStatusEffectRegistry.get(objectId);
     if (registry) {
       for (const [, se] of registry) {
-        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Local);
+        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Local, undefined);
       }
     }
     this.LocalStatusEffectRegistry.delete(objectId);
@@ -109,7 +123,7 @@ export class StatusTracker {
     const registry = this.PartyStatusEffectRegistry.get(objectId);
     if (registry) {
       for (const [, se] of registry) {
-        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Party);
+        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Party, undefined);
       }
     }
     this.PartyStatusEffectRegistry.delete(objectId);
@@ -123,6 +137,8 @@ export class StatusTracker {
         clearTimeout(oldEffect.expirationTimer);
         oldEffect.expirationTimer = undefined;
       }
+    } else if (se.effectType === StatusEffectType.Shield) {
+      this.emit("shieldApplied", se);
     }
     registry.set(se.instanceId, se);
 
@@ -159,7 +175,12 @@ export class StatusTracker {
     return false;
   }
 
-  public RemoveStatusEffect(targetId: TargetId, statusEffectId: number, et: StatusEffectTargetType) {
+  public RemoveStatusEffect(
+    targetId: TargetId,
+    statusEffectId: number,
+    et: StatusEffectTargetType,
+    reason: number | undefined
+  ) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return;
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
     const statusEffect = registry.get(statusEffectId);
@@ -167,6 +188,9 @@ export class StatusTracker {
       clearTimeout(statusEffect.expirationTimer);
       statusEffect.expirationTimer = undefined;
       registry.delete(statusEffectId);
+      if (reason === statuseffectexpiredreasontype.beattacked) {
+        this.RegisterValueUpdate(statusEffect, statusEffect.value, 0);
+      }
     }
   }
   public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType): Array<StatusEffect> {
@@ -193,14 +217,14 @@ export class StatusTracker {
     let seCountInLocal = 0;
     for (const [, reg] of this.LocalStatusEffectRegistry) {
       for (const [, se] of reg) {
-        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined);
       }
       seCountInLocal += reg.size;
     }
     let seCountInParty = 0;
     for (const [, reg] of this.PartyStatusEffectRegistry) {
       for (const [, se] of reg) {
-        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined);
       }
       seCountInParty += reg.size;
     }
@@ -254,6 +278,26 @@ export class StatusTracker {
     }
   }
 
+  public SyncStatusEffect(
+    instanceId: number,
+    characterId: bigint,
+    objectId: bigint | undefined,
+    value: number,
+    localCharacterId: bigint
+  ): void {
+    // this updates status effects for party members and other
+    const usePartyStatusEffects = this.#shouldUsePartyStatusEffect(characterId, localCharacterId);
+    const et = usePartyStatusEffects ? StatusEffectTargetType.Party : StatusEffectTargetType.Local;
+    const targetId = usePartyStatusEffects ? characterId : objectId;
+    if (!targetId) return; // we need to sync a local player but have no objectId
+    const registry: StatusEffectRegistry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    const se = registry.get(instanceId);
+    if (!se) return;
+    const oldValue = se.value;
+    se.value = value;
+    this.RegisterValueUpdate(se, oldValue, value);
+  }
+
   private ValidForWholeRaid(se: StatusEffect): boolean {
     return (
       (se.buffCategory === StatusEffectBuffCategory.Battleitem ||
@@ -285,8 +329,15 @@ export class StatusTracker {
 
   private ExpireStatusEffectByTimeout(se: StatusEffect) {
     if (this.debug) console.error("Triggered timeout on", se.name, "with iid", se.instanceId);
-    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined);
   }
+
+  private RegisterValueUpdate(se: StatusEffect, oldValue: number, newValue: number) {
+    if (se.effectType === StatusEffectType.Shield) {
+      this.emit("shieldChanged", se, oldValue, newValue);
+    }
+  }
+
   newPC(parsed: NewPC, localCharacterId: bigint, pktTime: Date) {
     const shouldUsePartyStatusEffects = this.#shouldUsePartyStatusEffect(parsed.PCStruct.CharacterId, localCharacterId);
     if (shouldUsePartyStatusEffects) {
@@ -338,11 +389,14 @@ export class StatusTracker {
     targetType: StatusEffectTargetType,
     pktTime: Date
   ): StatusEffect {
-    const val: number = se.Value ? se.Value.readUInt32LE() : 0;
+    const newValCandidate1: number = se.Value ? se.Value.readUInt32LE() : 0;
+    const newValCandidate2: number = se.Value ? se.Value.readUInt32LE(8) : 0;
+    const newVal = newValCandidate1 < newValCandidate2 ? newValCandidate1 : newValCandidate2;
     let statusEffectCategory = StatusEffectCategory.Other;
     let statusEffectBuffCategory = StatusEffectBuffCategory.Other;
     let showType = StatusEffectShowType.Other;
     let seName = "Unknown";
+    let statusEffectType = StatusEffectType.Other;
     const effectInfo = this.#data.skillBuff.get(se.StatusEffectId);
     if (effectInfo) {
       seName = effectInfo.name;
@@ -367,6 +421,11 @@ export class StatusTracker {
           showType = StatusEffectShowType.All;
           break;
       }
+      switch (effectInfo.type) {
+        case "shield":
+          statusEffectType = StatusEffectType.Shield;
+          break;
+      }
     }
     return {
       instanceId: se.EffectInstanceId,
@@ -375,7 +434,7 @@ export class StatusTracker {
       statusEffectId: se.StatusEffectId,
       targetId: targetId,
       type: targetType,
-      value: val,
+      value: newVal,
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
       showType: showType,
@@ -385,7 +444,8 @@ export class StatusTracker {
       expireAt: undefined,
       occurTime: se.OccurTime,
       name: seName,
-      pktTime,
+      pktTime: pktTime,
+      effectType: statusEffectType,
     };
   }
   getStatusEffects(

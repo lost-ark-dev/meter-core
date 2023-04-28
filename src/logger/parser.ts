@@ -62,16 +62,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         const target = this.#entityTracker.entities.get(parsed.TargetId);
-        if (this.#partyTracker.isEntityInParty(parsed.TargetId)) {
-          if (target?.name === this.#entityTracker.localPlayer.name) {
-            this.#statusTracker.RemoveLocalObject(parsed.TargetId);
-          } else {
-            const charId = this.#pcIdMapper.getCharacterId(parsed.TargetId);
-            if (charId) this.#statusTracker.RemovePartyObject(charId);
-          }
-        } else {
-          this.#statusTracker.RemoveLocalObject(parsed.TargetId);
-        }
         if (target) this.#gameTracker.onDeath(target, pkt.time);
       })
       .on("IdentityGaugeChangeNotify", (pkt) => {})

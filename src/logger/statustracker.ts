@@ -4,6 +4,7 @@ import type { StatusEffectDataLog } from "../packets/log/structures/StatusEffect
 import type { NewPC } from "../packets/log/types";
 import { Entity, EntityType, Player } from "./entityTracker";
 import type { PartyTracker } from "./partytracker";
+import { statuseffectexpiredreasontype } from "../packets/generated/enums";
 
 export enum StatusEffectTargetType {
   Party = 0,
@@ -187,7 +188,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       clearTimeout(statusEffect.expirationTimer);
       statusEffect.expirationTimer = undefined;
       registry.delete(statusEffectId);
-      if (reason === 4 /* beattacked */) {
+      if (reason === statuseffectexpiredreasontype.beattacked) {
         this.RegisterValueUpdate(statusEffect, statusEffect.value, 0);
       }
     }

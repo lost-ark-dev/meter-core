@@ -1,5 +1,5 @@
 import "../chunk-BMDL2WLM.mjs";
-import "../chunk-3WPW5BAN.mjs";
+import "../chunk-V334ZGME.mjs";
 import {
   __privateAdd,
   __privateGet,
@@ -9,18 +9,30 @@ import {
 } from "../chunk-NZTU4WRF.mjs";
 
 // src/logger/parser.ts
-import { TypedEmitter as TypedEmitter2 } from "tiny-typed-emitter";
+import { TypedEmitter as TypedEmitter3 } from "tiny-typed-emitter";
 
 // src/logger/statustracker.ts
-var _partyTracker, _data, _shouldUsePartyStatusEffectForEntity, shouldUsePartyStatusEffectForEntity_fn, _shouldUsePartyStatusEffect, shouldUsePartyStatusEffect_fn;
-var _StatusTracker = class {
-  constructor(partyTracker, data, debug = Boolean(process.env["DEV"])) {
+import { TypedEmitter } from "tiny-typed-emitter";
+
+// src/logger/utils.ts
+function u32tof32(v) {
+  const buf = Buffer.alloc(4);
+  buf.writeUInt32LE(v);
+  return Math.round(buf.readFloatLE() * 100) / 100;
+}
+
+// src/logger/statustracker.ts
+var _partyTracker, _data, _isLive, _shouldUsePartyStatusEffectForEntity, shouldUsePartyStatusEffectForEntity_fn, _shouldUsePartyStatusEffect, shouldUsePartyStatusEffect_fn;
+var _StatusTracker = class extends TypedEmitter {
+  constructor(partyTracker, data, isLive = true, debug = Boolean(process.env["DEV"])) {
+    super();
     __privateAdd(this, _shouldUsePartyStatusEffectForEntity);
     __privateAdd(this, _shouldUsePartyStatusEffect);
     __publicField(this, "PartyStatusEffectRegistry");
     __publicField(this, "LocalStatusEffectRegistry");
     __privateAdd(this, _partyTracker, void 0);
     __privateAdd(this, _data, void 0);
+    __privateAdd(this, _isLive, void 0);
     __publicField(this, "debug");
     __publicField(this, "trace", false);
     this.PartyStatusEffectRegistry = /* @__PURE__ */ new Map();
@@ -28,6 +40,7 @@ var _StatusTracker = class {
     this.debug = debug;
     __privateSet(this, _partyTracker, partyTracker);
     __privateSet(this, _data, data);
+    __privateSet(this, _isLive, isLive);
   }
   getStatusEffectRegistryForPlayer(id, t) {
     const registry = this.getPlayerRegistry(t);
@@ -53,20 +66,20 @@ var _StatusTracker = class {
     }
     return this.LocalStatusEffectRegistry;
   }
-  RemoveLocalObject(objectId) {
+  RemoveLocalObject(objectId, pktTime) {
     const registry = this.LocalStatusEffectRegistry.get(objectId);
     if (registry) {
       for (const [, se] of registry) {
-        this.RemoveStatusEffect(objectId, se.instanceId, 1 /* Local */);
+        this.RemoveStatusEffect(objectId, se.instanceId, 1 /* Local */, void 0, pktTime);
       }
     }
     this.LocalStatusEffectRegistry.delete(objectId);
   }
-  RemovePartyObject(objectId) {
+  RemovePartyObject(objectId, pktTime) {
     const registry = this.PartyStatusEffectRegistry.get(objectId);
     if (registry) {
       for (const [, se] of registry) {
-        this.RemoveStatusEffect(objectId, se.instanceId, 0 /* Party */);
+        this.RemoveStatusEffect(objectId, se.instanceId, 0 /* Party */, void 0, pktTime);
       }
     }
     this.PartyStatusEffectRegistry.delete(objectId);
@@ -75,19 +88,23 @@ var _StatusTracker = class {
     const registry = this.getStatusEffectRegistryForPlayer(se.targetId, se.type);
     const oldEffect = registry.get(se.instanceId);
     if (oldEffect) {
-      if (oldEffect.expirationTimer) {
+      if (__privateGet(this, _isLive) && oldEffect.expirationTimer) {
         clearTimeout(oldEffect.expirationTimer);
         oldEffect.expirationTimer = void 0;
       }
+    } else if (se.effectType === 0 /* Shield */) {
+      this.emit("shieldApplied", se);
     }
     registry.set(se.instanceId, se);
     this.SetupStatusEffectTimeout(se);
   }
-  HasAnyStatusEffect(id, t, statusEffectIds) {
+  HasAnyStatusEffect(id, t, statusEffectIds, pktTime) {
     if (!this.hasStatusEffectRegistryForPlayer(id, t))
       return false;
     const registry = this.getStatusEffectRegistryForPlayer(id, t);
     for (const [, se] of registry) {
+      if (!__privateGet(this, _isLive) && !this.IsReplayStatusEffectValidElseRemove(se, pktTime))
+        continue;
       for (const key of statusEffectIds) {
         if (key === se.statusEffectId)
           return true;
@@ -95,60 +112,85 @@ var _StatusTracker = class {
     }
     return false;
   }
-  HasAnyStatusEffectFromParty(targetId, et, partyId, statusEffectIds) {
+  IsReplayStatusEffectValidElseRemove(se, replayPktTime) {
+    if (se.expireAt === void 0 || se.expireAt.getTime() > replayPktTime.getTime()) {
+      return true;
+    }
+    this.ExpireStatusEffectByTimeout(se);
+    return false;
+  }
+  HasAnyStatusEffectFromParty(targetId, et, partyId, statusEffectIds, pktTime) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et))
       return false;
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
-    for (const effect of registry) {
-      if (statusEffectIds.includes(effect[1].statusEffectId)) {
-        if (this.ValidForWholeRaid(effect[1]))
+    for (const [, effect] of registry) {
+      if (!__privateGet(this, _isLive) && !this.IsReplayStatusEffectValidElseRemove(effect, pktTime))
+        continue;
+      if (statusEffectIds.includes(effect.statusEffectId)) {
+        if (this.ValidForWholeRaid(effect))
           return true;
-        const partyIdOfSource = __privateGet(this, _partyTracker).getPartyIdFromEntityId(effect[1].sourceId);
+        const partyIdOfSource = __privateGet(this, _partyTracker).getPartyIdFromEntityId(effect.sourceId);
         if (partyIdOfSource === partyId)
           return true;
       }
     }
     return false;
   }
-  RemoveStatusEffect(targetId, statusEffectId, et) {
+  RemoveStatusEffect(targetId, statusEffectId, et, reason, pktTime) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et))
       return;
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
     const statusEffect = registry.get(statusEffectId);
     if (statusEffect) {
-      clearTimeout(statusEffect.expirationTimer);
-      statusEffect.expirationTimer = void 0;
+      if (__privateGet(this, _isLive)) {
+        clearTimeout(statusEffect.expirationTimer);
+        statusEffect.expirationTimer = void 0;
+      }
       registry.delete(statusEffectId);
+      if (reason === 4 /* beattacked */) {
+        if (__privateGet(this, _isLive) || this.IsReplayStatusEffectValidElseRemove(statusEffect, pktTime))
+          this.RegisterValueUpdate(statusEffect, statusEffect.value, 0);
+      }
     }
   }
-  GetStatusEffects(targetId, et) {
+  GetStatusEffects(targetId, et, pktTime) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et))
       return [];
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    if (!__privateGet(this, _isLive)) {
+      for (const [, effect] of registry) {
+        this.IsReplayStatusEffectValidElseRemove(effect, pktTime);
+      }
+    }
     return [...registry.values()];
   }
-  GetStatusEffectsFromParty(targetId, et, partyId) {
+  GetStatusEffectsFromParty(targetId, et, partyId, pktTime) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et))
       return [];
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    if (!__privateGet(this, _isLive)) {
+      for (const [, effect] of registry) {
+        this.IsReplayStatusEffectValidElseRemove(effect, pktTime);
+      }
+    }
     return [...registry.values()].filter((value) => {
       if (this.ValidForWholeRaid(value))
         return true;
       return partyId === __privateGet(this, _partyTracker).getPartyIdFromEntityId(value.sourceId);
     });
   }
-  Clear() {
+  Clear(pktTime) {
     let seCountInLocal = 0;
     for (const [, reg] of this.LocalStatusEffectRegistry) {
       for (const [, se] of reg) {
-        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, void 0, pktTime);
       }
       seCountInLocal += reg.size;
     }
     let seCountInParty = 0;
     for (const [, reg] of this.PartyStatusEffectRegistry) {
       for (const [, se] of reg) {
-        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, void 0, pktTime);
       }
       seCountInParty += reg.size;
     }
@@ -162,9 +204,9 @@ var _StatusTracker = class {
     const se = registry.get(instanceId);
     if (se) {
       const durationExtensionMs = timestamp - se.timestamp;
-      if (this.trace)
-        console.log("Clearing timeout for", se.instanceId, "because of duration change");
-      if (se.expirationTimer) {
+      if (__privateGet(this, _isLive) && se.expirationTimer) {
+        if (this.trace)
+          console.log("Clearing timeout for", se.instanceId, "because of duration change");
         clearTimeout(se.expirationTimer);
         se.expirationTimer = void 0;
       }
@@ -184,7 +226,8 @@ var _StatusTracker = class {
               "to",
               new Date(timeoutTime).toISOString()
             );
-          se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
+          if (__privateGet(this, _isLive))
+            se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
           se.expireAt = new Date(timeoutTime);
           se.timestamp = timestamp;
         } else {
@@ -201,31 +244,59 @@ var _StatusTracker = class {
       );
     }
   }
+  SyncStatusEffect(instanceId, characterId, objectId, value, localCharacterId) {
+    const usePartyStatusEffects = __privateMethod(this, _shouldUsePartyStatusEffect, shouldUsePartyStatusEffect_fn).call(this, characterId, localCharacterId);
+    const et = usePartyStatusEffects ? 0 /* Party */ : 1 /* Local */;
+    const targetId = usePartyStatusEffects ? characterId : objectId;
+    if (!targetId)
+      return;
+    const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    const se = registry.get(instanceId);
+    if (!se)
+      return;
+    const oldValue = se.value;
+    se.value = value;
+    this.RegisterValueUpdate(se, oldValue, value);
+  }
   ValidForWholeRaid(se) {
     return (se.buffCategory === 3 /* Battleitem */ || se.buffCategory === 1 /* Bracelet */ || se.buffCategory === 2 /* Etc */) && se.category === 1 /* Debuff */ && se.showType === 1 /* All */;
   }
   SetupStatusEffectTimeout(se) {
     if (se.expirationDelay > 0 && se.expirationDelay < 604800) {
-      const startDate = se.started.getTime() > se.occurTime.getTime() ? se.started : se.occurTime;
+      const startDate = se.pktTime.getTime() > se.occurTime.getTime() ? se.pktTime : se.occurTime;
       const expirationDelayInMs = Math.ceil(se.expirationDelay * 1e3);
       const timeoutDelay = startDate.getTime() + expirationDelayInMs + _StatusTracker.TIMEOUT_DELAY_MS - se.pktTime.getTime();
       se.expireAt = new Date(se.pktTime.getTime() + timeoutDelay);
       if (this.trace)
-        console.log("Setting up statuseffect expiration timer for", se.name, se.instanceId, "with delay", timeoutDelay);
-      se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
+        console.log(
+          "Setting up statuseffect expiration time for",
+          se.name,
+          se.instanceId,
+          "to",
+          se.expireAt.toISOString(),
+          "with delay",
+          timeoutDelay
+        );
+      if (__privateGet(this, _isLive))
+        se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
     }
   }
   ExpireStatusEffectByTimeout(se) {
     if (this.debug)
       console.error("Triggered timeout on", se.name, "with iid", se.instanceId);
-    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type);
+    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, void 0, new Date());
+  }
+  RegisterValueUpdate(se, oldValue, newValue) {
+    if (se.effectType === 0 /* Shield */) {
+      this.emit("shieldChanged", se, oldValue, newValue);
+    }
   }
   newPC(parsed, localCharacterId, pktTime) {
     const shouldUsePartyStatusEffects = __privateMethod(this, _shouldUsePartyStatusEffect, shouldUsePartyStatusEffect_fn).call(this, parsed.PCStruct.CharacterId, localCharacterId);
     if (shouldUsePartyStatusEffects) {
-      this.RemovePartyObject(parsed.PCStruct.CharacterId);
+      this.RemovePartyObject(parsed.PCStruct.CharacterId, pktTime);
     } else {
-      this.RemoveLocalObject(parsed.PCStruct.PlayerId);
+      this.RemoveLocalObject(parsed.PCStruct.PlayerId, pktTime);
     }
     for (const se of parsed.PCStruct.statusEffectDatas) {
       this.RegisterStatusEffect(
@@ -240,11 +311,14 @@ var _StatusTracker = class {
     }
   }
   buildStatusEffect(se, targetId, sourceId, targetType, pktTime) {
-    const val = se.Value ? se.Value.readUInt32LE() : 0;
+    const newValCandidate1 = se.Value ? se.Value.readUInt32LE() : 0;
+    const newValCandidate2 = se.Value ? se.Value.readUInt32LE(8) : 0;
+    const newVal = newValCandidate1 < newValCandidate2 ? newValCandidate1 : newValCandidate2;
     let statusEffectCategory = 0 /* Other */;
     let statusEffectBuffCategory = 0 /* Other */;
     let showType = 0 /* Other */;
     let seName = "Unknown";
+    let statusEffectType = 1 /* Other */;
     const effectInfo = __privateGet(this, _data).skillBuff.get(se.StatusEffectId);
     if (effectInfo) {
       seName = effectInfo.name;
@@ -269,34 +343,40 @@ var _StatusTracker = class {
           showType = 1 /* All */;
           break;
       }
+      switch (effectInfo.type) {
+        case "shield":
+          statusEffectType = 0 /* Shield */;
+          break;
+      }
     }
     return {
       instanceId: se.EffectInstanceId,
       sourceId,
-      started: pktTime,
       statusEffectId: se.StatusEffectId,
       targetId,
       type: targetType,
-      value: val,
+      value: newVal,
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
       showType,
-      expirationDelay: se.TotalTime,
+      expirationDelay: u32tof32(se.TotalTime),
       expirationTimer: void 0,
       timestamp: se.EndTick,
       expireAt: void 0,
       occurTime: se.OccurTime,
       name: seName,
-      pktTime
+      pktTime,
+      effectType: statusEffectType
     };
   }
-  getStatusEffects(sourceEntity, targetEntity, localCharacterId) {
+  getStatusEffects(sourceEntity, targetEntity, localCharacterId, pktTime) {
     const statusEffectsOnTarget = [];
     const statusEffectsOnSource = [];
     const shouldUsePartyBuffForSource = __privateMethod(this, _shouldUsePartyStatusEffectForEntity, shouldUsePartyStatusEffectForEntity_fn).call(this, sourceEntity, localCharacterId);
     const sourceEffects = this.GetStatusEffects(
       shouldUsePartyBuffForSource ? sourceEntity.characterId : sourceEntity.entityId,
-      shouldUsePartyBuffForSource ? 0 /* Party */ : 1 /* Local */
+      shouldUsePartyBuffForSource ? 0 /* Party */ : 1 /* Local */,
+      pktTime
     );
     for (const se of sourceEffects)
       statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
@@ -307,10 +387,12 @@ var _StatusTracker = class {
       const targetEffects = sourceIsInParty && sourcePartyId ? this.GetStatusEffectsFromParty(
         shouldUsePartyBuffForTarget ? targetEntity.characterId : targetEntity.entityId,
         shouldUsePartyBuffForTarget ? 0 /* Party */ : 1 /* Local */,
-        sourcePartyId
+        sourcePartyId,
+        pktTime
       ) : this.GetStatusEffects(
         shouldUsePartyBuffForTarget ? targetEntity.characterId : targetEntity.entityId,
-        shouldUsePartyBuffForTarget ? 0 /* Party */ : 1 /* Local */
+        shouldUsePartyBuffForTarget ? 0 /* Party */ : 1 /* Local */,
+        pktTime
       );
       for (const se of targetEffects)
         statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
@@ -321,6 +403,7 @@ var _StatusTracker = class {
 var StatusTracker = _StatusTracker;
 _partyTracker = new WeakMap();
 _data = new WeakMap();
+_isLive = new WeakMap();
 _shouldUsePartyStatusEffectForEntity = new WeakSet();
 shouldUsePartyStatusEffectForEntity_fn = function(entity, localCharacterId) {
   if (entity.entityType !== 1 /* Player */)
@@ -346,13 +429,6 @@ shouldUsePartyStatusEffect_fn = function(characterId, localCharacterId) {
   return false;
 };
 __publicField(StatusTracker, "TIMEOUT_DELAY_MS", 1e3);
-
-// src/logger/utils.ts
-function u32tof32(v) {
-  const buf = Buffer.alloc(4);
-  buf.writeUInt32LE(v);
-  return Math.round(buf.readFloatLE() * 100) / 100;
-}
 
 // src/logger/entityTracker.ts
 var EntityTracker = class {
@@ -588,14 +664,14 @@ var EntityType = /* @__PURE__ */ ((EntityType2) => {
 })(EntityType || {});
 
 // src/logger/gameTracker.ts
-import { TypedEmitter } from "tiny-typed-emitter";
+import { TypedEmitter as TypedEmitter2 } from "tiny-typed-emitter";
 var defaultOptions = {
   isLive: true,
   dontResetOnZoneChange: false,
   resetAfterPhaseTransition: false,
   splitOnPhaseTransition: false
 };
-var GameTracker = class extends TypedEmitter {
+var GameTracker = class extends TypedEmitter2 {
   #game;
   encounters;
   #entityTracker;
@@ -632,7 +708,13 @@ var GameTracker = class extends TypedEmitter {
         totalShieldDone: 0,
         topShieldDone: 0,
         debuffs: /* @__PURE__ */ new Map(),
-        buffs: /* @__PURE__ */ new Map()
+        buffs: /* @__PURE__ */ new Map(),
+        topShieldGotten: 0,
+        totalEffectiveShieldingDone: 0,
+        topEffectiveShieldingDone: 0,
+        topEffectiveShieldingUsed: 0,
+        effectiveShieldingBuffs: /* @__PURE__ */ new Map(),
+        appliedShieldingBuffs: /* @__PURE__ */ new Map()
       }
     };
   }
@@ -691,7 +773,13 @@ var GameTracker = class extends TypedEmitter {
         totalShieldDone: 0,
         topShieldDone: 0,
         debuffs: /* @__PURE__ */ new Map(),
-        buffs: /* @__PURE__ */ new Map()
+        buffs: /* @__PURE__ */ new Map(),
+        appliedShieldingBuffs: /* @__PURE__ */ new Map(),
+        effectiveShieldingBuffs: /* @__PURE__ */ new Map(),
+        topEffectiveShieldingDone: 0,
+        topEffectiveShieldingUsed: 0,
+        topShieldGotten: 0,
+        totalEffectiveShieldingDone: 0
       }
     };
     this.emit("reset-state", this.#game);
@@ -737,7 +825,8 @@ var GameTracker = class extends TypedEmitter {
     const [statusEffectsOnSource, statusEffectsOnTarget] = this.#statusTracker.getStatusEffects(
       owner,
       target,
-      this.#entityTracker.localPlayer.characterId
+      this.#entityTracker.localPlayer.characterId,
+      time
     );
     if (this.#data.isBattleItem(damageData.skillEffectId, "attack")) {
       if (source && source.entityType === 4 /* Projectile */) {
@@ -928,6 +1017,68 @@ var GameTracker = class extends TypedEmitter {
       skill.hits.casts += 1;
     }
   }
+  onShieldUsed(targetEntity, sourceEntity, statusEffectId, shieldAmountRemoved) {
+    if (shieldAmountRemoved < 0) {
+      console.error("Shield change values was negative, shield ammount increased");
+    }
+    if (targetEntity.entityType === 1 /* Player */ && sourceEntity.entityType === 1 /* Player */) {
+      if (!this.#game.damageStatistics.effectiveShieldingBuffs.has(statusEffectId)) {
+        const statusEffect = this.#data.getStatusEffectHeaderData(statusEffectId);
+        if (statusEffect) {
+          this.#game.damageStatistics.effectiveShieldingBuffs.set(statusEffectId, statusEffect);
+        }
+      }
+      const now = new Date();
+      const targetEntityState = this.updateEntity(targetEntity, {}, now);
+      const sourceEntityState = this.updateEntity(sourceEntity, {}, now);
+      targetEntityState.damagePreventedByShield += shieldAmountRemoved;
+      const oldDmgPreventedBy = targetEntityState.damagePreventedByShieldBy.get(statusEffectId) ?? 0;
+      targetEntityState.damagePreventedByShieldBy.set(statusEffectId, oldDmgPreventedBy + shieldAmountRemoved);
+      this.#game.damageStatistics.topEffectiveShieldingUsed = Math.max(
+        targetEntityState.damagePreventedByShield,
+        this.#game.damageStatistics.topEffectiveShieldingUsed
+      );
+      sourceEntityState.damagePreventedWithShieldOnOthers += shieldAmountRemoved;
+      const oldDmgPreventedWith = sourceEntityState.damagePreventedWithShieldOnOthersBy.get(statusEffectId) ?? 0;
+      sourceEntityState.damagePreventedWithShieldOnOthersBy.set(
+        statusEffectId,
+        oldDmgPreventedWith + shieldAmountRemoved
+      );
+      this.#game.damageStatistics.topEffectiveShieldingDone = Math.max(
+        sourceEntityState.damagePreventedWithShieldOnOthers,
+        this.#game.damageStatistics.topEffectiveShieldingDone
+      );
+      this.#game.damageStatistics.totalEffectiveShieldingDone += shieldAmountRemoved;
+    }
+  }
+  onShieldApplied(targetEntity, sourceEntity, statusEffectId, amount) {
+    const now = new Date();
+    const targetEntityState = this.updateEntity(targetEntity, {}, now);
+    const sourceEntityState = this.updateEntity(sourceEntity, {}, now);
+    if (sourceEntityState.isPlayer && targetEntityState.isPlayer) {
+      if (!this.#game.damageStatistics.appliedShieldingBuffs.has(statusEffectId)) {
+        const statusEffect = this.#data.getStatusEffectHeaderData(statusEffectId);
+        if (statusEffect) {
+          this.#game.damageStatistics.appliedShieldingBuffs.set(statusEffectId, statusEffect);
+        }
+      }
+      targetEntityState.shieldReceived += amount;
+      sourceEntityState.shieldDone += amount;
+      const oldDoneByValue = sourceEntityState.shieldDoneBy.get(statusEffectId) ?? 0;
+      sourceEntityState.shieldDoneBy.set(statusEffectId, oldDoneByValue + amount);
+      const oldReceivedByValue = targetEntityState.shieldReceivedBy.get(statusEffectId) ?? 0;
+      targetEntityState.shieldReceivedBy.set(statusEffectId, oldReceivedByValue + amount);
+      this.#game.damageStatistics.topShieldDone = Math.max(
+        sourceEntityState.shieldDone,
+        this.#game.damageStatistics.topShieldDone
+      );
+      this.#game.damageStatistics.topShieldGotten = Math.max(
+        sourceEntityState.shieldReceived,
+        this.#game.damageStatistics.topShieldGotten
+      );
+      this.#game.damageStatistics.totalShieldDone += amount;
+    }
+  }
   getSkillNameIcon(skillId, skillEffectId) {
     if (skillId === 0 && skillEffectId === 0) {
       return { name: "Bleed", icon: "buff_168.png" };
@@ -1079,7 +1230,14 @@ var GameTracker = class extends TypedEmitter {
         hitsDebuffedBy: /* @__PURE__ */ new Map()
       },
       damageDealtDebuffedBy: /* @__PURE__ */ new Map(),
-      damageDealtBuffedBy: /* @__PURE__ */ new Map()
+      damageDealtBuffedBy: /* @__PURE__ */ new Map(),
+      damagePreventedByShieldBy: /* @__PURE__ */ new Map(),
+      damagePreventedWithShieldOnOthersBy: /* @__PURE__ */ new Map(),
+      shieldDoneBy: /* @__PURE__ */ new Map(),
+      shieldReceivedBy: /* @__PURE__ */ new Map(),
+      damagePreventedWithShieldOnOthers: 0,
+      damagePreventedByShield: 0,
+      shieldReceived: 0
     };
     return newEntity;
   }
@@ -1267,7 +1425,7 @@ var PCIdMapper = class {
 };
 
 // src/logger/parser.ts
-var Parser = class extends TypedEmitter2 {
+var Parser = class extends TypedEmitter3 {
   #logger;
   #data;
   #pcIdMapper;
@@ -1283,7 +1441,7 @@ var Parser = class extends TypedEmitter2 {
     this.#data = data;
     this.#pcIdMapper = new PCIdMapper();
     this.#partyTracker = new PartyTracker(this.#pcIdMapper);
-    this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data);
+    this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data, options.isLive ?? true);
     this.#entityTracker = new EntityTracker(this.#pcIdMapper, this.#partyTracker, this.#statusTracker, this.#data);
     this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#data, options);
     this.#gameTracker.emit = this.emit.bind(this);
@@ -1308,17 +1466,6 @@ var Parser = class extends TypedEmitter2 {
       if (!parsed)
         return;
       const target = this.#entityTracker.entities.get(parsed.TargetId);
-      if (this.#partyTracker.isEntityInParty(parsed.TargetId)) {
-        if (target?.name === this.#entityTracker.localPlayer.name) {
-          this.#statusTracker.RemoveLocalObject(parsed.TargetId);
-        } else {
-          const charId = this.#pcIdMapper.getCharacterId(parsed.TargetId);
-          if (charId)
-            this.#statusTracker.RemovePartyObject(charId);
-        }
-      } else {
-        this.#statusTracker.RemoveLocalObject(parsed.TargetId);
-      }
       if (target)
         this.#gameTracker.onDeath(target, pkt.time);
     }).on("IdentityGaugeChangeNotify", (pkt) => {
@@ -1451,7 +1598,13 @@ var Parser = class extends TypedEmitter2 {
       if (!parsed)
         return;
       for (const effectId of parsed.statusEffectIds)
-        this.#statusTracker.RemoveStatusEffect(parsed.CharacterId, effectId, 0 /* Party */);
+        this.#statusTracker.RemoveStatusEffect(
+          parsed.CharacterId,
+          effectId,
+          0 /* Party */,
+          parsed.Reason,
+          pkt.time
+        );
     }).on("PartyStatusEffectResultNotify", (pkt) => {
       const parsed = pkt.parsed;
       if (!parsed)
@@ -1468,7 +1621,7 @@ var Parser = class extends TypedEmitter2 {
       if (!parsed)
         return;
       for (const upo of parsed.unpublishedObjects)
-        this.#statusTracker.RemoveLocalObject(upo.ObjectId);
+        this.#statusTracker.RemoveLocalObject(upo.ObjectId, pkt.time);
     }).on("SkillDamageAbnormalMoveNotify", (pkt) => {
       const parsedDmg = pkt.parsed;
       if (!parsedDmg)
@@ -1554,7 +1707,13 @@ var Parser = class extends TypedEmitter2 {
       if (!parsed)
         return;
       for (const effectId of parsed.statusEffectIds)
-        this.#statusTracker.RemoveStatusEffect(parsed.ObjectId, effectId, 1 /* Local */);
+        this.#statusTracker.RemoveStatusEffect(
+          parsed.ObjectId,
+          effectId,
+          1 /* Local */,
+          parsed.Reason,
+          pkt.time
+        );
     }).on("StatusEffectSyncDataNotify", (pkt) => {
     }).on("TriggerBossBattleStatus", (pkt) => {
       this.#gameTracker.onPhaseTransition(2, pkt.time);
@@ -1588,9 +1747,60 @@ var Parser = class extends TypedEmitter2 {
       const parsed = pkt.parsed;
       if (!parsed)
         return;
-      this.#statusTracker.RemoveLocalObject(parsed.ObjectId);
+      this.#statusTracker.RemoveLocalObject(parsed.ObjectId, pkt.time);
     }).on("ZoneStatusEffectAddNotify", (pkt) => {
+    }).on("StatusEffectSyncDataNotify", (pkt) => {
+      const parsed = pkt.parsed;
+      if (!parsed)
+        return;
+      this.#statusTracker.SyncStatusEffect(
+        parsed.EffectInstanceId,
+        parsed.CharacterId,
+        parsed.ObjectId,
+        parsed.Value,
+        this.#entityTracker.localPlayer.characterId
+      );
+    }).on("TroopMemberUpdateMinNotify", (pkt) => {
+      const parsed = pkt.parsed;
+      if (!parsed)
+        return;
+      if (parsed.statusEffectDatas.length > 0) {
+        for (const se of parsed.statusEffectDatas) {
+          const objectId = this.#pcIdMapper.getEntityId(parsed.CharacterId);
+          const newValCandidate1 = se.Value ? se.Value.readUInt32LE() : 0;
+          const newValCandidate2 = se.Value ? se.Value.readUInt32LE(8) : 0;
+          const newVal = newValCandidate1 < newValCandidate2 ? newValCandidate1 : newValCandidate2;
+          this.#statusTracker.SyncStatusEffect(
+            se.EffectInstanceId,
+            parsed.CharacterId,
+            objectId,
+            newVal,
+            this.#entityTracker.localPlayer.characterId
+          );
+        }
+      }
     }).on("ZoneStatusEffectRemoveNotify", (pkt) => {
+    });
+    this.#statusTracker.on("shieldApplied", (se) => {
+      let targetObjectId = se.targetId;
+      if (se.type === 0 /* Party */) {
+        targetObjectId = this.#pcIdMapper.getEntityId(se.targetId) ?? targetObjectId;
+      }
+      if (targetObjectId === void 0)
+        return;
+      const sourceEntity = this.#entityTracker.getSourceEntity(se.sourceId);
+      const targetEntity = this.#entityTracker.getOrCreateEntity(targetObjectId);
+      this.#gameTracker.onShieldApplied(targetEntity, sourceEntity, se.statusEffectId, se.value);
+    }).on("shieldChanged", (se, oldValue, newVal) => {
+      let targetObjectId = se.targetId;
+      if (se.type === 0 /* Party */) {
+        targetObjectId = this.#pcIdMapper.getEntityId(se.targetId) ?? targetObjectId;
+      }
+      if (targetObjectId === void 0)
+        return;
+      const sourceEntity = this.#entityTracker.getSourceEntity(se.sourceId);
+      const targetEntity = this.#entityTracker.getOrCreateEntity(targetObjectId);
+      this.#gameTracker.onShieldUsed(targetEntity, sourceEntity, se.statusEffectId, oldValue - newVal);
     });
   }
   broadcastStateChange() {

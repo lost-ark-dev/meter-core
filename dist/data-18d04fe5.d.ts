@@ -1,4 +1,4 @@
-declare const PARSED_LOG_VERSION = 16;
+declare const PARSED_LOG_VERSION = 17;
 declare enum StatusEffectTarget {
     OTHER = 0,
     PARTY = 1,
@@ -44,6 +44,12 @@ interface DamageStatistics {
     topShieldDone: number;
     debuffs: Map<number, StatusEffect>;
     buffs: Map<number, StatusEffect>;
+    topShieldGotten: number;
+    totalEffectiveShieldingDone: number;
+    topEffectiveShieldingDone: number;
+    topEffectiveShieldingUsed: number;
+    effectiveShieldingBuffs: Map<number, StatusEffect>;
+    appliedShieldingBuffs: Map<number, StatusEffect>;
 }
 interface GameState {
     startedOn: number;
@@ -89,6 +95,13 @@ interface EntityState {
     hits: Hits;
     damageDealtDebuffedBy: Map<number, number>;
     damageDealtBuffedBy: Map<number, number>;
+    shieldReceived: number;
+    damagePreventedWithShieldOnOthers: number;
+    damagePreventedByShield: number;
+    damagePreventedWithShieldOnOthersBy: Map<number, number>;
+    damagePreventedByShieldBy: Map<number, number>;
+    shieldDoneBy: Map<number, number>;
+    shieldReceivedBy: Map<number, number>;
 }
 interface Breakdown {
     timestamp: number;

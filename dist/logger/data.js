@@ -25,7 +25,7 @@ __export(data_exports, {
   StatusEffectTarget: () => StatusEffectTarget
 });
 module.exports = __toCommonJS(data_exports);
-var PARSED_LOG_VERSION = 16;
+var PARSED_LOG_VERSION = 17;
 var StatusEffectTarget = /* @__PURE__ */ ((StatusEffectTarget2) => {
   StatusEffectTarget2[StatusEffectTarget2["OTHER"] = 0] = "OTHER";
   StatusEffectTarget2[StatusEffectTarget2["PARTY"] = 1] = "PARTY";

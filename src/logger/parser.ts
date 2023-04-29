@@ -30,7 +30,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
 
     this.#pcIdMapper = new PCIdMapper();
     this.#partyTracker = new PartyTracker(this.#pcIdMapper);
-    this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data);
+    this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data, options.isLive ?? true);
     this.#entityTracker = new EntityTracker(this.#pcIdMapper, this.#partyTracker, this.#statusTracker, this.#data);
     this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#data, options);
     this.#gameTracker.emit = this.emit.bind(this); //forward emits
@@ -212,7 +212,8 @@ export class Parser extends TypedEmitter<ParserEvent> {
             parsed.CharacterId,
             effectId,
             StatusEffectTargetType.Party,
-            parsed.Reason
+            parsed.Reason,
+            pkt.time
           );
       })
       .on("PartyStatusEffectResultNotify", (pkt) => {
@@ -231,7 +232,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("RemoveObject", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for (const upo of parsed.unpublishedObjects) this.#statusTracker.RemoveLocalObject(upo.ObjectId);
+        for (const upo of parsed.unpublishedObjects) this.#statusTracker.RemoveLocalObject(upo.ObjectId, pkt.time);
       })
       .on("SkillDamageAbnormalMoveNotify", (pkt) => {
         const parsedDmg = pkt.parsed;
@@ -325,7 +326,8 @@ export class Parser extends TypedEmitter<ParserEvent> {
             parsed.ObjectId,
             effectId,
             StatusEffectTargetType.Local,
-            parsed.Reason
+            parsed.Reason,
+            pkt.time
           );
       })
       .on("StatusEffectSyncDataNotify", (pkt) => {})
@@ -361,7 +363,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("ZoneObjectUnpublishNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#statusTracker.RemoveLocalObject(parsed.ObjectId);
+        this.#statusTracker.RemoveLocalObject(parsed.ObjectId, pkt.time);
       })
       .on("ZoneStatusEffectAddNotify", (pkt) => {})
       .on("StatusEffectSyncDataNotify", (pkt) => {

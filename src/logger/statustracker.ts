@@ -5,6 +5,7 @@ import type { NewPC } from "../packets/log/types";
 import { Entity, EntityType, Player } from "./entityTracker";
 import type { PartyTracker } from "./partytracker";
 import { statuseffectexpiredreasontype } from "../packets/generated/enums";
+import { u32tof32 } from "./utils";
 
 export enum StatusEffectTargetType {
   Party = 0,
@@ -37,7 +38,6 @@ export interface StatusEffect {
   statusEffectId: number;
   targetId: TargetId;
   sourceId: TargetId;
-  started: Date;
   type: StatusEffectTargetType;
   value: number;
   category: StatusEffectCategory;
@@ -71,16 +71,19 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
   #partyTracker: PartyTracker;
   #data: MeterData;
 
+  #isLive: boolean;
+
   private debug;
   private trace = false;
 
-  constructor(partyTracker: PartyTracker, data: MeterData, debug = Boolean(process.env["DEV"])) {
+  constructor(partyTracker: PartyTracker, data: MeterData, isLive = true, debug = Boolean(process.env["DEV"])) {
     super();
     this.PartyStatusEffectRegistry = new Map();
     this.LocalStatusEffectRegistry = new Map();
     this.debug = debug;
     this.#partyTracker = partyTracker;
     this.#data = data;
+    this.#isLive = isLive;
   }
 
   private getStatusEffectRegistryForPlayer(id: TargetId, t: StatusEffectTargetType): StatusEffectRegistry {
@@ -109,21 +112,21 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     return this.LocalStatusEffectRegistry;
   }
 
-  public RemoveLocalObject(objectId: bigint) {
+  public RemoveLocalObject(objectId: bigint, pktTime: Date) {
     const registry = this.LocalStatusEffectRegistry.get(objectId);
     if (registry) {
       for (const [, se] of registry) {
-        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Local, undefined);
+        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Local, undefined, pktTime);
       }
     }
     this.LocalStatusEffectRegistry.delete(objectId);
   }
 
-  public RemovePartyObject(objectId: bigint) {
+  public RemovePartyObject(objectId: bigint, pktTime: Date) {
     const registry = this.PartyStatusEffectRegistry.get(objectId);
     if (registry) {
       for (const [, se] of registry) {
-        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Party, undefined);
+        this.RemoveStatusEffect(objectId, se.instanceId, StatusEffectTargetType.Party, undefined, pktTime);
       }
     }
     this.PartyStatusEffectRegistry.delete(objectId);
@@ -133,7 +136,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     const registry = this.getStatusEffectRegistryForPlayer(se.targetId, se.type);
     const oldEffect = registry.get(se.instanceId);
     if (oldEffect) {
-      if (oldEffect.expirationTimer) {
+      if (this.#isLive && oldEffect.expirationTimer) {
         clearTimeout(oldEffect.expirationTimer);
         oldEffect.expirationTimer = undefined;
       }
@@ -145,10 +148,16 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     this.SetupStatusEffectTimeout(se);
   }
 
-  public HasAnyStatusEffect(id: TargetId, t: StatusEffectTargetType, statusEffectIds: number[]): boolean {
+  public HasAnyStatusEffect(
+    id: TargetId,
+    t: StatusEffectTargetType,
+    statusEffectIds: number[],
+    pktTime: Date
+  ): boolean {
     if (!this.hasStatusEffectRegistryForPlayer(id, t)) return false;
     const registry: StatusEffectRegistry = this.getStatusEffectRegistryForPlayer(id, t);
     for (const [, se] of registry) {
+      if (!this.#isLive && !this.IsReplayStatusEffectValidElseRemove(se, pktTime)) continue;
       for (const key of statusEffectIds) {
         if (key === se.statusEffectId) return true;
       }
@@ -156,19 +165,35 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     return false;
   }
 
+  /**
+   * Check if a StatusEffect is still valid and remove it if not
+   * @param {StatusEffect} se The StatusEffect to check
+   * @param {Date} replayPktTime time of the currently processed pkt
+   * @returns true if the StatusEffect is still valid, false if it was cleaned up
+   */
+  private IsReplayStatusEffectValidElseRemove(se: StatusEffect, replayPktTime: Date): boolean {
+    if (se.expireAt === undefined || se.expireAt.getTime() > replayPktTime.getTime()) {
+      return true;
+    }
+    this.ExpireStatusEffectByTimeout(se);
+    return false;
+  }
+
   public HasAnyStatusEffectFromParty(
     targetId: TargetId,
     et: StatusEffectTargetType,
     partyId: number,
-    statusEffectIds: number[]
+    statusEffectIds: number[],
+    pktTime: Date
   ): boolean {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return false;
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
-    for (const effect of registry) {
-      if (statusEffectIds.includes(effect[1].statusEffectId)) {
+    for (const [, effect] of registry) {
+      if (!this.#isLive && !this.IsReplayStatusEffectValidElseRemove(effect, pktTime)) continue;
+      if (statusEffectIds.includes(effect.statusEffectId)) {
         // Dagger and Expose Weakness are for the whole raid
-        if (this.ValidForWholeRaid(effect[1])) return true;
-        const partyIdOfSource = this.#partyTracker.getPartyIdFromEntityId(effect[1].sourceId);
+        if (this.ValidForWholeRaid(effect)) return true;
+        const partyIdOfSource = this.#partyTracker.getPartyIdFromEntityId(effect.sourceId);
         if (partyIdOfSource === partyId) return true;
       }
     }
@@ -179,33 +204,49 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     targetId: TargetId,
     statusEffectId: number,
     et: StatusEffectTargetType,
-    reason: number | undefined
+    reason: number | undefined,
+    pktTime: Date
   ) {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return;
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
     const statusEffect = registry.get(statusEffectId);
     if (statusEffect) {
-      clearTimeout(statusEffect.expirationTimer);
-      statusEffect.expirationTimer = undefined;
+      if (this.#isLive) {
+        clearTimeout(statusEffect.expirationTimer);
+        statusEffect.expirationTimer = undefined;
+      }
       registry.delete(statusEffectId);
       if (reason === statuseffectexpiredreasontype.beattacked) {
-        this.RegisterValueUpdate(statusEffect, statusEffect.value, 0);
+        // is live OR is still valid
+        if (this.#isLive || this.IsReplayStatusEffectValidElseRemove(statusEffect, pktTime))
+          this.RegisterValueUpdate(statusEffect, statusEffect.value, 0);
       }
     }
   }
-  public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType): Array<StatusEffect> {
+  public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType, pktTime: Date): Array<StatusEffect> {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    if (!this.#isLive) {
+      for (const [, effect] of registry) {
+        this.IsReplayStatusEffectValidElseRemove(effect, pktTime);
+      }
+    }
     return [...registry.values()];
   }
 
   public GetStatusEffectsFromParty(
     targetId: TargetId,
     et: StatusEffectTargetType,
-    partyId: number
+    partyId: number,
+    pktTime: Date
   ): Array<StatusEffect> {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
+    if (!this.#isLive) {
+      for (const [, effect] of registry) {
+        this.IsReplayStatusEffectValidElseRemove(effect, pktTime);
+      }
+    }
     return [...registry.values()].filter((value) => {
       // Dagger and Expose Weakness are for the whole raid
       if (this.ValidForWholeRaid(value)) return true;
@@ -213,18 +254,18 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     });
   }
 
-  public Clear() {
+  public Clear(pktTime: Date) {
     let seCountInLocal = 0;
     for (const [, reg] of this.LocalStatusEffectRegistry) {
       for (const [, se] of reg) {
-        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined);
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined, pktTime);
       }
       seCountInLocal += reg.size;
     }
     let seCountInParty = 0;
     for (const [, reg] of this.PartyStatusEffectRegistry) {
       for (const [, se] of reg) {
-        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined);
+        this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined, pktTime);
       }
       seCountInParty += reg.size;
     }
@@ -238,9 +279,9 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     const se = registry.get(instanceId);
     if (se) {
       const durationExtensionMs = timestamp - se.timestamp;
-      if (this.trace) console.log("Clearing timeout for", se.instanceId, "because of duration change");
 
-      if (se.expirationTimer) {
+      if (this.#isLive && se.expirationTimer) {
+        if (this.trace) console.log("Clearing timeout for", se.instanceId, "because of duration change");
         clearTimeout(se.expirationTimer);
         se.expirationTimer = undefined;
       }
@@ -260,7 +301,8 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
               "to",
               new Date(timeoutTime).toISOString()
             );
-          se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
+          if (this.#isLive)
+            se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
           se.expireAt = new Date(timeoutTime);
           se.timestamp = timestamp;
         } else {
@@ -313,23 +355,31 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     // only setup expiration timer if we have a duration in the pkt, for no duration it is -1
     if (se.expirationDelay > 0 && se.expirationDelay < 604800) {
       // don't set timeout >= 7d
-      // we use the later date of state date from the pkt and then time the pkt arrived at our client
+      // we use the later date of start date from the pkt and then time the pkt arrived at our client
       // because we don't want to expire it if we recevie a remove pkt in the future
-      const startDate = se.started.getTime() > se.occurTime.getTime() ? se.started : se.occurTime;
+      const startDate = se.pktTime.getTime() > se.occurTime.getTime() ? se.pktTime : se.occurTime;
       // se.expirationDelay is in seconds as float
       const expirationDelayInMs = Math.ceil(se.expirationDelay * 1000);
       const timeoutDelay =
         startDate.getTime() + expirationDelayInMs + StatusTracker.TIMEOUT_DELAY_MS - se.pktTime.getTime();
       se.expireAt = new Date(se.pktTime.getTime() + timeoutDelay);
       if (this.trace)
-        console.log("Setting up statuseffect expiration timer for", se.name, se.instanceId, "with delay", timeoutDelay);
-      se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
+        console.log(
+          "Setting up statuseffect expiration time for",
+          se.name,
+          se.instanceId,
+          "to",
+          se.expireAt.toISOString(),
+          "with delay",
+          timeoutDelay
+        );
+      if (this.#isLive) se.expirationTimer = setTimeout(this.ExpireStatusEffectByTimeout.bind(this, se), timeoutDelay);
     }
   }
 
   private ExpireStatusEffectByTimeout(se: StatusEffect) {
     if (this.debug) console.error("Triggered timeout on", se.name, "with iid", se.instanceId);
-    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined);
+    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, undefined, new Date());
   }
 
   private RegisterValueUpdate(se: StatusEffect, oldValue: number, newValue: number) {
@@ -341,9 +391,9 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
   newPC(parsed: NewPC, localCharacterId: bigint, pktTime: Date) {
     const shouldUsePartyStatusEffects = this.#shouldUsePartyStatusEffect(parsed.PCStruct.CharacterId, localCharacterId);
     if (shouldUsePartyStatusEffects) {
-      this.RemovePartyObject(parsed.PCStruct.CharacterId);
+      this.RemovePartyObject(parsed.PCStruct.CharacterId, pktTime);
     } else {
-      this.RemoveLocalObject(parsed.PCStruct.PlayerId);
+      this.RemoveLocalObject(parsed.PCStruct.PlayerId, pktTime);
     }
     for (const se of parsed.PCStruct.statusEffectDatas) {
       this.RegisterStatusEffect(
@@ -430,7 +480,6 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     return {
       instanceId: se.EffectInstanceId,
       sourceId: sourceId,
-      started: pktTime,
       statusEffectId: se.StatusEffectId,
       targetId: targetId,
       type: targetType,
@@ -438,7 +487,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
       showType: showType,
-      expirationDelay: se.TotalTime,
+      expirationDelay: u32tof32(se.TotalTime),
       expirationTimer: undefined,
       timestamp: se.EndTick,
       expireAt: undefined,
@@ -451,7 +500,8 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
   getStatusEffects(
     sourceEntity: Entity,
     targetEntity: Entity | undefined,
-    localCharacterId: bigint
+    localCharacterId: bigint,
+    pktTime: Date
   ): [[number, bigint][], [number, bigint][]] {
     const statusEffectsOnTarget: [number, bigint][] = [];
     const statusEffectsOnSource: [number, bigint][] = [];
@@ -459,7 +509,8 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     const shouldUsePartyBuffForSource = this.#shouldUsePartyStatusEffectForEntity(sourceEntity, localCharacterId);
     const sourceEffects = this.GetStatusEffects(
       shouldUsePartyBuffForSource ? (sourceEntity as Player).characterId : sourceEntity.entityId,
-      shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+      shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
+      pktTime
     );
     for (const se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
 
@@ -474,11 +525,13 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
           ? this.GetStatusEffectsFromParty(
               shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
               shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
-              sourcePartyId
+              sourcePartyId,
+              pktTime
             )
           : this.GetStatusEffects(
               shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
-              shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local
+              shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
+              pktTime
             );
       for (const se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
     }

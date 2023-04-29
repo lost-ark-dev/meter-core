@@ -201,7 +201,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     const [statusEffectsOnSource, statusEffectsOnTarget] = this.#statusTracker.getStatusEffects(
       owner,
       target,
-      this.#entityTracker.localPlayer.characterId
+      this.#entityTracker.localPlayer.characterId,
+      time
     );
     // Override skillEffect for battleitems (this way we know the real item used: splendid or not)
     if (this.#data.isBattleItem(damageData.skillEffectId, "attack")) {

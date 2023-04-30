@@ -2,7 +2,7 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "../data";
 import type { StatusEffectDataLog } from "../packets/log/structures/StatusEffectData";
 import type { NewPC } from "../packets/log/types";
-import { Entity, EntityType, Player } from "./entityTracker";
+import { type Entity, EntityType, type Player } from "./entityTracker";
 import type { PartyTracker } from "./partytracker";
 import { statuseffectexpiredreasontype } from "../packets/generated/enums";
 import { u32tof32 } from "./utils";

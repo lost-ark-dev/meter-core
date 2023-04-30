@@ -2,12 +2,12 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "../data";
 import { stattype, triggersignaltype } from "../packets/generated/enums";
 import type { GameState, GameTrackerOptions } from "./data";
-import { Entity, EntityTracker, EntityType, Projectile } from "./entityTracker";
+import { EntityTracker, EntityType, type Entity, type Projectile } from "./entityTracker";
 import { GameTracker } from "./gameTracker";
 import type { Logger } from "./logger";
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
-import { StatusEffect, StatusEffectTargetType, StatusTracker } from "./statustracker";
+import { StatusEffectTargetType, StatusTracker, type StatusEffect } from "./statustracker";
 
 export class Parser extends TypedEmitter<ParserEvent> {
   #logger: Logger;
@@ -400,7 +400,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
 
     this.#statusTracker
       .on("shieldApplied", (se: StatusEffect) => {
-        let targetObjectId: bigint|undefined = se.targetId;
+        let targetObjectId: bigint | undefined = se.targetId;
         if (se.type === StatusEffectTargetType.Party) {
           targetObjectId = this.#pcIdMapper.getEntityId(se.targetId) ?? targetObjectId;
         }
@@ -410,7 +410,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
         this.#gameTracker.onShieldApplied(targetEntity, sourceEntity, se.statusEffectId, se.value);
       })
       .on("shieldChanged", (se: StatusEffect, oldValue: number, newVal: number) => {
-        let targetObjectId: bigint|undefined = se.targetId;
+        let targetObjectId: bigint | undefined = se.targetId;
         if (se.type === StatusEffectTargetType.Party) {
           targetObjectId = this.#pcIdMapper.getEntityId(se.targetId) ?? targetObjectId;
         }

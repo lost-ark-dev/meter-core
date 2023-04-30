@@ -1,10 +1,10 @@
 import cap from "cap";
-import { isIPv4 } from "net";
-import { TypedEmitter } from "tiny-typed-emitter";
-import { TCPTracker, TCPSession, ListenOptions } from "./tcp_tracker";
-import { RawSocket } from "raw-socket-sniffer";
-import { networkInterfaces } from "os";
 import { execSync } from "child_process";
+import { isIPv4 } from "net";
+import { networkInterfaces } from "os";
+import { RawSocket } from "raw-socket-sniffer";
+import { TypedEmitter } from "tiny-typed-emitter";
+import { TCPSession, TCPTracker, type ListenOptions } from "./tcp_tracker";
 
 const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;

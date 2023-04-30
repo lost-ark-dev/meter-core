@@ -73,7 +73,7 @@ export class EntityTracker {
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
     this.#pcIdMapper.clear();
-    this.#statusTracker.Clear();
+    this.#statusTracker.Clear(pkt.time);
     if (player.characterId !== 0n) this.#pcIdMapper.addMapping(player.characterId, player.entityId);
     if (this.localPlayer && this.localPlayer.characterId && this.localPlayer.characterId > 0n)
       this.#partyTracker.completeEntry(this.localPlayer.characterId, parsed.PlayerId);
@@ -96,7 +96,7 @@ export class EntityTracker {
     this.#pcIdMapper.addMapping(player.characterId, player.entityId);
     this.#partyTracker.setOwnName(parsed.Name);
     this.#partyTracker.completeEntry(player.characterId, parsed.PlayerId);
-    this.#statusTracker.RemoveLocalObject(parsed.PlayerId);
+    this.#statusTracker.RemoveLocalObject(parsed.PlayerId, pkt.time);
     for (const se of parsed.statusEffectDatas) {
       const sourceEntity = this.getSourceEntity(se.SourceId);
       this.#statusTracker.RegisterStatusEffect(
@@ -128,7 +128,7 @@ export class EntityTracker {
       isBoss,
     };
     this.entities.set(npc.entityId, npc);
-    this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId);
+    this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId, pkt.time);
     for (const se of parsed.NpcStruct.statusEffectDatas) {
       const sourceEntity = this.getSourceEntity(se.SourceId);
       this.#statusTracker.RegisterStatusEffect(
@@ -160,7 +160,7 @@ export class EntityTracker {
       typeId: parsed.NpcData.TypeId,
       isBoss,
     };
-    this.#statusTracker.RemoveLocalObject(parsed.NpcData.ObjectId);
+    this.#statusTracker.RemoveLocalObject(parsed.NpcData.ObjectId, pkt.time);
     for (const se of parsed.NpcData.statusEffectDatas) {
       const sourceEntity = this.getSourceEntity(se.SourceId);
       this.#statusTracker.RegisterStatusEffect(

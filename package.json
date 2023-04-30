@@ -12,7 +12,7 @@
   },
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,ts}\"",
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "build:test": "tsup src/test.ts --clean --no-config",
     "test": "ts-node src/test.ts"
   },
@@ -26,11 +26,13 @@
     "tiny-typed-emitter": "^2.1.0"
   },
   "devDependencies": {
-    "@tsconfig/node18-strictest-esm": "^1.0.1",
+    "@tsconfig/esm": "^1.0.3",
+    "@tsconfig/node18": "^2.0.0",
+    "@tsconfig/strictest": "^2.0.1",
     "@types/node": "^18.11.11",
     "prettier": "^2.8.1",
     "ts-node": "^10.9.1",
-    "tsup": "^6.5.0",
-    "typescript": "^4.9.4"
+    "tsup": "^6.7.0",
+    "typescript": "^5.0.4"
   }
 }

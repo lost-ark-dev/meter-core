@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -29,7 +28,9 @@ var import_tiny_typed_emitter2 = require("tiny-typed-emitter");
 
 // src/packets/stream.ts
 var Read = class {
+  /** Buffer */
   b;
+  /** Offset */
   o;
   constructor(buf) {
     this.b = buf;
@@ -108,7 +109,9 @@ var Read = class {
   }
 };
 var Write = class {
+  /** Buffer */
   b;
+  /** Offset */
   o;
   constructor(max = 65535) {
     this.b = Buffer.allocUnsafe(max);
@@ -156,6 +159,13 @@ var Write = class {
     if (value.length <= maxLength)
       this.o += this.b.write(value, this.o, "utf16le");
   }
+  /**
+   * @param opts.length Used when Buffer should be fixed length -> no header
+   * @param opts.maxLen Used when Buffer has a max number of chunk -> chunk count is written as header
+   * @param opts.lenType Required if maxLen, Used to specify header size possible values: ["u8", "u16", "u32"]
+   * @param opts.multiplier Default: 1, Used to specify chunk size, Buffer size should be a multiple of multiplier, defaults to 1
+   * @param opts If empty, fallback to opts.length = Buffer.length
+   */
   bytes(value = Buffer.alloc(0), opts = {}) {
     if (opts.maxLen) {
       const chunkSize = opts.multiplier ?? 1;
@@ -176,6 +186,11 @@ var Write = class {
     }
     this.o += value.copy(this.b, this.o);
   }
+  /**
+   *
+   * @param opts.maxLen Max size of array, size is set to 0 if overflow
+   * @param opts.lenTypeUsed to specify header size possible values: ["u8", "u16", "u32"]
+   */
   array(value = [], opts, callbackfn) {
     if (value === void 0 || value.length > opts.maxLen) {
       this[opts.lenType](0);
@@ -330,7 +345,9 @@ function isValidDate(year, month, day) {
   } else {
     year += 1900;
   }
-  return day > 0 && month <= 12 && (day <= daysInMonths[month] || day == 29 && month == 2 && IsLeapYear(year));
+  return day > 0 && /* 
+  month > 0 &&*/
+  month <= 12 && (day <= daysInMonths[month] || day == 29 && month == 2 && IsLeapYear(year));
 }
 function bigintToDate(value) {
   let LODWORD = Number(value & 0xffffffffn);
@@ -2898,6 +2915,7 @@ var PKT = class {
     this.#decompressor = decompressor;
     this.#read = read126;
   }
+  // in case we listen for it more than once
   #cached;
   get parsed() {
     if (!this.#cached) {
@@ -2930,7 +2948,7 @@ var LogEvent = class {
     } else if (args.length === 3) {
       const [pkt, logId45, write64] = args;
       this.#data = Buffer.alloc(0);
-      this.time = new Date();
+      this.time = /* @__PURE__ */ new Date();
       this.#logId = logId45;
       this.#read = () => pkt;
       this.#write = write64;
@@ -2938,6 +2956,7 @@ var LogEvent = class {
       throw new Error(`[meter-core/logger/parser] - LogEvent<T>: Invalid constructor arguments`);
     }
   }
+  // in case we listen for it more than once
   #readCached;
   get parsed() {
     if (!this.#readCached) {
@@ -2962,7 +2981,7 @@ var LogEvent = class {
         const buf = writer.value;
         buf.writeUint16LE(buf.length, HEADER_LEN_OFFSET);
         buf.writeUint16LE(this.#logId, HEADER_ID_OFFSET);
-        buf.writeUintLE(+new Date(), HEADER_DATE_OFFSET, HEADER_DATE_SIZE);
+        buf.writeUintLE(+/* @__PURE__ */ new Date(), HEADER_DATE_OFFSET, HEADER_DATE_SIZE);
         this.#writeCached = writer.value;
       } catch (e) {
         console.error(`[meter-core/logger/parser] - serialized - ${e}`);
@@ -3048,6 +3067,7 @@ var version = 0;
 
 // src/logger/logger.ts
 var Logger = class extends import_tiny_typed_emitter2.TypedEmitter {
+  //Only common behaviour is the emitted logStreamEvent
 };
 var LiveLogger = class extends Logger {
   #decompressor;

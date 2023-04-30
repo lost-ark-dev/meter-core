@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import { StatusEffect, StatusEffectBuffTypeFlags, StatusEffectTarget } from "./logger/data";
+import { StatusEffectBuffTypeFlags, StatusEffectTarget, type StatusEffect } from "./logger/data";
 import { stattype } from "./packets/generated/enums";
 export type Npc = {
   id: number;

@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -245,6 +244,7 @@ var MeterData = class {
     }
     const statusEffect = {
       target: buff.target === "none" ? 0 /* OTHER */ : buff.target === "self" ? 2 /* SELF */ : 1 /* PARTY */,
+      // self+party
       category: buff.category,
       buffcategory,
       bufftype: this.getStatusEffectBuffTypeFlags(buff),

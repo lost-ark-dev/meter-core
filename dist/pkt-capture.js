@@ -1,4 +1,3 @@
-"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -18,6 +17,10 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -34,7 +37,10 @@ __export(pkt_capture_exports, {
 });
 module.exports = __toCommonJS(pkt_capture_exports);
 var import_cap = __toESM(require("cap"));
+var import_child_process = require("child_process");
 var import_net = require("net");
+var import_os = require("os");
+var import_raw_socket_sniffer = require("raw-socket-sniffer");
 var import_tiny_typed_emitter = require("tiny-typed-emitter");
 
 // src/tcp_tracker.ts
@@ -177,8 +183,10 @@ var TCPSession = class extends import_stream2.EventEmitter {
   src;
   dst;
   send_seqno;
+  // Current seq number flushed
   send_buffers;
   recv_seqno;
+  // Current seq number flushed
   recv_buffers;
   listen_options;
   is_ignored;
@@ -412,9 +420,6 @@ function isDeviceIp(ip, listen_options) {
 }
 
 // src/pkt-capture.ts
-var import_raw_socket_sniffer = require("raw-socket-sniffer");
-var import_os = require("os");
-var import_child_process = require("child_process");
 var { findDevice, deviceList } = import_cap.default.Cap;
 var { Ethernet, PROTOCOL, IPV4, TCP } = import_cap.default.decoders;
 var PktCapture = class extends import_tiny_typed_emitter.TypedEmitter {

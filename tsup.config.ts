@@ -10,7 +10,7 @@ export default defineConfig({
     "src/logger/logger.ts",
     "src/logger/parser.ts",
   ],
-  format: ["esm", "cjs"],
+  format: ["cjs"],
   dts: true,
   clean: true,
 });

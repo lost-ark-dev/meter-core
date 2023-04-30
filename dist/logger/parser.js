@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -153,6 +152,12 @@ var _StatusTracker = class extends import_tiny_typed_emitter.TypedEmitter {
     }
     return false;
   }
+  /**
+   * Check if a StatusEffect is still valid and remove it if not
+   * @param {StatusEffect} se The StatusEffect to check
+   * @param {Date} replayPktTime time of the currently processed pkt
+   * @returns true if the StatusEffect is still valid, false if it was cleaned up
+   */
   IsReplayStatusEffectValidElseRemove(se, replayPktTime) {
     if (se.expireAt === void 0 || se.expireAt.getTime() > replayPktTime.getTime()) {
       return true;
@@ -325,7 +330,7 @@ var _StatusTracker = class extends import_tiny_typed_emitter.TypedEmitter {
   ExpireStatusEffectByTimeout(se) {
     if (this.debug)
       console.error("Triggered timeout on", se.name, "with iid", se.instanceId);
-    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, void 0, new Date());
+    this.RemoveStatusEffect(se.targetId, se.instanceId, se.type, void 0, /* @__PURE__ */ new Date());
   }
   RegisterValueUpdate(se, oldValue, newValue) {
     if (se.effectType === 0 /* Shield */) {
@@ -486,7 +491,7 @@ var EntityTracker = class {
     this.#data = data;
     this.localPlayer = {
       entityId: 0n,
-      entityType: EntityType.Player,
+      entityType: 1 /* Player */,
       name: "You",
       class: 0,
       gearLevel: 0,
@@ -499,7 +504,7 @@ var EntityTracker = class {
       return;
     const player = {
       entityId: parsed.PCStruct.PlayerId,
-      entityType: EntityType.Player,
+      entityType: 1 /* Player */,
       name: parsed.PCStruct.Name,
       class: parsed.PCStruct.ClassId,
       gearLevel: u32tof32(parsed.PCStruct.GearLevel),
@@ -524,7 +529,7 @@ var EntityTracker = class {
     this.entities.clear();
     const player = {
       entityId: parsed.PlayerId,
-      entityType: EntityType.Player,
+      entityType: 1 /* Player */,
       name: this.localPlayer.name,
       class: this.localPlayer.class,
       gearLevel: this.localPlayer.gearLevel,
@@ -533,7 +538,7 @@ var EntityTracker = class {
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
     this.#pcIdMapper.clear();
-    this.#statusTracker.Clear();
+    this.#statusTracker.Clear(pkt.time);
     if (player.characterId !== 0n)
       this.#pcIdMapper.addMapping(player.characterId, player.entityId);
     if (this.localPlayer && this.localPlayer.characterId && this.localPlayer.characterId > 0n)
@@ -546,7 +551,7 @@ var EntityTracker = class {
     this.entities.clear();
     const player = {
       entityId: parsed.PlayerId,
-      entityType: EntityType.Player,
+      entityType: 1 /* Player */,
       name: parsed.Name,
       class: parsed.ClassId,
       gearLevel: u32tof32(parsed.GearLevel),
@@ -557,7 +562,7 @@ var EntityTracker = class {
     this.#pcIdMapper.addMapping(player.characterId, player.entityId);
     this.#partyTracker.setOwnName(parsed.Name);
     this.#partyTracker.completeEntry(player.characterId, parsed.PlayerId);
-    this.#statusTracker.RemoveLocalObject(parsed.PlayerId);
+    this.#statusTracker.RemoveLocalObject(parsed.PlayerId, pkt.time);
     for (const se of parsed.statusEffectDatas) {
       const sourceEntity = this.getSourceEntity(se.SourceId);
       this.#statusTracker.RegisterStatusEffect(
@@ -583,13 +588,13 @@ var EntityTracker = class {
     }
     const npc = {
       entityId: parsed.NpcStruct.ObjectId,
-      entityType: EntityType.Npc,
+      entityType: 2 /* Npc */,
       name: npcData?.name ?? parsed.NpcStruct.ObjectId.toString(16),
       typeId: parsed.NpcStruct.TypeId,
       isBoss
     };
     this.entities.set(npc.entityId, npc);
-    this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId);
+    this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId, pkt.time);
     for (const se of parsed.NpcStruct.statusEffectDatas) {
       const sourceEntity = this.getSourceEntity(se.SourceId);
       this.#statusTracker.RegisterStatusEffect(
@@ -615,13 +620,13 @@ var EntityTracker = class {
     }
     const summon = {
       entityId: parsed.NpcData.ObjectId,
-      entityType: EntityType.Summon,
+      entityType: 3 /* Summon */,
       name: npc?.name ?? parsed.NpcData.ObjectId.toString(16),
       ownerId: parsed.OwnerId,
       typeId: parsed.NpcData.TypeId,
       isBoss
     };
-    this.#statusTracker.RemoveLocalObject(parsed.NpcData.ObjectId);
+    this.#statusTracker.RemoveLocalObject(parsed.NpcData.ObjectId, pkt.time);
     for (const se of parsed.NpcData.statusEffectDatas) {
       const sourceEntity = this.getSourceEntity(se.SourceId);
       this.#statusTracker.RegisterStatusEffect(
@@ -639,9 +644,9 @@ var EntityTracker = class {
   }
   getSourceEntity(id) {
     let entity = this.entities.get(id);
-    if (entity?.entityType === EntityType.Projectile) {
+    if (entity?.entityType === 4 /* Projectile */) {
       id = entity.ownerId;
-    } else if (entity?.entityType === EntityType.Summon) {
+    } else if (entity?.entityType === 3 /* Summon */) {
       id = entity.ownerId;
     }
     entity = this.entities.get(id);
@@ -649,7 +654,7 @@ var EntityTracker = class {
       return entity;
     const newEntity = {
       entityId: id,
-      entityType: EntityType.Npc,
+      entityType: 2 /* Npc */,
       name: id.toString(16)
     };
     this.entities.set(id, newEntity);
@@ -659,13 +664,13 @@ var EntityTracker = class {
     const classId = this.#data.getSkillClassId(skillid);
     if (classId !== 0) {
       let newEntity;
-      if (entity.entityType === EntityType.Player) {
+      if (entity.entityType === 1 /* Player */) {
         const player = entity;
         if (player.class == classId)
           return player;
         newEntity = {
           entityId: player.entityId,
-          entityType: EntityType.Player,
+          entityType: 1 /* Player */,
           name: player.name,
           class: classId,
           gearLevel: player.gearLevel,
@@ -674,7 +679,7 @@ var EntityTracker = class {
       } else {
         newEntity = {
           entityId: entity.entityId,
-          entityType: EntityType.Player,
+          entityType: 1 /* Player */,
           name: entity.name,
           class: classId,
           gearLevel: 0,
@@ -689,20 +694,12 @@ var EntityTracker = class {
   getOrCreateEntity(entityId) {
     let ent = this.entities.get(entityId);
     if (!ent) {
-      ent = { entityId, entityType: EntityType.Unknown, name: entityId.toString(16) };
+      ent = { entityId, entityType: 0 /* Unknown */, name: entityId.toString(16) };
       this.entities.set(entityId, ent);
     }
     return ent;
   }
 };
-var EntityType = /* @__PURE__ */ ((EntityType2) => {
-  EntityType2[EntityType2["Unknown"] = 0] = "Unknown";
-  EntityType2[EntityType2["Player"] = 1] = "Player";
-  EntityType2[EntityType2["Npc"] = 2] = "Npc";
-  EntityType2[EntityType2["Summon"] = 3] = "Summon";
-  EntityType2[EntityType2["Projectile"] = 4] = "Projectile";
-  return EntityType2;
-})(EntityType || {});
 
 // src/logger/gameTracker.ts
 var import_tiny_typed_emitter2 = require("tiny-typed-emitter");
@@ -737,6 +734,7 @@ var GameTracker = class extends import_tiny_typed_emitter2.TypedEmitter {
       lastCombatPacket: 0,
       fightStartedOn: 0,
       localPlayer: this.#entityTracker.localPlayer.name,
+      //this will be updated on dipatch
       currentBoss: void 0,
       entities: /* @__PURE__ */ new Map(),
       damageStatistics: {
@@ -782,7 +780,8 @@ var GameTracker = class extends import_tiny_typed_emitter2.TypedEmitter {
     }
   }
   splitEncounter(time) {
-    if (this.#game.fightStartedOn !== 0 && (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0)) {
+    if (this.#game.fightStartedOn !== 0 && // no combat packets
+    (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0)) {
       const curState = structuredClone(this.#game);
       this.encounters.push(curState);
     }
@@ -802,6 +801,7 @@ var GameTracker = class extends import_tiny_typed_emitter2.TypedEmitter {
       lastCombatPacket: +curTime,
       fightStartedOn: 0,
       localPlayer: this.#entityTracker.localPlayer.name,
+      //We never reset localplayer outside of initenv or initpc
       currentBoss: this.getBossIfStillExist(),
       entities: /* @__PURE__ */ new Map(),
       damageStatistics: {
@@ -1069,7 +1069,7 @@ var GameTracker = class extends import_tiny_typed_emitter2.TypedEmitter {
           this.#game.damageStatistics.effectiveShieldingBuffs.set(statusEffectId, statusEffect);
         }
       }
-      const now = new Date();
+      const now = /* @__PURE__ */ new Date();
       const targetEntityState = this.updateEntity(targetEntity, {}, now);
       const sourceEntityState = this.updateEntity(sourceEntity, {}, now);
       targetEntityState.damagePreventedByShield += shieldAmountRemoved;
@@ -1093,7 +1093,7 @@ var GameTracker = class extends import_tiny_typed_emitter2.TypedEmitter {
     }
   }
   onShieldApplied(targetEntity, sourceEntity, statusEffectId, amount) {
-    const now = new Date();
+    const now = /* @__PURE__ */ new Date();
     const targetEntityState = this.updateEntity(targetEntity, {}, now);
     const sourceEntityState = this.updateEntity(sourceEntity, {}, now);
     if (sourceEntityState.isPlayer && targetEntityState.isPlayer) {
@@ -1474,6 +1474,7 @@ var Parser = class extends import_tiny_typed_emitter3.TypedEmitter {
   #statusTracker;
   #entityTracker;
   #gameTracker;
+  //TODO: refactor
   #wasWipe;
   #wasKill;
   constructor(logger, data, options) {
@@ -1844,11 +1845,12 @@ var Parser = class extends import_tiny_typed_emitter3.TypedEmitter {
       this.#gameTracker.onShieldUsed(targetEntity, sourceEntity, se.statusEffectId, oldValue - newVal);
     });
   }
+  //TODO: method to change broadcast interval (without restart)
   broadcastStateChange() {
     this.emit("state-change", this.#gameTracker.getBroadcast());
   }
   reset() {
-    this.#gameTracker.resetState(+new Date());
+    this.#gameTracker.resetState(+/* @__PURE__ */ new Date());
   }
   cancelReset() {
     this.#gameTracker.cancelReset();
@@ -1857,7 +1859,7 @@ var Parser = class extends import_tiny_typed_emitter3.TypedEmitter {
     this.#gameTracker.updateOptions(options);
   }
   get encounters() {
-    this.#gameTracker.splitEncounter(new Date());
+    this.#gameTracker.splitEncounter(/* @__PURE__ */ new Date());
     return this.#gameTracker.encounters;
   }
 };

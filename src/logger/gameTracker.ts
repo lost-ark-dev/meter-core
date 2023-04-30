@@ -2,11 +2,13 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData } from "../data";
 import { hitflag, hitoption } from "../packets/generated/enums";
 import type { InitEnv } from "../packets/log/types";
-import { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions, StatusEffectTarget } from "./data";
-import { Entity, EntityTracker, EntityType, Npc, Player, Projectile } from "./entityTracker";
+import type { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions } from "./data";
+import { StatusEffectTarget } from "./data";
+import type { Entity, Npc, Player, Projectile } from "./entityTracker";
+import { EntityTracker, EntityType } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
-import type { StatusTracker } from "./statustracker";
 import type { ParserEvent } from "./parser";
+import type { StatusTracker } from "./statustracker";
 
 const defaultOptions: GameTrackerOptions = {
   isLive: true,

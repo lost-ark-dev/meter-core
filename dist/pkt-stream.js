@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -28,7 +27,9 @@ var import_tiny_typed_emitter = require("tiny-typed-emitter");
 
 // src/packets/stream.ts
 var Read = class {
+  /** Buffer */
   b;
+  /** Offset */
   o;
   constructor(buf) {
     this.b = buf;
@@ -251,7 +252,9 @@ function isValidDate(year, month, day) {
   } else {
     year += 1900;
   }
-  return day > 0 && month <= 12 && (day <= daysInMonths[month] || day == 29 && month == 2 && IsLeapYear(year));
+  return day > 0 && /* 
+  month > 0 &&*/
+  month <= 12 && (day <= daysInMonths[month] || day == 29 && month == 2 && IsLeapYear(year));
 }
 function bigintToDate(value) {
   let LODWORD = Number(value & 0xffffffffn);
@@ -1448,6 +1451,9 @@ var PKTStream = class extends import_tiny_typed_emitter.TypedEmitter {
     super();
     this.#decompressor = decompressor;
   }
+  /**
+   * @returns `false` if packet is malformed
+   */
   read(buf) {
     try {
       if (buf.length < 6)
@@ -1489,6 +1495,7 @@ var PKT = class {
     this.#decompressor = decompressor;
     this.#read = read71;
   }
+  // in case we listen for it more than once
   #cached;
   get parsed() {
     if (!this.#cached) {

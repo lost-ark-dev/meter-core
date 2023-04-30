@@ -1,5 +1,5 @@
 import type { PartyInfo } from "../packets/log/types";
-import { Entity, EntityType, Player } from "./entityTracker";
+import { type Entity, EntityType, type Player } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
 import type { PCIdMapper } from "./pcidmapper";
 import { u32tof32 } from "./utils";

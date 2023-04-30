@@ -509,7 +509,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         this.#game.damageStatistics.topShieldDone
       );
       this.#game.damageStatistics.topShieldGotten = Math.max(
-        sourceEntityState.shieldReceived,
+        targetEntityState.shieldReceived,
         this.#game.damageStatistics.topShieldGotten
       );
       this.#game.damageStatistics.totalShieldDone += amount;

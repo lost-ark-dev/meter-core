@@ -1073,7 +1073,7 @@ var GameTracker = class extends TypedEmitter2 {
         this.#game.damageStatistics.topShieldDone
       );
       this.#game.damageStatistics.topShieldGotten = Math.max(
-        sourceEntityState.shieldReceived,
+        targetEntityState.shieldReceived,
         this.#game.damageStatistics.topShieldGotten
       );
       this.#game.damageStatistics.totalShieldDone += amount;

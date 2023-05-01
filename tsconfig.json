@@ -1,9 +1,10 @@
 {
-  "extends": ["@tsconfig/node18/tsconfig.json", "@tsconfig/esm/tsconfig.json", "@tsconfig/strictest/tsconfig.json"],
+  "extends": ["@tsconfig/node18/tsconfig.json", "@tsconfig/strictest/tsconfig.json"],
   "compilerOptions": {
     "moduleResolution": "node",
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "module": "CommonJS"
   },
   "ts-node": {
     "files": true

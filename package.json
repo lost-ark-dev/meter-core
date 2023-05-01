@@ -26,7 +26,6 @@
     "tiny-typed-emitter": "^2.1.0"
   },
   "devDependencies": {
-    "@tsconfig/esm": "^1.0.3",
     "@tsconfig/node18": "^2.0.0",
     "@tsconfig/strictest": "^2.0.1",
     "@types/node": "^18.11.11",

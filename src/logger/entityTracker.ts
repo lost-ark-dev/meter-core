@@ -127,6 +127,12 @@ export class EntityTracker {
       typeId: parsed.NpcStruct.TypeId,
       isBoss,
     };
+    const esther = this.#data.getNpcEsther(parsed.NpcStruct.TypeId);
+    if (esther !== undefined) {
+      npc.entityType = EntityType.Esther;
+      npc.name = esther.name;
+      (npc as Esther).icon = esther.icon;
+    }
     this.entities.set(npc.entityId, npc);
     this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId, pkt.time);
     for (const se of parsed.NpcStruct.statusEffectDatas) {
@@ -200,7 +206,7 @@ export class EntityTracker {
       let newEntity: Player;
       if (entity.entityType === EntityType.Player) {
         const player = entity as Player;
-        if (player.class == classId) return player;
+        if (player.class === classId) return player;
         newEntity = {
           entityId: player.entityId,
           entityType: EntityType.Player,
@@ -239,6 +245,7 @@ export const enum EntityType {
   Player,
   Npc,
   Summon,
+  Esther,
   Projectile,
 }
 
@@ -256,9 +263,14 @@ export type Player = Entity & {
 };
 
 export type Npc = Entity & {
-  entityType: EntityType.Npc | EntityType.Summon;
+  entityType: EntityType.Npc | EntityType.Summon | EntityType.Esther;
   typeId: number;
   isBoss: boolean;
+};
+
+export type Esther = Npc & {
+  entityType: EntityType.Esther;
+  icon: string;
 };
 
 export type Summon = Npc & {

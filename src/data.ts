@@ -72,6 +72,13 @@ export type SkillEffect = {
   itemcategory?: string;
 };
 
+export type Esther = {
+  name: string;
+  icon: string;
+  skills: number[];
+  npcs: number[];
+};
+
 export class MeterData {
   dbPath: string = "";
   modulePath: string;
@@ -83,6 +90,7 @@ export class MeterData {
   skillBuff: Map<number, SkillBuff>;
   skillEffect: Map<number, SkillEffect>;
   combatEffect: Map<number, CombatEffect>;
+  esther: Esther[];
 
   constructor(meterDataPath: string = "./meter-core/data") {
     this.modulePath = meterDataPath;
@@ -93,6 +101,7 @@ export class MeterData {
     this.skillBuff = new Map();
     this.skillEffect = new Map();
     this.combatEffect = new Map();
+    this.esther = [];
   }
 
   processEnumData(data: { [key: string]: { [key: string]: string } }) {
@@ -137,6 +146,9 @@ export class MeterData {
       this.combatEffect.set(combatEffect.id, combatEffect);
     }
   }
+  processEsther(data: Esther[]) {
+    this.esther = Object.values(data);
+  }
 
   getNpcName(id: number) {
     return this.npc.get(id)?.name || "";
@@ -160,6 +172,20 @@ export class MeterData {
   getSkillEffectDirectionalMask(id: number) {
     return this.skillEffect.get(id)?.directionalmask || 0;
   }
+
+  getSkillEsther(skillId: number): Esther | undefined {
+    for (const esther of this.esther) {
+      if (esther.skills.includes(skillId)) return esther;
+    }
+    return;
+  }
+  getNpcEsther(npcId: number): Esther | undefined {
+    for (const esther of this.esther) {
+      if (esther.npcs.includes(npcId)) return esther;
+    }
+    return;
+  }
+
   getStatusEffectHeaderData(buffId: number) {
     const buff = this.skillBuff.get(buffId);
     if (!buff || buff.iconshowtype === "none") return;
@@ -429,5 +455,6 @@ export class MeterData {
     this.processSkillBuffData(JSON.parse(readFileSync(join(basePath, "SkillBuff.json"), "utf-8")));
     this.processSkillBuffEffectData(JSON.parse(readFileSync(join(basePath, "SkillEffect.json"), "utf-8")));
     this.processCombatEffectData(JSON.parse(readFileSync(join(basePath, "CombatEffect.json"), "utf-8")));
+    this.processEsther(JSON.parse(readFileSync(join(basePath, "Esther.json"), "utf-8")));
   }
 }

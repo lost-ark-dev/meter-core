@@ -4,7 +4,7 @@ import { hitflag, hitoption } from "../packets/generated/enums";
 import type { InitEnv } from "../packets/log/types";
 import type { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions } from "./data";
 import { StatusEffectTarget } from "./data";
-import type { Entity, Npc, Player, Projectile } from "./entityTracker";
+import type { Entity, Esther, Npc, Player, Projectile } from "./entityTracker";
 import { EntityTracker, EntityType } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
 import type { ParserEvent } from "./parser";
@@ -573,9 +573,12 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       if (entity.entityType === EntityType.Player) {
         const player = entity as Player;
         extraInfo = { classId: player.class, gearScore: player.gearLevel, isPlayer: true };
-      } else if (entity.entityType === EntityType.Npc) {
+      } else if (entity.entityType === EntityType.Npc || entity.entityType === EntityType.Summon) {
         const npc = entity as Npc;
         extraInfo = { npcId: npc.typeId, isBoss: npc.isBoss };
+      } else if (entity.entityType === EntityType.Esther) {
+        const esther = entity as Esther;
+        extraInfo = { npcId: esther.typeId, isBoss: esther.isBoss, isEsther: true, icon: esther.icon };
       }
       entityState = {
         ...this.createEntity(),

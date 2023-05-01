@@ -1,5 +1,5 @@
 import type { Skill } from "../data";
-export const PARSED_LOG_VERSION = 17;
+export const PARSED_LOG_VERSION = 18;
 
 export enum StatusEffectTarget {
   OTHER,
@@ -75,6 +75,7 @@ export interface HealSource {
   expires: number;
 }
 
+//TODO: minimize entityState default by marking fields as optional & checking for default in vue
 export interface EntityState {
   lastUpdate: number;
   id: string;
@@ -83,6 +84,8 @@ export interface EntityState {
   classId: number;
   isBoss: boolean;
   isPlayer: boolean;
+  isEsther?: boolean;
+  icon?: string;
   isDead: boolean;
   deaths: number;
   deathTime: number;
@@ -103,7 +106,7 @@ export interface EntityState {
   damagePreventedWithShieldOnOthers: number;
   damagePreventedByShield: number;
   damagePreventedWithShieldOnOthersBy: Map<number, number>;
-  damagePreventedByShieldBy: Map<number, number>
+  damagePreventedByShieldBy: Map<number, number>;
   shieldDoneBy: Map<number, number>;
   shieldReceivedBy: Map<number, number>;
 }

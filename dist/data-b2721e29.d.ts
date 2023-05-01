@@ -1,4 +1,4 @@
-declare const PARSED_LOG_VERSION = 17;
+declare const PARSED_LOG_VERSION = 18;
 declare enum StatusEffectTarget {
     OTHER = 0,
     PARTY = 1,
@@ -79,6 +79,8 @@ interface EntityState {
     classId: number;
     isBoss: boolean;
     isPlayer: boolean;
+    isEsther?: boolean;
+    icon?: string;
     isDead: boolean;
     deaths: number;
     deathTime: number;
@@ -341,6 +343,12 @@ type SkillEffect = {
     icon?: string;
     itemcategory?: string;
 };
+type Esther = {
+    name: string;
+    icon: string;
+    skills: number[];
+    npcs: number[];
+};
 declare class MeterData {
     dbPath: string;
     modulePath: string;
@@ -351,6 +359,7 @@ declare class MeterData {
     skillBuff: Map<number, SkillBuff>;
     skillEffect: Map<number, SkillEffect>;
     combatEffect: Map<number, CombatEffect>;
+    esther: Esther[];
     constructor(meterDataPath?: string);
     processEnumData(data: {
         [key: string]: {
@@ -375,12 +384,15 @@ declare class MeterData {
     processCombatEffectData(data: {
         [key: string]: CombatEffect;
     }): void;
+    processEsther(data: Esther[]): void;
     getNpcName(id: number): string;
     getClassName(id: number): string;
     getSkillName(id: number): string;
     getSkillClassId(id: number): number;
     getSkillEffectComment(id: number): string;
     getSkillEffectDirectionalMask(id: number): number;
+    getSkillEsther(skillId: number): Esther | undefined;
+    getNpcEsther(npcId: number): Esther | undefined;
     getStatusEffectHeaderData(buffId: number): StatusEffect | undefined;
     getStatusEffectBuffTypeFlags(buff: SkillBuff): StatusEffectBuffTypeFlags;
     getStatPairMap(statpair: {
@@ -393,4 +405,4 @@ declare class MeterData {
     loadDbs(basePath: string): void;
 }
 
-export { Breakdown as B, CombatEffect as C, DamageStatistics as D, EntityState as E, GameTrackerOptions as G, HealSource as H, MeterData as M, Npc as N, PARSED_LOG_VERSION as P, StatusEffectTarget as S, GameState as a, StatusEffectBuffTypeFlags as b, StatusEffect as c, StatusEffectSource as d, GameStateNew as e, EntitySkills as f, Hits as g, Skill as h, SkillBuff as i, PassiveOption as j, CombatEffectCondition as k, CombatEffectActions as l, SkillEffect as m };
+export { Breakdown as B, CombatEffect as C, DamageStatistics as D, EntityState as E, GameTrackerOptions as G, HealSource as H, MeterData as M, Npc as N, PARSED_LOG_VERSION as P, StatusEffectTarget as S, GameState as a, StatusEffectBuffTypeFlags as b, StatusEffect as c, StatusEffectSource as d, GameStateNew as e, EntitySkills as f, Hits as g, Skill as h, SkillBuff as i, PassiveOption as j, CombatEffectCondition as k, CombatEffectActions as l, SkillEffect as m, Esther as n };

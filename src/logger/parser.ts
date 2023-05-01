@@ -237,8 +237,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("SkillDamageAbnormalMoveNotify", (pkt) => {
         const parsedDmg = pkt.parsed;
         if (!parsedDmg) return;
-        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.SourceId);
-        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsedDmg.SkillId);
+        const ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.SourceId);
         parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
           const targetEntity = this.#entityTracker.getOrCreateEntity(event.skillDamageEvent.TargetId);
           const sourceEntity = this.#entityTracker.getOrCreateEntity(parsedDmg.SourceId);
@@ -261,8 +260,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("SkillDamageNotify", (pkt) => {
         const parsedDmg = pkt.parsed;
         if (!parsedDmg) return;
-        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.SourceId);
-        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsedDmg.SkillId);
+        const ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.SourceId);
 
         parsedDmg.SkillDamageEvents.forEach((event) => {
           const targetEntity = this.#entityTracker.getOrCreateEntity(event.TargetId);

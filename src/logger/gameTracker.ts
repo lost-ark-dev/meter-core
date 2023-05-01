@@ -566,10 +566,11 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   updateEntity(entity: Entity, values: Partial<EntityState>, time: Date) {
     const updateTime = { lastUpdate: +time };
     let entityState = this.#game.entities.get(entity.name);
-    if (entityState) {
-      Object.assign(entityState, values, updateTime);
-    } else {
-      let extraInfo: Partial<EntityState> = {};
+    let extraInfo: Partial<EntityState> = {};
+    if (
+      !entityState ||
+      (entity.entityType === EntityType.Player && entityState.isPlayer !== true) // We guessed isPlayer
+    ) {
       if (entity.entityType === EntityType.Player) {
         const player = entity as Player;
         extraInfo = { classId: player.class, gearScore: player.gearLevel, isPlayer: true };
@@ -580,6 +581,10 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         const esther = entity as Esther;
         extraInfo = { npcId: esther.typeId, isBoss: esther.isBoss, isEsther: true, icon: esther.icon };
       }
+    }
+    if (entityState) {
+      Object.assign(entityState, values, updateTime, extraInfo);
+    } else {
       entityState = {
         ...this.createEntity(),
         ...values,

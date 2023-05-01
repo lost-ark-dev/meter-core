@@ -690,7 +690,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     clone.entities = new Map();
     this.#game.entities.forEach((e, k, m) => {
       // Remove all entities that are not players (if live)
-      if (!e.isPlayer) {
+      if (!e.isPlayer && !e.isEsther) {
         return;
       }
       const eCopy = { ...e };

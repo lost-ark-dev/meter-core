@@ -251,6 +251,7 @@ declare enum stattype {
     gold_rate = 112,
     exp_rate = 113,
     attack_power_addend = 123,
+    attack_power_addend_2 = 124,
     npc_species_humanoid_dam_rate = 125,
     npc_species_devil_dam_rate = 126,
     npc_species_substance_dam_rate = 127,

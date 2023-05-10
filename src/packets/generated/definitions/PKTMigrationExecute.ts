@@ -16,4 +16,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTMigrationExecute";
-export const opcode = 19365;
+export const opcode = 32608;

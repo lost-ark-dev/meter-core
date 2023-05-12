@@ -9,6 +9,7 @@ import { EntityTracker, EntityType } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
 import type { ParserEvent } from "./parser";
 import type { StatusTracker } from "./statustracker";
+import { BreakdownTracker } from "./breakdownTracker";
 
 const defaultOptions: GameTrackerOptions = {
   isLive: true,
@@ -22,6 +23,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
   #entityTracker: EntityTracker;
   #statusTracker: StatusTracker;
+  #breakdownTracker: BreakdownTracker;
   #data: MeterData;
   options: GameTrackerOptions;
 
@@ -33,12 +35,14 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   constructor(
     entityTracker: EntityTracker,
     statusTracker: StatusTracker,
+    breakdownTracker: BreakdownTracker,
     data: MeterData,
     options: Partial<GameTrackerOptions>
   ) {
     super();
     this.#entityTracker = entityTracker;
     this.#statusTracker = statusTracker;
+    this.#breakdownTracker = breakdownTracker;
     this.#data = data;
     this.options = { ...defaultOptions, ...options };
 
@@ -110,6 +114,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0) // no player damage dealt OR taken
     ) {
       const curState = structuredClone(this.#game);
+      this.applyBreakdowns(curState.entities);
+
       this.encounters.push(curState);
     }
     this.resetState(+time);
@@ -396,7 +402,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         debuffedBy: [...mappedSeOnTarget],
       };
 
-      skill.breakdown.push(breakdown);
+      const breakdownOwner = BigInt('0x' + damageOwner.id)
+      this.#breakdownTracker.addBreakdown(breakdownOwner, skillId, breakdown);
     }
 
     if (damageTarget.isPlayer) {
@@ -691,23 +698,28 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
 
   getBroadcast(): GameState {
-    const clone: GameState = { ...this.#game };
+    const clone: GameState = { ...this.#game }
+
     clone.entities = new Map();
-    this.#game.entities.forEach((e, k, m) => {
-      // Remove all entities that are not players (if live)
-      if (!e.isPlayer && !e.isEsther) {
-        return;
-      }
-      const eCopy = { ...e };
-      eCopy.skills = new Map(e.skills);
-      eCopy.skills.forEach((s) => {
-        // Dont send breakdowns; will hang up UI
-        s.breakdown = [];
-      });
-      clone.entities.set(k, eCopy);
+    this.#game.entities.forEach((entity, id) => {
+      // Skip all entities that are not players (if live)
+      if (!entity.isPlayer && !entity.isEsther) return
+      clone.entities.set(id, { ...entity });
     });
+
     clone.localPlayer = this.#entityTracker.localPlayer.name;
     return clone;
+  }
+
+  applyBreakdowns(entityStates: Map<string, EntityState>) {;
+    entityStates.forEach((entity) => {
+      entity.skills.forEach((skill) => {
+        const id = BigInt('0x' + entity.id)
+        const breakdowns = this.#breakdownTracker.getBreakdowns(id, skill.id);
+        if (breakdowns) skill.breakdown = [...breakdowns];
+      })
+    })
+    this.#breakdownTracker.reset();
   }
 }
 export type DamageData = {

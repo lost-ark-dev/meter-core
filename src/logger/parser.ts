@@ -8,12 +8,14 @@ import type { Logger } from "./logger";
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
 import { StatusEffectTargetType, StatusTracker, type StatusEffect } from "./statustracker";
+import { BreakdownTracker } from "./breakdownTracker";
 
 export class Parser extends TypedEmitter<ParserEvent> {
   #logger: Logger;
   #data: MeterData;
 
   #pcIdMapper: PCIdMapper;
+  #breakdownTracker: BreakdownTracker;
   #partyTracker: PartyTracker;
   #statusTracker: StatusTracker;
   #entityTracker: EntityTracker;
@@ -29,10 +31,11 @@ export class Parser extends TypedEmitter<ParserEvent> {
     this.#data = data;
 
     this.#pcIdMapper = new PCIdMapper();
+    this.#breakdownTracker = new BreakdownTracker();
     this.#partyTracker = new PartyTracker(this.#pcIdMapper);
     this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data, options.isLive ?? true);
     this.#entityTracker = new EntityTracker(this.#pcIdMapper, this.#partyTracker, this.#statusTracker, this.#data);
-    this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#data, options);
+    this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#breakdownTracker, this.#data, options);
     this.#gameTracker.emit = this.emit.bind(this); //forward emits
     /*
     this.#gameTracker.emit = <U extends keyof ParserEvent>(event: U, ...args: Parameters<ParserEvent[U]>): boolean => {

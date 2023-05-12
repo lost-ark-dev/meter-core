@@ -1,7 +1,5 @@
 import type { MeterData } from "../data";
-import { stattype } from "../packets/generated/enums";
 import type { InitEnv, InitPC, NewNpc, NewNpcSummon, NewPC } from "../packets/log/types";
-import type { EntityState } from "./data";
 import type { LogEvent } from "./logEvent";
 import type { PartyTracker } from "./partytracker";
 import type { PCIdMapper } from "./pcidmapper";

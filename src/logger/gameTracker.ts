@@ -129,6 +129,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
   resetState(curTime: number) {
     this.cancelReset();
+    this.#breakdownTracker.reset();
     this.#game = {
       startedOn: +curTime,
       lastCombatPacket: +curTime,

@@ -520,6 +520,12 @@ type PKTRemoveObject = {
     unpublishedObjects: UnpublishObject[];
 };
 
+type PKTSkillCastNotify = {
+    SkillLevel: number;
+    Caster: bigint;
+    SkillId: number;
+};
+
 type SkillDamageEvent = {
     DamageType: number;
     Modifier: number;
@@ -727,6 +733,7 @@ interface PKTStreamEvents {
     PKTRaidBossKillNotify: (pkt: PKT<PKTRaidBossKillNotify>) => void;
     PKTRaidResult: (pkt: PKT<PKTRaidResult>) => void;
     PKTRemoveObject: (pkt: PKT<PKTRemoveObject>) => void;
+    PKTSkillCastNotify: (pkt: PKT<PKTSkillCastNotify>) => void;
     PKTSkillDamageAbnormalMoveNotify: (pkt: PKT<PKTSkillDamageAbnormalMoveNotify>) => void;
     PKTSkillDamageNotify: (pkt: PKT<PKTSkillDamageNotify>) => void;
     PKTSkillStageNotify: (pkt: PKT<PKTSkillStageNotify>) => void;

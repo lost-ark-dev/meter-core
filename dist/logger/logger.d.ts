@@ -1,6 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-571b9fa5.js';
+import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-b78dad88.js';
 import { a as GameState } from '../data-322e7383.js';
 import 'oodle';
 
@@ -463,6 +463,12 @@ type ZoneStatusEffectRemoveNotify = {
     StatusEffectId: number;
 };
 
+type SkillCastNotify = {
+    SkillLevel: number;
+    Caster: bigint;
+    SkillId: number;
+};
+
 interface LogStreamEvent {
     AbilityChangeNotify: (pkt: LogEvent<AbilityChangeNotify>) => void;
     ActiveAbilityNotify: (pkt: LogEvent<ActiveAbilityNotify>) => void;
@@ -508,6 +514,7 @@ interface LogStreamEvent {
     ZoneObjectUnpublishNotify: (pkt: LogEvent<ZoneObjectUnpublishNotify>) => void;
     ZoneStatusEffectAddNotify: (pkt: LogEvent<ZoneStatusEffectAddNotify>) => void;
     ZoneStatusEffectRemoveNotify: (pkt: LogEvent<ZoneStatusEffectRemoveNotify>) => void;
+    SkillCastNotify: (pkt: LogEvent<SkillCastNotify>) => void;
     logData: (data: Buffer) => void;
     fileEnd: (output: string) => void;
     "*": (name: string, pkt: LogEvent<Object>) => void;

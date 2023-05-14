@@ -14,7 +14,7 @@ import {
   HEADER_VERSION_SIZE,
   LogEvent,
 } from "./logEvent";
-import { ReadStream, WriteStream, createWriteStream } from "fs";
+import { WriteStream, createWriteStream } from "fs";
 import type { GameState } from "./data";
 import { PacketBuffer } from "../pkt-buffer";
 import { createReadStream } from "fs";

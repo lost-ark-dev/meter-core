@@ -29,6 +29,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
   phaseTransitionResetRequest: boolean;
   phaseTransitionResetRequestTime: number;
+  #entityToSkillBreakdown: Map<bigint, Map<number, Breakdown[]>>;
 
   constructor(
     entityTracker: EntityTracker,
@@ -46,6 +47,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
     this.phaseTransitionResetRequest = false;
     this.phaseTransitionResetRequestTime = 0;
+    this.#entityToSkillBreakdown = new Map()
 
     this.encounters = [];
     this.#game = {
@@ -110,6 +112,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0) // no player damage dealt OR taken
     ) {
       const curState = structuredClone(this.#game);
+      this.applyBreakdowns(curState.entities);
+
       this.encounters.push(curState);
     }
     this.resetState(+time);
@@ -123,6 +127,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
   resetState(curTime: number) {
     this.cancelReset();
+    this.resetBreakdowns();
+
     this.#game = {
       startedOn: +curTime,
       lastCombatPacket: +curTime,
@@ -396,7 +402,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         debuffedBy: [...mappedSeOnTarget],
       };
 
-      skill.breakdown.push(breakdown);
+      const breakdownOwner = BigInt('0x' + damageOwner.id)
+      this.addBreakdown(breakdownOwner, skillId, breakdown);
     }
 
     if (damageTarget.isPlayer) {
@@ -691,25 +698,112 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
 
   getBroadcast(): GameState {
-    const clone: GameState = { ...this.#game };
+    const clone: GameState = { ...this.#game }
+
     clone.entities = new Map();
-    this.#game.entities.forEach((e, k, m) => {
-      // Remove all entities that are not players (if live)
-      if (!e.isPlayer && !e.isEsther) {
-        return;
-      }
-      const eCopy = { ...e };
-      eCopy.skills = new Map(e.skills);
-      eCopy.skills.forEach((s) => {
-        // Dont send breakdowns; will hang up UI
-        s.breakdown = [];
-      });
-      clone.entities.set(k, eCopy);
+    this.#game.entities.forEach((entity, id) => {
+      // Skip all entities that are not players (if live)
+      if (!entity.isPlayer && !entity.isEsther) return
+      clone.entities.set(id, { ...entity });
     });
+
     clone.localPlayer = this.#entityTracker.localPlayer.name;
     return clone;
   }
+
+  //#region Breakdown Tracker
+
+  resetBreakdowns() {
+    this.#entityToSkillBreakdown.clear();
+  }
+
+  /**
+   * Adds a breakdown entry for the given entity if it doesn't exist yet.
+   *
+   * @param entityId
+   * @returns The entry for the given entity.
+   */
+  createBreakdownEntity(entityId: bigint): Map<number, Breakdown[]> {
+    if (!this.#entityToSkillBreakdown.has(entityId)) {
+      this.#entityToSkillBreakdown.set(entityId, new Map());
+    }
+    return this.#entityToSkillBreakdown.get(entityId)!;
+  }
+
+  /**
+   * Removes the entry for the given entity.
+   *
+   * @param entityId The ID of the entity to remove the entry for.
+   */
+  removeBreakdownEntry(entityId: bigint) {
+    this.#entityToSkillBreakdown.delete(entityId);
+  }
+
+  /**
+   * Adds a breakdown to the given entity and skill.
+   *
+   * @param entityId The ID of the entity to add the breakdown for.
+   * @param skillId The ID of the skill to add the breakdown for.
+   * @param breakdown The breakdown to add.
+   */
+  addBreakdown(entityId: bigint, skillId: number, breakdown: Breakdown) {
+    const entityBreakdown = this.createBreakdownEntity(entityId);
+    if (!entityBreakdown.has(skillId)) {
+      const skill = new Array<Breakdown>(breakdown);
+      entityBreakdown.set(skillId, skill);
+    } else {
+      entityBreakdown.get(skillId)!.push(breakdown);
+    }
+  }
+
+/**
+ * Returns the breakdowns for the given entity and skill, or undefined if none exist.
+ *
+ * @param entityId The ID of the entity to get the breakdowns for.
+ * @param skillId The ID of the skill to get the breakdowns for.
+ * @returns The breakdowns for the given entity and skill, or undefined if none exist.
+ */
+  getBreakdowns(entityId: bigint, skillId: number): Breakdown[] | undefined {
+    const entityBreakdown = this.#entityToSkillBreakdown.get(entityId);
+    if (!entityBreakdown) return undefined;
+
+    return entityBreakdown.get(skillId);
+  }
+
+  /**
+   * Clears the breakdowns for the given entity and skill.
+   *
+   * @param entityId The ID of the entity to clear the breakdowns for.
+   * @param skillId The ID of the skill to clear the breakdowns for.
+   */
+  clearBreakdowns(entityId: bigint, skillId: number) {
+    const entityBreakdown = this.#entityToSkillBreakdown.get(entityId);
+    if (!entityBreakdown) return;
+
+    entityBreakdown.delete(skillId);
+  }
+
+  /**
+   * Applies the breakdowns to the given entity states and optionally clears
+   * stored breakdowns afterwards. (Defaults to true)
+   *
+   * @param entityStates The entity states to apply the breakdowns to.
+   * @param reset Whether to clear the stored breakdowns afterwards.
+   */
+  applyBreakdowns(entityStates: Map<string, EntityState>, reset = true) {;
+    entityStates.forEach((entity) => {
+      entity.skills.forEach((skill) => {
+        const id = BigInt('0x' + entity.id)
+        const breakdowns = this.getBreakdowns(id, skill.id);
+        if (breakdowns) skill.breakdown = [...breakdowns];
+      })
+    })
+    if (reset) this.resetBreakdowns();
+  }
+
+  //#endregion
 }
+
 export type DamageData = {
   skillId: number;
   skillEffectId: number;

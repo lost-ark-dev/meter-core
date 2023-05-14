@@ -234,6 +234,15 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!parsed) return;
         for (const upo of parsed.unpublishedObjects) this.#statusTracker.RemoveLocalObject(upo.ObjectId, pkt.time);
       })
+      .on("SkillCastNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        // Same as SkillStartNotify, but only for identity skills (seems like so at least)
+        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsed.Caster);
+        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsed.SkillId);
+        //TODO: use this to grab cast info (skill Level, tripods, runes) for further processing
+        this.#gameTracker.onStartSkill(ownerEntity, parsed.SkillId, pkt.time);
+      })
       .on("SkillDamageAbnormalMoveNotify", (pkt) => {
         const parsedDmg = pkt.parsed;
         if (!parsedDmg) return;

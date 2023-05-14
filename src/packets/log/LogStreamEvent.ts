@@ -45,6 +45,7 @@ export interface LogStreamEvent {
   ZoneObjectUnpublishNotify: (pkt: LogEvent<types.ZoneObjectUnpublishNotify>) => void;
   ZoneStatusEffectAddNotify: (pkt: LogEvent<types.ZoneStatusEffectAddNotify>) => void;
   ZoneStatusEffectRemoveNotify: (pkt: LogEvent<types.ZoneStatusEffectRemoveNotify>) => void;
+  SkillCastNotify: (pkt: LogEvent<types.SkillCastNotify>) => void;
   logData: (data: Buffer) => void;
   fileEnd: (output: string) => void;
   "*": (name: string, pkt: LogEvent<Object>) => void;

@@ -45,4 +45,5 @@ export const codeMapping = new Map<number, [number]>([
   [codes.PKTZoneObjectUnpublishNotify, [logIds.ZoneObjectUnpublishNotify]],
   [codes.PKTZoneStatusEffectAddNotify, [logIds.ZoneStatusEffectAddNotify]],
   [codes.PKTZoneStatusEffectRemoveNotify, [logIds.ZoneStatusEffectRemoveNotify]],
+  [codes.PKTSkillCastNotify, [logIds.SkillCastNotify]],
 ]);

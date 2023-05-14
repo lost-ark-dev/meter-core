@@ -42,3 +42,4 @@ export type { IdentityGaugeChangeNotify } from "./definitions/IdentityGaugeChang
 export type { ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpublishNotify";
 export type { ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export type { ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
+export type { SkillCastNotify } from "./definitions/SkillCastNotify";

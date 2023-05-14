@@ -28,6 +28,7 @@ export type { PKTPassiveStatusEffectRemoveNotify } from "./definitions/PKTPassiv
 export type { PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export type { PKTRaidResult } from "./definitions/PKTRaidResult";
 export type { PKTRemoveObject } from "./definitions/PKTRemoveObject";
+export type { PKTSkillCastNotify } from "./definitions/PKTSkillCastNotify";
 export type { PKTSkillDamageAbnormalMoveNotify } from "./definitions/PKTSkillDamageAbnormalMoveNotify";
 export type { PKTSkillDamageNotify } from "./definitions/PKTSkillDamageNotify";
 export type { PKTSkillStageNotify } from "./definitions/PKTSkillStageNotify";

@@ -42,3 +42,4 @@ export { read as IdentityGaugeChangeNotify } from "./definitions/IdentityGaugeCh
 export { read as ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpublishNotify";
 export { read as ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export { read as ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
+export { read as SkillCastNotify } from "./definitions/SkillCastNotify";

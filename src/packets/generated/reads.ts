@@ -28,6 +28,7 @@ export { read as PKTPassiveStatusEffectRemoveNotify } from "./definitions/PKTPas
 export { read as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { read as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { read as PKTRemoveObject } from "./definitions/PKTRemoveObject";
+export { read as PKTSkillCastNotify } from "./definitions/PKTSkillCastNotify";
 export { read as PKTSkillDamageAbnormalMoveNotify } from "./definitions/PKTSkillDamageAbnormalMoveNotify";
 export { read as PKTSkillDamageNotify } from "./definitions/PKTSkillDamageNotify";
 export { read as PKTSkillStageNotify } from "./definitions/PKTSkillStageNotify";

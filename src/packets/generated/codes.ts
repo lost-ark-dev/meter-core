@@ -28,6 +28,7 @@ export { opcode as PKTPassiveStatusEffectRemoveNotify } from "./definitions/PKTP
 export { opcode as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { opcode as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { opcode as PKTRemoveObject } from "./definitions/PKTRemoveObject";
+export { opcode as PKTSkillCastNotify } from "./definitions/PKTSkillCastNotify";
 export { opcode as PKTSkillDamageAbnormalMoveNotify } from "./definitions/PKTSkillDamageAbnormalMoveNotify";
 export { opcode as PKTSkillDamageNotify } from "./definitions/PKTSkillDamageNotify";
 export { opcode as PKTSkillStageNotify } from "./definitions/PKTSkillStageNotify";

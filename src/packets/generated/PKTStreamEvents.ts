@@ -31,6 +31,7 @@ export interface PKTStreamEvents {
   PKTRaidBossKillNotify: (pkt: PKT<types.PKTRaidBossKillNotify>) => void;
   PKTRaidResult: (pkt: PKT<types.PKTRaidResult>) => void;
   PKTRemoveObject: (pkt: PKT<types.PKTRemoveObject>) => void;
+  PKTSkillCastNotify: (pkt: PKT<types.PKTSkillCastNotify>) => void;
   PKTSkillDamageAbnormalMoveNotify: (pkt: PKT<types.PKTSkillDamageAbnormalMoveNotify>) => void;
   PKTSkillDamageNotify: (pkt: PKT<types.PKTSkillDamageNotify>) => void;
   PKTSkillStageNotify: (pkt: PKT<types.PKTSkillStageNotify>) => void;

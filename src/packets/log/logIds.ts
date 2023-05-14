@@ -42,3 +42,4 @@ export { logId as IdentityGaugeChangeNotify } from "./definitions/IdentityGaugeC
 export { logId as ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpublishNotify";
 export { logId as ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export { logId as ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
+export { logId as SkillCastNotify } from "./definitions/SkillCastNotify";

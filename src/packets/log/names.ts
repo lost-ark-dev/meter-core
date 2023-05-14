@@ -42,3 +42,4 @@ export { name as IdentityGaugeChangeNotify } from "./definitions/IdentityGaugeCh
 export { name as ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpublishNotify";
 export { name as ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export { name as ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
+export { name as SkillCastNotify } from "./definitions/SkillCastNotify";

@@ -126,4 +126,5 @@ export const logMapping = new Map<
     logId.ZoneStatusEffectRemoveNotify,
     [names.ZoneStatusEffectRemoveNotify, reads.ZoneStatusEffectRemoveNotify, writes.ZoneStatusEffectRemoveNotify],
   ],
+  [logId.SkillCastNotify, [names.SkillCastNotify, reads.SkillCastNotify, writes.SkillCastNotify]],
 ]);

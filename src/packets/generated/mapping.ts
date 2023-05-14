@@ -53,6 +53,7 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTRaidBossKillNotify, [names.PKTRaidBossKillNotify, reads.PKTRaidBossKillNotify]],
   [codes.PKTRaidResult, [names.PKTRaidResult, reads.PKTRaidResult]],
   [codes.PKTRemoveObject, [names.PKTRemoveObject, reads.PKTRemoveObject]],
+  [codes.PKTSkillCastNotify, [names.PKTSkillCastNotify, reads.PKTSkillCastNotify]],
   [
     codes.PKTSkillDamageAbnormalMoveNotify,
     [names.PKTSkillDamageAbnormalMoveNotify, reads.PKTSkillDamageAbnormalMoveNotify],

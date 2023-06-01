@@ -14,7 +14,7 @@
     "format": "prettier --write \"**/*.{js,json,ts}\"",
     "build": "tsc --noEmit && tsup",
     "build:test": "tsup src/test.ts --clean --no-config",
-    "test": "ts-node src/test.ts"
+    "test": "tsc --noEmit && tsup src/test.ts --clean --no-config --sourcemap --&& node ./dist/test.js"
   },
   "dependencies": {
     "cap": "^0.2.1",
@@ -30,7 +30,6 @@
     "@tsconfig/strictest": "^2.0.1",
     "@types/node": "^18.11.11",
     "prettier": "^2.8.1",
-    "ts-node": "^10.9.1",
     "tsup": "^6.7.0",
     "typescript": "^5.0.4"
   }

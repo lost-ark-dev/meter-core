@@ -1,19 +1,18 @@
 import type { Read, Write } from "../../stream";
 import type { PKTDeathNotify } from "../../generated/types";
 export type DeathNotify = {
-  SourceId: bigint;
-  TargetId: bigint;
+  sourceId: bigint;
+  targetId: bigint;
 };
 export function read(reader: Read, version: number) {
   const data = {} as DeathNotify;
-  data.SourceId = reader.u64();
-  data.TargetId = reader.u64();
+  data.sourceId = reader.u64();
+  data.targetId = reader.u64();
   return data;
 }
 export function write(writer: Write, data: DeathNotify | PKTDeathNotify) {
-  writer.u64(data.SourceId);
-  writer.u64(data.TargetId);
+  writer.u64(data.sourceId);
+  writer.u64(data.targetId);
 }
 
-export const logId = 6;
 export const name = "DeathNotify";

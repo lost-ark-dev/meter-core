@@ -43,3 +43,7 @@ export type { ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpublis
 export type { ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export type { ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
 export type { SkillCastNotify } from "./definitions/SkillCastNotify";
+export type { IdentityStanceChangeNotify } from "./definitions/IdentityStanceChangeNotify";
+export type { EquipChangeNotify } from "./definitions/EquipChangeNotify";
+export type { EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChangeNotify";
+export type { InitItem } from "./definitions/InitItem";

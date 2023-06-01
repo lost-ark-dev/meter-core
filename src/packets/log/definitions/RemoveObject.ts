@@ -15,5 +15,4 @@ export function write(writer: Write, data: RemoveObject | PKTRemoveObject) {
   });
 }
 
-export const logId = 28;
 export const name = "RemoveObject";

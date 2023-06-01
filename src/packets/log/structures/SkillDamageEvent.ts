@@ -3,34 +3,34 @@ import type { SkillDamageEvent } from "../../generated/structures/SkillDamageEve
 import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 
 export type SkillDamageEventLog = {
-  Modifier: number;
-  TargetId: bigint;
-  DamageType: number;
-  DamageAttr?: number;
-  CurHp: bigint;
-  Unk3_m: number;
-  MaxHp: bigint;
-  Damage: bigint;
+  modifier: number;
+  targetId: bigint;
+  damageType: number;
+  damageAttr?: number;
+  curHp: bigint;
+  unk3_m: number;
+  maxHp: bigint;
+  damage: bigint;
 };
 export function read(reader: Read, version: number) {
   const data = {} as SkillDamageEventLog;
-  data.Modifier = reader.u8();
-  data.TargetId = reader.u64();
-  data.DamageType = reader.u8();
-  if (reader.bool()) data.DamageAttr = reader.u8();
-  data.CurHp = ReadNBytesInt64.read(reader, version);
-  data.Unk3_m = reader.u16();
-  data.MaxHp = ReadNBytesInt64.read(reader, version);
-  data.Damage = ReadNBytesInt64.read(reader, version);
+  data.modifier = reader.u8();
+  data.targetId = reader.u64();
+  data.damageType = reader.u8();
+  if (reader.bool()) data.damageAttr = reader.u8();
+  data.curHp = ReadNBytesInt64.read(reader, version);
+  data.unk3_m = reader.u16();
+  data.maxHp = ReadNBytesInt64.read(reader, version);
+  data.damage = ReadNBytesInt64.read(reader, version);
   return data;
 }
 export function write(writer: Write, data: SkillDamageEventLog | SkillDamageEvent) {
-  writer.u8(data.Modifier);
-  writer.u64(data.TargetId);
-  writer.u8(data.DamageType);
-  if (writer.bool(data.DamageAttr !== undefined)) writer.u8(data.DamageAttr);
-  ReadNBytesInt64.write(writer, data.CurHp);
-  writer.u16(data.Unk3_m);
-  ReadNBytesInt64.write(writer, data.MaxHp);
-  ReadNBytesInt64.write(writer, data.Damage);
+  writer.u8(data.modifier);
+  writer.u64(data.targetId);
+  writer.u8(data.damageType);
+  if (writer.bool(data.damageAttr !== undefined)) writer.u8(data.damageAttr);
+  ReadNBytesInt64.write(writer, data.curHp);
+  writer.u16(data.unk3_m);
+  ReadNBytesInt64.write(writer, data.maxHp);
+  ReadNBytesInt64.write(writer, data.damage);
 }

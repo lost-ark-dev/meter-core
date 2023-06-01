@@ -1,22 +1,21 @@
 import type { Read, Write } from "../../stream";
 import type { PKTSkillStageNotify } from "../../generated/types";
 export type SkillStageNotify = {
-  SourceId: bigint;
-  SkillId: number;
-  Stage: number;
+  sourceId: bigint;
+  skillId: number;
+  stage: number;
 };
 export function read(reader: Read, version: number) {
   const data = {} as SkillStageNotify;
-  data.SourceId = reader.u64();
-  data.SkillId = reader.u32();
-  data.Stage = reader.u8();
+  data.sourceId = reader.u64();
+  data.skillId = reader.u32();
+  data.stage = reader.u8();
   return data;
 }
 export function write(writer: Write, data: SkillStageNotify | PKTSkillStageNotify) {
-  writer.u64(data.SourceId);
-  writer.u32(data.SkillId);
-  writer.u8(data.Stage);
+  writer.u64(data.sourceId);
+  writer.u32(data.skillId);
+  writer.u8(data.stage);
 }
 
-export const logId = 31;
 export const name = "SkillStageNotify";

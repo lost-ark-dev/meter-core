@@ -15,5 +15,4 @@ export function write(writer: Write, data: AbilityChangeNotify | PKTAbilityChang
   });
 }
 
-export const logId = 0;
 export const name = "AbilityChangeNotify";

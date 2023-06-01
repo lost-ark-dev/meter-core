@@ -6,9 +6,13 @@ export type { PKTAuthTokenResult } from "./definitions/PKTAuthTokenResult";
 export type { PKTBlockSkillStateNotify } from "./definitions/PKTBlockSkillStateNotify";
 export type { PKTCounterAttackNotify } from "./definitions/PKTCounterAttackNotify";
 export type { PKTDeathNotify } from "./definitions/PKTDeathNotify";
+export type { PKTEquipChangeNotify } from "./definitions/PKTEquipChangeNotify";
+export type { PKTEquipLifeToolChangeNotify } from "./definitions/PKTEquipLifeToolChangeNotify";
+export type { PKTIdentityStanceChangeNotify } from "./definitions/PKTIdentityStanceChangeNotify";
 export type { PKTInitAbility } from "./definitions/PKTInitAbility";
 export type { PKTInitEnv } from "./definitions/PKTInitEnv";
 export type { PKTInitPC } from "./definitions/PKTInitPC";
+export type { PKTInitItem } from "./definitions/PKTInitItem";
 export type { PKTInitLocal } from "./definitions/PKTInitLocal";
 export type { PKTMigrationExecute } from "./definitions/PKTMigrationExecute";
 export type { PKTNewNpc } from "./definitions/PKTNewNpc";
@@ -46,3 +50,4 @@ export type { PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaug
 export type { PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
 export type { PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
 export type { PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";
+export type { PKTPCInspectResult } from "./definitions/PKTPCInspectResult";

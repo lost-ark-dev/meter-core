@@ -1,22 +1,21 @@
 import type { Read, Write } from "../../stream";
 import type { PKTCounterAttackNotify } from "../../generated/types";
 export type CounterAttackNotify = {
-  SourceId: bigint;
-  TargetId: bigint;
-  Type: number;
+  sourceId: bigint;
+  targetId: bigint;
+  type: number;
 };
 export function read(reader: Read, version: number) {
   const data = {} as CounterAttackNotify;
-  data.SourceId = reader.u64();
-  data.TargetId = reader.u64();
-  data.Type = reader.u32();
+  data.sourceId = reader.u64();
+  data.targetId = reader.u64();
+  data.type = reader.u32();
   return data;
 }
 export function write(writer: Write, data: CounterAttackNotify | PKTCounterAttackNotify) {
-  writer.u64(data.SourceId);
-  writer.u64(data.TargetId);
-  writer.u32(data.Type);
+  writer.u64(data.sourceId);
+  writer.u64(data.targetId);
+  writer.u32(data.type);
 }
 
-export const logId = 5;
 export const name = "CounterAttackNotify";

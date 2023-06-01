@@ -1,16 +1,15 @@
 import type { Read, Write } from "../../stream";
 import type { PKTZoneStatusEffectRemoveNotify } from "../../generated/types";
 export type ZoneStatusEffectRemoveNotify = {
-  StatusEffectId: number;
+  statusEffectId: number;
 };
 export function read(reader: Read, version: number) {
   const data = {} as ZoneStatusEffectRemoveNotify;
-  data.StatusEffectId = reader.u32();
+  data.statusEffectId = reader.u32();
   return data;
 }
 export function write(writer: Write, data: ZoneStatusEffectRemoveNotify | PKTZoneStatusEffectRemoveNotify) {
-  writer.u32(data.StatusEffectId);
+  writer.u32(data.statusEffectId);
 }
 
-export const logId = 45;
 export const name = "ZoneStatusEffectRemoveNotify";

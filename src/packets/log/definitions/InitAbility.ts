@@ -15,5 +15,4 @@ export function write(writer: Write, data: InitAbility | PKTInitAbility) {
   });
 }
 
-export const logId = 7;
 export const name = "InitAbility";

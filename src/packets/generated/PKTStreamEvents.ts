@@ -9,9 +9,13 @@ export interface PKTStreamEvents {
   PKTBlockSkillStateNotify: (pkt: PKT<types.PKTBlockSkillStateNotify>) => void;
   PKTCounterAttackNotify: (pkt: PKT<types.PKTCounterAttackNotify>) => void;
   PKTDeathNotify: (pkt: PKT<types.PKTDeathNotify>) => void;
+  PKTEquipChangeNotify: (pkt: PKT<types.PKTEquipChangeNotify>) => void;
+  PKTEquipLifeToolChangeNotify: (pkt: PKT<types.PKTEquipLifeToolChangeNotify>) => void;
+  PKTIdentityStanceChangeNotify: (pkt: PKT<types.PKTIdentityStanceChangeNotify>) => void;
   PKTInitAbility: (pkt: PKT<types.PKTInitAbility>) => void;
   PKTInitEnv: (pkt: PKT<types.PKTInitEnv>) => void;
   PKTInitPC: (pkt: PKT<types.PKTInitPC>) => void;
+  PKTInitItem: (pkt: PKT<types.PKTInitItem>) => void;
   PKTInitLocal: (pkt: PKT<types.PKTInitLocal>) => void;
   PKTMigrationExecute: (pkt: PKT<types.PKTMigrationExecute>) => void;
   PKTNewNpc: (pkt: PKT<types.PKTNewNpc>) => void;
@@ -49,5 +53,6 @@ export interface PKTStreamEvents {
   PKTZoneObjectUnpublishNotify: (pkt: PKT<types.PKTZoneObjectUnpublishNotify>) => void;
   PKTZoneStatusEffectAddNotify: (pkt: PKT<types.PKTZoneStatusEffectAddNotify>) => void;
   PKTZoneStatusEffectRemoveNotify: (pkt: PKT<types.PKTZoneStatusEffectRemoveNotify>) => void;
+  PKTPCInspectResult: (pkt: PKT<types.PKTPCInspectResult>) => void;
   "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }

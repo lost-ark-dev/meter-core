@@ -5,7 +5,6 @@ import type { NewPC } from "../packets/log/types";
 import { type Entity, EntityType, type Player } from "./entityTracker";
 import type { PartyTracker } from "./partytracker";
 import { statuseffectexpiredreasontype } from "../packets/generated/enums";
-import { u32tof32 } from "./utils";
 
 export enum StatusEffectTargetType {
   Party = 0,
@@ -51,6 +50,7 @@ export interface StatusEffect {
   timestamp: bigint;
   name: string;
   pktTime: Date;
+  stackCount: number;
 }
 
 interface StatusTrackerEvents {
@@ -389,18 +389,18 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
   }
 
   newPC(parsed: NewPC, localCharacterId: bigint, pktTime: Date) {
-    const shouldUsePartyStatusEffects = this.#shouldUsePartyStatusEffect(parsed.PCStruct.CharacterId, localCharacterId);
+    const shouldUsePartyStatusEffects = this.#shouldUsePartyStatusEffect(parsed.pcStruct.characterId, localCharacterId);
     if (shouldUsePartyStatusEffects) {
-      this.RemovePartyObject(parsed.PCStruct.CharacterId, pktTime);
+      this.RemovePartyObject(parsed.pcStruct.characterId, pktTime);
     } else {
-      this.RemoveLocalObject(parsed.PCStruct.PlayerId, pktTime);
+      this.RemoveLocalObject(parsed.pcStruct.playerId, pktTime);
     }
-    for (const se of parsed.PCStruct.statusEffectDatas) {
+    for (const se of parsed.pcStruct.statusEffectDatas) {
       this.RegisterStatusEffect(
         this.buildStatusEffect(
           se,
-          shouldUsePartyStatusEffects ? parsed.PCStruct.CharacterId : parsed.PCStruct.PlayerId,
-          se.SourceId,
+          shouldUsePartyStatusEffects ? parsed.pcStruct.characterId : parsed.pcStruct.playerId,
+          se.sourceId,
           shouldUsePartyStatusEffects ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
           pktTime
         )
@@ -439,15 +439,15 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     targetType: StatusEffectTargetType,
     pktTime: Date
   ): StatusEffect {
-    const newValCandidate1: number = se.Value ? se.Value.readUInt32LE() : 0;
-    const newValCandidate2: number = se.Value ? se.Value.readUInt32LE(8) : 0;
+    const newValCandidate1: number = se.value ? se.value.readUInt32LE() : 0;
+    const newValCandidate2: number = se.value ? se.value.readUInt32LE(8) : 0;
     const newVal = newValCandidate1 < newValCandidate2 ? newValCandidate1 : newValCandidate2;
     let statusEffectCategory = StatusEffectCategory.Other;
     let statusEffectBuffCategory = StatusEffectBuffCategory.Other;
     let showType = StatusEffectShowType.Other;
     let seName = "Unknown";
     let statusEffectType = StatusEffectType.Other;
-    const effectInfo = this.#data.skillBuff.get(se.StatusEffectId);
+    const effectInfo = this.#data.skillBuff.get(se.statusEffectId);
     if (effectInfo) {
       seName = effectInfo.name;
       switch (effectInfo.category) {
@@ -478,23 +478,24 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       }
     }
     return {
-      instanceId: se.EffectInstanceId,
+      instanceId: se.effectInstanceId,
       sourceId: sourceId,
-      statusEffectId: se.StatusEffectId,
+      statusEffectId: se.statusEffectId,
       targetId: targetId,
       type: targetType,
       value: newVal,
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
       showType: showType,
-      expirationDelay: u32tof32(se.TotalTime),
+      expirationDelay: se.totalTime,
       expirationTimer: undefined,
-      timestamp: se.EndTick,
+      timestamp: se.endTick,
       expireAt: undefined,
-      occurTime: se.OccurTime,
+      occurTime: se.occurTime,
       name: seName,
       pktTime: pktTime,
       effectType: statusEffectType,
+      stackCount: se.stackCount,
     };
   }
   getStatusEffects(
@@ -502,9 +503,9 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     targetEntity: Entity | undefined,
     localCharacterId: bigint,
     pktTime: Date
-  ): [[number, bigint][], [number, bigint][]] {
-    const statusEffectsOnTarget: [number, bigint][] = [];
-    const statusEffectsOnSource: [number, bigint][] = [];
+  ): [[number, bigint, number][], [number, bigint, number][]] {
+    const statusEffectsOnTarget: [number, bigint, number][] = [];
+    const statusEffectsOnSource: [number, bigint, number][] = [];
 
     const shouldUsePartyBuffForSource = this.#shouldUsePartyStatusEffectForEntity(sourceEntity, localCharacterId);
     const sourceEffects = this.GetStatusEffects(
@@ -512,7 +513,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
       pktTime
     );
-    for (const se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId]);
+    for (const se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId, se.stackCount]);
 
     if (targetEntity) {
       const shouldUsePartyBuffForTarget = this.#shouldUsePartyStatusEffectForEntity(targetEntity, localCharacterId);
@@ -533,7 +534,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
               shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
               pktTime
             );
-      for (const se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId]);
+      for (const se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId, se.stackCount]);
     }
     return [statusEffectsOnSource, statusEffectsOnTarget];
   }

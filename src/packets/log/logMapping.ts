@@ -1,4 +1,4 @@
-import * as logId from "./logIds";
+import { logId } from "./logIds";
 import * as names from "./names";
 import * as reads from "./reads";
 import * as writes from "./writes";
@@ -127,4 +127,14 @@ export const logMapping = new Map<
     [names.ZoneStatusEffectRemoveNotify, reads.ZoneStatusEffectRemoveNotify, writes.ZoneStatusEffectRemoveNotify],
   ],
   [logId.SkillCastNotify, [names.SkillCastNotify, reads.SkillCastNotify, writes.SkillCastNotify]],
+  [
+    logId.IdentityStanceChangeNotify,
+    [names.IdentityStanceChangeNotify, reads.IdentityStanceChangeNotify, writes.IdentityStanceChangeNotify],
+  ],
+  [logId.EquipChangeNotify, [names.EquipChangeNotify, reads.EquipChangeNotify, writes.EquipChangeNotify]],
+  [
+    logId.EquipLifeToolChangeNotify,
+    [names.EquipLifeToolChangeNotify, reads.EquipLifeToolChangeNotify, writes.EquipLifeToolChangeNotify],
+  ],
+  [logId.InitItem, [names.InitItem, reads.InitItem, writes.InitItem]],
 ]);

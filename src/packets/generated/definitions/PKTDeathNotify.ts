@@ -1,30 +1,30 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTDeathNotify = {
-  Unk0: number;
-  Unk1_0?: number;
-  Unk2: number;
-  Unk3_0?: number;
-  Unk4: number;
-  Unk5_0?: number;
-  SourceId: bigint;
-  Unk7: number;
-  TargetId: bigint;
-  Unk9: bigint;
+  unk0: number;
+  unk2_0?: number;
+  unk3: number;
+  unk5_0?: number;
+  unk6: number;
+  unk8_0?: number;
+  sourceId: bigint;
+  unk10: number;
+  targetId: bigint;
+  unk12: bigint;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTDeathNotify;
-  data.Unk0 = reader.u8();
-  if (reader.bool()) data.Unk1_0 = reader.u8();
-  data.Unk2 = reader.u32();
-  if (reader.bool()) data.Unk3_0 = reader.u8();
-  data.Unk4 = reader.u16();
-  if (reader.bool()) data.Unk5_0 = reader.u8();
-  data.SourceId = reader.u64();
-  data.Unk7 = reader.u32();
-  data.TargetId = reader.u64();
-  data.Unk9 = reader.u64();
+  data.unk0 = reader.u8();
+  if (reader.bool()) data.unk2_0 = reader.u8();
+  data.unk3 = reader.u32();
+  if (reader.bool()) data.unk5_0 = reader.u8();
+  data.unk6 = reader.u16();
+  if (reader.bool()) data.unk8_0 = reader.u8();
+  data.sourceId = reader.u64();
+  data.unk10 = reader.u32();
+  data.targetId = reader.u64();
+  data.unk12 = reader.u64();
   return data;
 }
 export const name = "PKTDeathNotify";

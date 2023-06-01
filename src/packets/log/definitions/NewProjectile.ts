@@ -13,5 +13,4 @@ export function write(writer: Write, data: NewProjectile | PKTNewProjectile) {
   ProjectileInfo.write(writer, data.projectileInfo);
 }
 
-export const logId = 15;
 export const name = "NewProjectile";

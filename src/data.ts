@@ -1,12 +1,26 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import { StatusEffectBuffTypeFlags, StatusEffectTarget, type StatusEffect } from "./logger/data";
-import { stattype } from "./packets/generated/enums";
+import { StatusEffectBuffTypeFlags, StatusEffectTarget, type StatusEffect, EntityState } from "./logger/data";
+import {
+  addontype,
+  buffshowprioritycategory,
+  combateffectactiontype,
+  combateffectactortype,
+  combateffectconditiontype,
+  hitoption,
+  identitycategory,
+  npcgrade,
+  paramtype,
+  skillfeaturetype,
+  stattype,
+} from "./packets/generated/enums";
+import { Entity, EntityType, Player, Npc as NpcEntity } from "./logger/entityTracker";
 export type Npc = {
   id: number;
   name: string;
-  grade: string;
+  grade: keyof typeof npcgrade;
   type: string;
+  pushimmune: boolean;
 };
 
 export type Skill = {
@@ -15,6 +29,8 @@ export type Skill = {
   desc: string;
   classid: number;
   icon: string;
+  identitycategory?: keyof typeof identitycategory;
+  groups?: number[];
   summonids?: number[];
   summonsourceskill?: number;
   sourceskill?: number;
@@ -29,7 +45,8 @@ export type SkillBuff = {
   duration: number;
   category: "buff" | "debuff";
   type: string; // statuseffecttype
-  buffcategory: string;
+  statuseffectvalues?: number[];
+  buffcategory: keyof typeof buffshowprioritycategory;
   target: string;
   uniquegroup: number;
   overlapFlag: number;
@@ -38,26 +55,45 @@ export type SkillBuff = {
   setname?: string; // set nicename when buffcategory === "set"
 };
 
+export type SkillFeature = Map<number, SkillFeatureLevelData>;
+export type SkillFeatureLevelData = {
+  key: number;
+  name: string;
+  entries: SkillFeatureOption[];
+};
+export type SkillFeatureOption = {
+  type: keyof typeof skillfeaturetype;
+  level: number;
+  paramtype: keyof typeof paramtype;
+  params: number[];
+};
+
 export type PassiveOption = {
-  type: string; //addontype
-  keystat: string; //stattype
+  type: keyof typeof addontype; //addontype
+  keystat: keyof typeof stattype; //stattype
   keyindex: number;
   value: number;
 };
 
 export type CombatEffect = {
   id: number;
+  effects: CombatEffectDetail[];
+};
+export type CombatEffectDetail = {
+  ratio: number;
+  cooldown: number;
   conditions: CombatEffectCondition[];
-  actions: CombatEffectActions[];
+  actions: CombatEffectAction[];
 };
 export type CombatEffectCondition = {
-  type: string; //combateffectconditiontype
-  actor: string; //combateffectactortype
+  type: keyof typeof combateffectconditiontype; //combateffectconditiontype
+  actor: keyof typeof combateffectactortype; //combateffectactortype
   arg: number;
 };
-export type CombatEffectActions = {
-  type: string; //combateffectactiontype
-  actor: string; //combateffectactortype
+export type CombatEffectAction = {
+  type: keyof typeof combateffectactiontype; //combateffectactiontype
+  actor: keyof typeof combateffectactortype; //combateffectactortype
+  args: number[];
 };
 
 export type SkillEffect = {
@@ -78,7 +114,22 @@ export type Esther = {
   skills: number[];
   npcs: number[];
 };
-
+export type ItemSetData = { setname: string; level: number };
+export type ItemSet = {
+  items: Map<number, ItemSetData>;
+  seteffects: Map<string, ItemSetLevel>;
+};
+export type ItemSetLevel = Map<number, ItemSetCount>;
+export type ItemSetCount = Map<number, { desc: string; options: PassiveOption[] }>;
+export type CombatEffectConditionData = {
+  effect: CombatEffectDetail;
+  self?: Entity;
+  target?: Entity;
+  caster?: Entity | undefined;
+  skill?: Skill | undefined;
+  hitOption?: hitoption;
+  targetCount?: number;
+};
 export class MeterData {
   dbPath: string = "";
   modulePath: string;
@@ -89,8 +140,10 @@ export class MeterData {
   skill: Map<number, Skill>;
   skillBuff: Map<number, SkillBuff>;
   skillEffect: Map<number, SkillEffect>;
+  skillFeature: Map<number, SkillFeature>;
   combatEffect: Map<number, CombatEffect>;
   esther: Esther[];
+  itemSet: ItemSet;
 
   constructor(meterDataPath: string = "./meter-core/data") {
     this.modulePath = meterDataPath;
@@ -100,8 +153,10 @@ export class MeterData {
     this.skill = new Map();
     this.skillBuff = new Map();
     this.skillEffect = new Map();
+    this.skillFeature = new Map();
     this.combatEffect = new Map();
     this.esther = [];
+    this.itemSet = { items: new Map(), seteffects: new Map() };
   }
 
   processEnumData(data: { [key: string]: { [key: string]: string } }) {
@@ -141,6 +196,20 @@ export class MeterData {
       this.skillEffect.set(skillEffect.id, skillEffect);
     }
   }
+  processSkillFeature(data: {
+    [skillid: string]: {
+      skillid: number;
+      tripods: { [index: string]: { key: number; name: string; entries: SkillFeatureOption[] } };
+    };
+  }) {
+    for (const skillFeature of Object.values(data)) {
+      const m = new Map<number, SkillFeatureLevelData>();
+      for (const levelData of Object.values(skillFeature.tripods)) {
+        m.set(levelData.key, levelData);
+      }
+      this.skillFeature.set(skillFeature.skillid, m);
+    }
+  }
   processCombatEffectData(data: { [key: string]: CombatEffect }) {
     for (const combatEffect of Object.values(data)) {
       this.combatEffect.set(combatEffect.id, combatEffect);
@@ -148,6 +217,34 @@ export class MeterData {
   }
   processEsther(data: Esther[]) {
     this.esther = Object.values(data);
+  }
+  processItemSet(data: {
+    [setName: string]: {
+      [setLevel: string]: {
+        itemids: number[];
+        value: {
+          [setCount: string]: {
+            desc: string;
+            options: PassiveOption[];
+          };
+        };
+      };
+    };
+  }) {
+    for (const [setName, setNameData] of Object.entries(data)) {
+      const m: ItemSetLevel = new Map();
+      for (const [level, setLevelData] of Object.entries(setNameData)) {
+        const m2: ItemSetCount = new Map();
+        for (const [count, setCountData] of Object.entries(setLevelData.value)) {
+          m2.set(parseInt(count), setCountData);
+        }
+        m.set(parseInt(level), m2);
+        for (const itemid of Object.values(setLevelData.itemids)) {
+          this.itemSet.items.set(itemid, { setname: setName, level: parseInt(level) });
+        }
+      }
+      this.itemSet.seteffects.set(setName, m);
+    }
   }
 
   getNpcName(id: number) {
@@ -288,9 +385,9 @@ export class MeterData {
 
     // Extract type from passive options
     buff.passiveoption.forEach((option) => {
+      const addon = addontype[option.type];
       if (option.type === "stat") {
-        const stat = stattype[option.keystat as keyof typeof stattype];
-        if (!stat) return; //Important, as the previous trick might return undefined
+        const stat = stattype[option.keystat];
         if ([stattype.mastery, stattype.mastery_x, stattype.paralyzation_point_rate].includes(stat)) {
           bufftype |= StatusEffectBuffTypeFlags.STAGGER;
         }
@@ -375,56 +472,206 @@ export class MeterData {
             bufftype |= StatusEffectBuffTypeFlags.DMG;
           } else bufftype |= StatusEffectBuffTypeFlags.DEFENSE;
         }
-      } else if ("skill_critical_ratio" === option.type) {
+      } else if (addontype.skill_critical_ratio === addon) {
         bufftype |= StatusEffectBuffTypeFlags.CRIT;
       } else if (
-        ["skill_damage", "class_option", "skill_group_damage", "skill_critical_damage", "skill_penetration"].includes(
-          option.type
-        )
+        [
+          addontype.skill_damage,
+          addontype.class_option,
+          addontype.skill_group_damage,
+          addontype.skill_critical_damage,
+          addontype.skill_penetration,
+        ].includes(addon)
       ) {
         if ((buff.category === "buff" && option.value >= 0) || (buff.category === "debuff" && option.value <= 0)) {
           bufftype |= StatusEffectBuffTypeFlags.DMG;
         } else bufftype |= StatusEffectBuffTypeFlags.DEFENSE;
-      } else if (["skill_cooldown_reduction", "skill_group_cooldown_reduction"].includes(option.type)) {
+      } else if ([addontype.skill_cooldown_reduction, addontype.skill_group_cooldown_reduction].includes(addon)) {
         bufftype |= StatusEffectBuffTypeFlags.COOLDOWN;
-      } else if (["skill_mana_reduction", "mana_reduction"].includes(option.type)) {
+      } else if ([addontype.skill_mana_reduction, addontype.mana_reduction].includes(addon)) {
         bufftype |= StatusEffectBuffTypeFlags.RESOURCE;
-      } else if ("combat_effect" === option.type) {
+      } else if (addontype.combat_effect === addon) {
         // Extract type from combat_effect
         const combatEffect = this.combatEffect.get(option.keyindex);
         if (!combatEffect) return;
-        //TODO: evaluate conditions ? or maybe it should be done on meter core & remove those buffs
-        combatEffect.actions.forEach((action) => {
-          if (
-            [
-              "modify_damage",
-              "modify_final_damage",
-              "modify_critical_multiplier",
-              "modify_penetration",
-              "modify_penetration_when_critical",
-              "modify_penetration_addend",
-              "modify_penetration_addend_when_critical",
-              "modify_damage_shield_multiplier",
-            ].includes(action.type)
-          ) {
-            bufftype |= StatusEffectBuffTypeFlags.DMG;
-          } else if ("modify_critical_ratio" === action.type) {
-            bufftype |= StatusEffectBuffTypeFlags.CRIT;
-          }
+        combatEffect.effects.forEach((effect) => {
+          //TODO: evaluate conditions ? or maybe it should be done on meter core & remove those buffs
+          effect.actions.forEach((action) => {
+            const actionType = combateffectactiontype[action.type];
+            if (
+              [
+                combateffectactiontype.modify_damage,
+                combateffectactiontype.modify_final_damage,
+                combateffectactiontype.modify_critical_multiplier,
+                combateffectactiontype.modify_penetration,
+                combateffectactiontype.modify_penetration_when_critical,
+                combateffectactiontype.modify_penetration_addend,
+                combateffectactiontype.modify_penetration_addend_when_critical,
+                combateffectactiontype.modify_damage_shield_multiplier,
+              ].includes(actionType)
+            ) {
+              bufftype |= StatusEffectBuffTypeFlags.DMG;
+            } else if (combateffectactiontype.modify_critical_ratio === actionType) {
+              bufftype |= StatusEffectBuffTypeFlags.CRIT;
+            }
+          });
         });
       }
     });
     return bufftype;
   }
-  getStatPairMap(statpair: { StatType: number; Value: bigint }[]) {
+  getStatPairMap(statpair: { statType: number; value: bigint }[]) {
     //TODO: use a "Common" packet for statpair parsing
     const map = new Map<stattype, bigint>();
     statpair.forEach((pair) => {
-      map.set(pair.StatType, pair.Value);
+      map.set(pair.statType, pair.value);
     });
     return map;
   }
-
+  isCombatEffectConditionsValid({
+    effect,
+    self,
+    target,
+    caster,
+    skill,
+    hitOption,
+    targetCount,
+  }: CombatEffectConditionData): boolean {
+    let conditionValid = true;
+    effect.conditions.forEach((condition) => {
+      if (!conditionValid) return;
+      const actor = combateffectactortype[condition.actor];
+      switch (combateffectconditiontype[condition.type]) {
+        case combateffectconditiontype.target_count:
+          if (!targetCount || targetCount !== condition.arg) conditionValid = false;
+          break;
+        case combateffectconditiontype.current_skill:
+          if (!skill || skill.id === condition.arg) conditionValid = false;
+          break;
+        case combateffectconditiontype.pc:
+          if (actor === combateffectactortype.self) {
+            if (!self || self.entityType !== EntityType.Player) conditionValid = false;
+          } else if (actor === combateffectactortype.target) {
+            if (!target || target.entityType !== EntityType.Player) conditionValid = false;
+          } else if (actor === combateffectactortype.caster) {
+            if (!caster || caster.entityType !== EntityType.Player) conditionValid = false;
+          } else {
+            conditionValid = false;
+          }
+          break;
+        case combateffectconditiontype.skill_identity_category:
+          if (!skill || !skill.identitycategory || identitycategory[skill.identitycategory] != condition.arg)
+            conditionValid = false;
+          break;
+        //S_ImmuneNotify, S_ImmuneStatusNotify
+        /**
+         * "movetype" enum in AbnormalMoveNotify
+         * "movetype" & "MoveOptionData" in SkillDamageAbnormalMoveNotify
+         * "ImmuneNotify" takes an effectId, mby it's smthing else ?
+         * "ImmuneStatusNotify" has ImmuneData with {DebuffImmuneList, AbnormalStatusImmuneList, StatusEffectTypeImmuneList} each of those have Type/Value
+         */
+        case combateffectconditiontype.abnormal_move_immune:
+          //"Push immune foes", usually tripod "Weak Point Detection"
+          if (
+            !target ||
+            ![EntityType.Npc, EntityType.Summon].includes(target.entityType) ||
+            !(target as NpcEntity).pushimmune
+          )
+            conditionValid = false;
+          break;
+        case combateffectconditiontype.abnormal_move_all:
+          //TODO: implement abnormal move tracking (with expiration & stuff)
+          // Only useful for 250841 (Blade's Death Sentence / Confirmed Kill tripod)
+          conditionValid = false;
+          break;
+        case combateffectconditiontype.abnormal_move:
+          //TODO: implement abnormal move tracking (with expiration & stuff)
+          // Only useful for 250851 (Blade's Death Sentence / Ruthless tripod)
+          conditionValid = false;
+          break;
+        case combateffectconditiontype.abnormal_status:
+          //TODO: implement abnormal move tracking (with expiration & stuff)
+          // Only useful for 351308 (Machinist's Annihilation Mode / Cross Fire tripod)
+          conditionValid = false;
+          break;
+        case combateffectconditiontype.current_skill_group:
+          if (!skill || !skill.groups || !skill.groups.includes(condition.arg)) conditionValid = false;
+          break;
+        case combateffectconditiontype.hp_less:
+          if (actor === combateffectactortype.self) {
+            if (
+              !self ||
+              Number((self.stats.get(stattype.hp) ?? 0n) / (self.stats.get(stattype.max_hp) ?? 0n)) >=
+                condition.arg / 100
+            )
+              conditionValid = false;
+          } else if (actor === combateffectactortype.target) {
+            if (
+              !target ||
+              Number((target.stats.get(stattype.hp) ?? 0n) / (target.stats.get(stattype.max_hp) ?? 0n)) >=
+                condition.arg / 100
+            )
+              conditionValid = false;
+          } else if (actor === combateffectactortype.caster) {
+            if (
+              !caster ||
+              Number((caster.stats.get(stattype.hp) ?? 0n) / (caster.stats.get(stattype.max_hp) ?? 0n)) >=
+                condition.arg / 100
+            )
+              conditionValid = false;
+          } else {
+            conditionValid = false;
+            break;
+          }
+          break;
+        case combateffectconditiontype.npc_scaled_level_less:
+          if (actor === combateffectactortype.target) {
+            if (target && [EntityType.Npc, EntityType.Summon].includes(target.entityType)) {
+              if ((target as NpcEntity).balanceLevel > condition.arg) conditionValid = false;
+            } else conditionValid = false;
+          } else {
+            conditionValid = false;
+          }
+          break;
+        case combateffectconditiontype.npc_grade_less:
+          if (actor === combateffectactortype.target) {
+            if (target && [EntityType.Npc, EntityType.Summon].includes(target.entityType)) {
+              const grade = npcgrade[(target as NpcEntity).grade];
+              if (!grade || grade > condition.arg) conditionValid = false;
+            } else conditionValid = false;
+          } else {
+            conditionValid = false;
+          }
+          break;
+        case combateffectconditiontype.npc_grade_greater:
+          if (actor === combateffectactortype.target) {
+            if (target && [EntityType.Npc, EntityType.Summon].includes(target.entityType)) {
+              const grade = npcgrade[(target as NpcEntity).grade];
+              if (!grade || grade < condition.arg) conditionValid = false;
+            } else conditionValid = false;
+          } else {
+            conditionValid = false;
+          }
+          break;
+        case combateffectconditiontype.identity_stance:
+          if (actor === combateffectactortype.self) {
+            if (!self || self.entityType !== EntityType.Player || (self as Player).stance !== condition.arg)
+              conditionValid = false;
+          } else {
+            conditionValid = false;
+          }
+          break;
+        case combateffectconditiontype.directional_attack:
+          if (!hitOption || ((hitOption + 1) & condition.arg) === 0) conditionValid = false;
+          break;
+        default:
+          // The condition isn't handled, invalidate condition
+          conditionValid = false;
+          break;
+      }
+    });
+    return conditionValid;
+  }
   isSupportClassId(id: number) {
     return id === 105 || id === 204 || id === 602;
   }
@@ -454,7 +701,9 @@ export class MeterData {
     this.processSkillData(JSON.parse(readFileSync(join(basePath, "Skill.json"), "utf-8")));
     this.processSkillBuffData(JSON.parse(readFileSync(join(basePath, "SkillBuff.json"), "utf-8")));
     this.processSkillBuffEffectData(JSON.parse(readFileSync(join(basePath, "SkillEffect.json"), "utf-8")));
+    this.processSkillFeature(JSON.parse(readFileSync(join(basePath, "SkillFeature.json"), "utf-8")));
     this.processCombatEffectData(JSON.parse(readFileSync(join(basePath, "CombatEffect.json"), "utf-8")));
     this.processEsther(JSON.parse(readFileSync(join(basePath, "Esther.json"), "utf-8")));
+    this.processItemSet(JSON.parse(readFileSync(join(basePath, "ItemSet.json"), "utf-8")));
   }
 }

@@ -1,12 +1,12 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTRaidBossKillNotify = {
-  Unk0: Buffer;
+  unk0: Buffer;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTRaidBossKillNotify;
-  data.Unk0 = reader.bytes(5);
+  data.unk0 = reader.bytes(5);
   return data;
 }
 export const name = "PKTRaidBossKillNotify";

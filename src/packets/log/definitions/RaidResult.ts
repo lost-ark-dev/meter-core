@@ -7,5 +7,4 @@ export function read(reader: Read, version: number) {
 }
 export function write(writer: Write, data: RaidResult | PKTRaidResult) {}
 
-export const logId = 27;
 export const name = "RaidResult";

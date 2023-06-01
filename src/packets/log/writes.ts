@@ -43,3 +43,7 @@ export { write as ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpu
 export { write as ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export { write as ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
 export { write as SkillCastNotify } from "./definitions/SkillCastNotify";
+export { write as IdentityStanceChangeNotify } from "./definitions/IdentityStanceChangeNotify";
+export { write as EquipChangeNotify } from "./definitions/EquipChangeNotify";
+export { write as EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChangeNotify";
+export { write as InitItem } from "./definitions/InitItem";

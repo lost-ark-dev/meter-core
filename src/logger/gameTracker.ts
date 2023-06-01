@@ -1,6 +1,16 @@
 import { TypedEmitter } from "tiny-typed-emitter";
-import type { MeterData } from "../data";
-import { hitflag, hitoption } from "../packets/generated/enums";
+import type { CombatEffectConditionData, MeterData, Skill, SkillBuff } from "../data";
+import {
+  addontype,
+  combateffectactiontype,
+  damageattr,
+  damagetype,
+  hitflag,
+  hitoption,
+  paramtype,
+  skillfeaturetype,
+  stattype,
+} from "../packets/generated/enums";
 import type { InitEnv } from "../packets/log/types";
 import type { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions } from "./data";
 import { StatusEffectTarget } from "./data";
@@ -9,6 +19,7 @@ import { EntityTracker, EntityType } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
 import type { ParserEvent } from "./parser";
 import type { StatusTracker } from "./statustracker";
+import { CombatEffect } from "../data";
 
 const defaultOptions: GameTrackerOptions = {
   isLive: true,
@@ -47,7 +58,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
     this.phaseTransitionResetRequest = false;
     this.phaseTransitionResetRequestTime = 0;
-    this.#entityToSkillBreakdown = new Map()
+    this.#entityToSkillBreakdown = new Map();
 
     this.encounters = [];
     this.#game = {
@@ -188,7 +199,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
     this.updateEntity(target, { isDead: true, deathTime: +time, deaths }, time);
   }
-  onDamage(owner: Entity, source: Entity, target: Entity, damageData: DamageData, time: Date) {
+  onDamage(owner: Entity, source: Entity, target: Entity, damageData: DamageData, targetCount: number, time: Date) {
     if (
       (damageData.modifier & 0xf) === hitflag.damage_share &&
       damageData.skillId === 0 &&
@@ -260,21 +271,21 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     // map status effects
     const mappedSeOnSource: Set<number> = new Set();
     const mappedSeOnTarget: Set<number> = new Set();
-    statusEffectsOnSource.forEach((buffId) => {
-      mappedSeOnSource.add(buffId[0] as number);
+    statusEffectsOnSource.forEach(([buffId]) => {
+      mappedSeOnSource.add(buffId);
     });
-    statusEffectsOnTarget.forEach((buffId) => {
-      mappedSeOnTarget.add(buffId[0] as number);
+    statusEffectsOnTarget.forEach(([buffId]) => {
+      mappedSeOnTarget.add(buffId);
     });
 
     // Damage update
-    skill.damageDealt += damageData.damage;
+    skill.damageInfo.damageDealt += damageData.damage;
     if (damageData.damage > skill.maxDamage) skill.maxDamage = damageData.damage;
 
     damageOwner.hits.total += 1;
     skill.hits.total += 1;
 
-    damageOwner.damageDealt += damageData.damage;
+    damageOwner.damageInfo.damageDealt += damageData.damage;
     damageTarget.damageTaken += damageData.damage;
 
     // Crit update
@@ -307,7 +318,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       this.#game.damageStatistics.totalDamageDealt += damageData.damage;
       this.#game.damageStatistics.topDamageDealt = Math.max(
         this.#game.damageStatistics.topDamageDealt,
-        damageOwner.damageDealt
+        damageOwner.damageInfo.damageDealt
       );
       //#region Player buff
       let isBuffedBySupport = false,
@@ -329,6 +340,16 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             statusEffect.target === StatusEffectTarget.PARTY &&
             this.#data.isSupportClassId(statusEffect.source.skill.classid);
         }
+
+        const oldval = skill!.damageDealtBuffedBy.get(buffId) ?? 0;
+        skill!.damageDealtBuffedBy.set(buffId, oldval + damageData.damage);
+        const oldOwnerDamage = damageOwner.damageDealtBuffedBy.get(buffId) ?? 0;
+        damageOwner.damageDealtBuffedBy.set(buffId, oldOwnerDamage + damageData.damage);
+
+        const oldHitAmountTotal = damageOwner.hits.hitsBuffedBy.get(buffId) ?? 0;
+        damageOwner.hits.hitsBuffedBy.set(buffId, oldHitAmountTotal + 1);
+        const oldHitAmountSkill = skill!.hits.hitsBuffedBy.get(buffId) ?? 0;
+        skill!.hits.hitsBuffedBy.set(buffId, oldHitAmountSkill + 1);
       });
       mappedSeOnTarget.forEach((buffId) => {
         if (!this.#game.damageStatistics.debuffs.has(buffId)) {
@@ -345,50 +366,533 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             statusEffect.target === StatusEffectTarget.PARTY &&
             this.#data.isSupportClassId(statusEffect.source.skill.classid);
         }
-      });
 
-      const debuffAttackCount = isDebuffedBySupport ? 1 : 0;
-      const buffAttackCount = isBuffedBySupport ? 1 : 0;
-
-      skill.damageDealtBuffedBySupport += isBuffedBySupport ? damageData.damage : 0;
-      skill.damageDealtDebuffedBySupport += isDebuffedBySupport ? damageData.damage : 0;
-
-      mappedSeOnSource.forEach((buffId) => {
-        const oldval = skill!.damageDealtBuffedBy.get(buffId) ?? 0;
-        skill!.damageDealtBuffedBy.set(buffId, oldval + damageData.damage);
-        const oldOwnerDamage = damageOwner.damageDealtBuffedBy.get(buffId) ?? 0;
-        damageOwner.damageDealtBuffedBy.set(buffId, oldOwnerDamage + damageData.damage);
-      });
-      mappedSeOnTarget.forEach((buffId) => {
         const oldSkillDmg = skill!.damageDealtDebuffedBy.get(buffId) ?? 0;
         skill!.damageDealtDebuffedBy.set(buffId, oldSkillDmg + damageData.damage);
         const oldOwnerDamage = damageOwner.damageDealtDebuffedBy.get(buffId) ?? 0;
         damageOwner.damageDealtDebuffedBy.set(buffId, oldOwnerDamage + damageData.damage);
-      });
 
-      damageOwner.damageDealtBuffedBySupport += isBuffedBySupport ? damageData.damage : 0;
-      damageOwner.damageDealtDebuffedBySupport += isDebuffedBySupport ? damageData.damage : 0;
-
-      damageOwner.hits.hitsBuffedBySupport += buffAttackCount;
-      damageOwner.hits.hitsDebuffedBySupport += debuffAttackCount;
-      mappedSeOnSource.forEach((buffId) => {
-        const oldHitAmountTotal = damageOwner.hits.hitsBuffedBy.get(buffId) ?? 0;
-        damageOwner.hits.hitsBuffedBy.set(buffId, oldHitAmountTotal + 1);
-        const oldHitAmountSkill = skill!.hits.hitsBuffedBy.get(buffId) ?? 0;
-        skill!.hits.hitsBuffedBy.set(buffId, oldHitAmountSkill + 1);
-      });
-      mappedSeOnTarget.forEach((buffId) => {
         const oldHitAmountTotal = damageOwner.hits.hitsDebuffedBy.get(buffId) ?? 0;
         damageOwner.hits.hitsDebuffedBy.set(buffId, oldHitAmountTotal + 1);
         const oldHitAmountSkill = skill!.hits.hitsDebuffedBy.get(buffId) ?? 0;
         skill!.hits.hitsDebuffedBy.set(buffId, oldHitAmountSkill + 1);
       });
 
+      const debuffAttackCount = isDebuffedBySupport ? 1 : 0;
+      const buffAttackCount = isBuffedBySupport ? 1 : 0;
+
+      skill.damageInfo.damageDealtBuffedBySupport += isBuffedBySupport ? damageData.damage : 0;
+      skill.damageInfo.damageDealtDebuffedBySupport += isDebuffedBySupport ? damageData.damage : 0;
+
+      damageOwner.damageInfo.damageDealtBuffedBySupport += isBuffedBySupport ? damageData.damage : 0;
+      damageOwner.damageInfo.damageDealtDebuffedBySupport += isDebuffedBySupport ? damageData.damage : 0;
+
+      damageOwner.hits.hitsBuffedBySupport += buffAttackCount;
+      damageOwner.hits.hitsDebuffedBySupport += debuffAttackCount;
+
       skill.hits.hitsBuffedBySupport += buffAttackCount;
       skill.hits.hitsDebuffedBySupport += debuffAttackCount;
 
       //#endregion
 
+      //#region rDps
+      /**
+       * SkillBuff.Type
+       *
+       * statuseffecttype=="instant_stat_amplify"
+       * -> ValueA = critRes
+       * -> ValueB = never used
+       * -> ValueC = Phys. Defense (always negative)
+       * -> ValueD = Mag. Defense (always negative)
+       * -> ValueE = never used
+       * -> ValueF = never used
+       * -> ValueG = 0/1/2 -> 0=examples, 1=self ?, 2=party ? -> only 6 are 0 or 1, other are 2 => ignore
+       * -> ValueH = Incoming Phys. Damage (always positive)
+       * -> ValueI = Incoming Mag. Damage (always positive)
+       *
+       * statuseffecttype=="skill_damage_amplify"
+       * -> ValueA = SkillId -> if != 0, only apply to the given skillId
+       * -> ValueB = effect value (always positive)
+       * -> ValueC = 0,1,2 -> 0=examples, 1=self, 2=party
+       * -> ValueD = 2
+       * -> ValueE = SkillEffectId -> if != 0, only apply to the given skillEffectId
+       *
+       * statuseffecttype=="directional_attack_amplify"
+       * -> ValueA = frontValue
+       * -> ValueE = backValue
+       * -> ValueG = 0,1,2 -> 0=examples, 1=self, 2=party
+       *
+       * statuseffecttype=="attack_power_amplify" -> used by support buffs "15% of caster's basic attack"
+       * -> ValueA = effect value (always positive)
+       *
+       *
+       * PassiveOptions
+       * addontype=="skill_group_damage" -> no party synergies
+       *
+       *
+       * addontype=="stat" && keystat=="critical_hit_rate"
+       * addontype=="stat" && keystat=="critical_dam_rate" -> used for crit dmg tracking only
+       * addontype=="stat" && keystat=="attack_power_sub_rate_2"
+       * addontype=="stat" && keystat=="physical_inc_sub_rate_2" -> resistance on yourself
+       * addontype=="stat" && keystat=="magical_inc_sub_rate_2" -> resistance on yourself
+       * addontype=="stat" && keystat=="skill_damage_sub_rate_2" -> bard's buble etc
+       * addontype=="stat" && keystat=="def_x"/"def_y"      -> used by dark nades & Dagger bracelet
+       *
+       *
+       *
+       * addontype=="combat_effect" && combatEffect.Action.Type=="modify_critical_multiplier"
+       * -> need following conditions to be handled:
+       *  [
+       *  abnormal_move_immune, -> tripod weak point detection (Crit Damage on Push-Immune foes) (200306, 350706), 32431 ?
+       *  npc_grade_less, -> idk (77399997)
+       *  target_count, -> Cull buff (arcana card) 192810, tripod isolation (crit damage ...) 268150, tripod Enhanced Magazine 350408, 350891
+       *  current_skill: 
+       *    192810 -> Cull buff (arcana card) (makes it work on arcana awakenings)
+            268150 -> tripod isolation
+            280908 -> tripod Steady Aim
+            281315, 281416, 281506, 281903 -> tripod Solo Performance
+            361808 -> tripod Light Explosion
+            361917 -> unused Holy Sword tripod
+            2324002 -> tripod Furious Hit
+            3415010 -> unused Raging Dragon Slash tripod
+       *  skill_identity_category-> 192810 cull buff (makes it work on any arcana skills -> identitycategory::arcana_normal, arcana_stack, arcana_ruin, arcana_card)
+       *  pc, -> unused buffs ?
+       *  abnormal_move_all -> itemset Express: ignore, anw value=0
+       *  abnormal_move,-> ignore, anw value=0
+       *  abnormal_status -> Cross Fire tripod (target frozen)
+       *  npc_scaled_level_less -> bracelets (605000069, 605000070, 605000071, 605000072, 605000077, 605000078, 605000079, 605000080), 
+       *  current_skill_group -> bracelets (77392001, 77392002, 77392003, 605000077, 605000078, 605000079, 605000080, 605010161, 605010162, 605010163, 605010164),
+       *  hp_less,
+       *    351708 -> tripod Evolved Shot
+       *    380708 -> tripod Heaven Calls
+       *    380709 -> ? deleted tripod ?
+       *    380710 -> ? deleted tripod ?
+       *    2324002 -> tripod Furious Hit
+       *  npc_grade_greater (280908 (tripod Steady Aim), 350805, 380708, 380709, 380710, 3415010, 3459001),
+       *  identity_stance (281315, 281416, 281506, 281903, 361808), -> sharpshooter silverhawk status (on/off)
+       *  directional_attack (600000103, 610000103, 620000103) -> bracelets ?
+       * ]
+       * 
+       * 
+       * [Processing steps]
+       * 1- get all relevent buffs with their respective type, value and source
+       * 2- group up all additive buffs
+       * 3- if there is at least 1 crit chance buff, calculate crit damage
+       * 4- apply all buff group 1 by 1 (multiplicative) to calculate flatGain and each step effGain%
+       * TODO: i think that, as for the stagger, the flat damage/flat stat is rounded after each effect applied -> this might create a tiny inaccuracy
+       *    - dmg: amount=(1-1/buff%)*dmg
+       *    - crit: amountIfCrit=buff%*(dmg-dmg/critDMGStat) / amount=buff% * ( dmg*critDMGStat - dmg)
+       *    - effGain%=1-(dmg/(dmg-amount))
+       *    - flatGain = sum(amount)
+       * - attribute damageGain to each source based on their buff gain% and totalDamageGain%
+       *    - attrDmg = (effGain%/sum(effGain%))*flatGain
+       * 
+       */
+      if (damageData.damage > 0 && damageOwner.isPlayer) {
+        type RdpsBuffData = {
+          casterEntity: Entity;
+          rate: number;
+        };
+        const rdpsData = {
+          multDmg: {
+            sumRate: 0.0,
+            totalRate: 1.0,
+            values: Array<RdpsBuffData>(),
+          },
+          addDmg: {
+            sumRate: 0.0,
+            values: Array<RdpsBuffData>(),
+          },
+          crit: {
+            sumRate: 0.0,
+            values: Array<RdpsBuffData>(),
+          },
+          critDmgRate: 2.0,
+        };
+        // Process only if source is a player, excluding support of the rdps processing for now
+        //TODO: include support buffs (will require full atk power sources emulation (bc of 15% of base atk power that is additive) & spec for bard's serenade)
+        statusEffectsOnSource.forEach(([buffId, sourceEntityId, stackCount]) => {
+          const casterEntity = this.#entityTracker.entities.get(sourceEntityId);
+          if (!casterEntity) return;
+          const buff = this.getBuffAfterTripods(this.#data.skillBuff.get(buffId), casterEntity, damageData);
+          if (!buff) return;
+          // Check for atk power buff, crit buff and dmg buff
+          if (
+            buff.type === "skill_damage_amplify" &&
+            buff.statuseffectvalues &&
+            casterEntity.entityType === EntityType.Player &&
+            sourceEntityId !== owner.entityId
+          ) {
+            const skillId = buff.statuseffectvalues[0] ?? 0;
+            const skillEffectId = buff.statuseffectvalues[4] ?? 0;
+            if (
+              (skillId === 0 || skillId === damageData.skillId) &&
+              (skillEffectId === 0 || skillEffectId === damageData.skillEffectId)
+            ) {
+              const val = buff.statuseffectvalues[1] ?? 0;
+              if (val !== 0) {
+                const rate = (val / 10000) * stackCount;
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+            }
+          } else if (
+            buff.type === "attack_power_amplify" &&
+            buff.statuseffectvalues &&
+            casterEntity.entityType === EntityType.Player &&
+            sourceEntityId !== owner.entityId
+          ) {
+            //TODO: we need caster base atk power to process support 15% of caster's atk power buff
+          }
+          buff.passiveoption.forEach((passive) => {
+            if (addontype[passive.type] === addontype.stat) {
+              if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+                if (passive.keystat === "critical_hit_rate") {
+                  // Only Lance of judgment
+                  const val = passive.value;
+                  if (val !== 0) {
+                    const rate = (val / 10000) * stackCount;
+                    rdpsData.crit.values.push({
+                      casterEntity,
+                      rate,
+                    });
+                    rdpsData.crit.sumRate += rate;
+                  }
+                } else if (passive.keystat === "attack_power_sub_rate_2") {
+                  //There, every attack power buff of that same type (skill_damage_sub_rate_2) is added together (instead of being multiplied)
+                  //But it is still multiplied with other buffs
+                  //TODO: weight in spec efficiency for Serenade of Courage
+                  const val = passive.value;
+                  if (val !== 0) {
+                    const rate = (val / 10000) * stackCount;
+                    rdpsData.addDmg.values.push({
+                      casterEntity,
+                      rate,
+                    });
+                    rdpsData.addDmg.sumRate += rate;
+                  }
+                } else if (passive.keystat === "skill_damage_sub_rate_2") {
+                  //TODO: maybe buffs from that same category are added together as well, hard to try it out :/
+                  const val = passive.value;
+                  if (val !== 0) {
+                    const rate = (val / 10000) * stackCount;
+                    rdpsData.multDmg.values.push({
+                      casterEntity,
+                      rate,
+                    });
+                    rdpsData.multDmg.sumRate += rate;
+                    rdpsData.multDmg.totalRate *= 1 + rate;
+                  }
+                } else if (passive.keystat === "skill_damage_rate") {
+                  //Yearning
+                  //TODO: we need to know weapon quality (and therefore additional damage from weapon), and emulate all buffs that increase skill_damage_rate because they are additive
+                  /*
+                  const val = passive.value;
+                  if (val !== 0) {
+                    const rate = (val / 10000) * stackCount;
+                    rdpsData.multDmg.values.push({
+                      casterEntity,
+                      rate,
+                    });
+                    rdpsData.multDmg.sumRate += rate;
+                    rdpsData.multDmg.totalRate *= 1 + rate;
+                  }
+                  */
+                }
+              } else {
+                //Process self buffs
+                if (passive.keystat === "critical_dam_rate" && buff.category === "buff") {
+                  //we don't check for  && sourceEntityId === owner.entityId in case, but it should only tr
+                  //always "buff" anw
+                  rdpsData.critDmgRate += (passive.value / 10000) * stackCount;
+                }
+              }
+            } else if (addontype[passive.type] === addontype.combat_effect) {
+              const ce = this.#data.combatEffect.get(passive.keyindex);
+              rdpsData.critDmgRate +=
+                stackCount *
+                this.getCritMultiplierFromCombatEffect(ce, {
+                  self: owner,
+                  target,
+                  caster: casterEntity,
+                  skill: this.#data.skill.get(skillId),
+                  hitOption,
+                  targetCount,
+                });
+            }
+          });
+        });
+        statusEffectsOnTarget.forEach(([debuffId, sourceEntityId, stackCount]) => {
+          const casterEntity = this.#entityTracker.entities.get(sourceEntityId);
+          //On target doesn't have interesting self buffs, so we can filter there
+          if (!casterEntity || casterEntity.entityType !== EntityType.Player || sourceEntityId === owner.entityId)
+            return;
+          const debuff = this.getBuffAfterTripods(this.#data.skillBuff.get(debuffId), casterEntity, damageData);
+          if (!debuff) return;
+          // Check for defense reduction or crit resistance that are issued from players
+          if (debuff.type === "instant_stat_amplify" && debuff.statuseffectvalues) {
+            //Crit resistance
+            const val = debuff.statuseffectvalues[0] ?? 0;
+            if (val !== 0) {
+              const rate = (val / 10000) * stackCount;
+              rdpsData.crit.values.push({
+                casterEntity,
+                rate,
+              });
+              rdpsData.crit.sumRate += rate;
+            }
+            if (damageData.damageType === damagetype.physics) {
+              //Phys. Defense
+              const val = debuff.statuseffectvalues[2] ?? 0;
+              if (val !== 0) {
+                const rate = -(val / 10000) * stackCount * 0.5; //TODO: currently we'll estimate the defense gain to be 50% of the stat, becasue defense emulation is a pain
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+              //Incoming Phys. Damage
+              const val2 = debuff.statuseffectvalues[7] ?? 0;
+              if (val2 !== 0) {
+                const rate = (val2 / 10000) * stackCount;
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+            } else if (damageData.damageType === damagetype.magic) {
+              //Mag. Defense
+              const val = debuff.statuseffectvalues[3] ?? 0;
+              if (val !== 0) {
+                const rate = -(val / 10000) * stackCount * 0.5; //TODO: for 0.5, see Phys. Defense
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+              //Incoming Mag. Damage
+              const val2 = debuff.statuseffectvalues[8] ?? 0;
+              if (val2 !== 0) {
+                const rate = (val2 / 10000) * stackCount;
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+            }
+          }
+          //check for skill dmg buffs
+          if (debuff.type === "skill_damage_amplify" && debuff.statuseffectvalues) {
+            const skillId = debuff.statuseffectvalues[0] ?? 0;
+            const skillEffectId = debuff.statuseffectvalues[4] ?? 0;
+            if (
+              (skillId === 0 || skillId === damageData.skillId) &&
+              (skillEffectId === 0 || skillEffectId === damageData.skillEffectId)
+            ) {
+              const val = debuff.statuseffectvalues[1] ?? 0;
+              if (val !== 0) {
+                const rate = (val / 10000) * stackCount;
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+            }
+          }
+          //check for skill dmg buffs
+          if (debuff.type === "directional_attack_amplify" && debuff.statuseffectvalues) {
+            if (isFrontAttack) {
+              const frontRate = debuff.statuseffectvalues[0] ?? 0;
+              if (frontRate !== 0) {
+                const rate = (frontRate / 10000) * stackCount;
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+            }
+            if (isBackAttack) {
+              const backRate = debuff.statuseffectvalues[4] ?? 0;
+              if (backRate !== 0) {
+                const rate = (backRate / 10000) * stackCount;
+                rdpsData.multDmg.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.multDmg.sumRate += rate;
+                rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+            }
+          }
+        });
+        // If we have at least 1 crit synergy
+        // - Calculate crit damage
+        // - Evaluate dmg gain (%) for the sum of crit synergies
+        // - attribute the dmg gain (%) to each crit synergy based on their rate
+        if (rdpsData.crit.values.length > 0) {
+          const skillCastedData = this.#data.skill.get(damageData.skillId);
+          //Get crit dmg gained from set
+          (owner as Player).itemSet?.forEach((option) => {
+            if (addontype[option.type] === addontype.stat && stattype[option.keystat] === stattype.critical_dam_rate) {
+              rdpsData.critDmgRate += option.value / 10000;
+            } else if (addontype[option.type] === addontype.combat_effect) {
+              const ce = this.#data.combatEffect.get(option.keyindex);
+              rdpsData.critDmgRate += this.getCritMultiplierFromCombatEffect(ce, {
+                self: owner,
+                target,
+                caster: owner,
+                skill: skillCastedData,
+                hitOption,
+                targetCount,
+              });
+            }
+
+            //Get crit dmg gained from tripods
+            (owner as Player).skills.get(damageData.skillId)?.tripods.forEach((tripodData) => {
+              //Get current combat effect
+              const combatEffects = new Map<number, CombatEffect>();
+
+              tripodData.options.forEach((option) => {
+                const featureType = skillfeaturetype[option.type];
+                if (featureType === skillfeaturetype.add_chain_combat_effect) {
+                  if ((option.params[0] ?? 0) === 0 || damageData.skillEffectId === (option.params[0] ?? 0)) {
+                    const ceId = option.params[1];
+                    if (ceId) {
+                      const ce = this.#data.combatEffect.get(ceId);
+                      //add combat effect
+                      if (ce) combatEffects.set(ce.id, ce);
+                    }
+                  }
+                } else if (featureType === skillfeaturetype.remove_chain_combat_effect) {
+                  //remove combat effect
+                  combatEffects.delete(option.params[0] ?? 0);
+                } else if (featureType === skillfeaturetype.change_combat_effect_arg) {
+                  if ((option.params[0] ?? 0) === 0 || damageData.skillEffectId === (option.params[0] ?? 0)) {
+                    //edit combat effect
+                    const ce = combatEffects.get(option.params[1] ?? 0);
+                    //we might not get the combatEffect, because in the db, there are refs to unused effects (such as addonSkillFeature that come from AstraOption)
+                    if (ce) {
+                      // ! We have to be careful here not to edit combat_effect original value
+                      const newCe: CombatEffect = structuredClone(ce);
+                      combatEffects.set(ce.id, newCe);
+                      newCe.effects.forEach((effect) => {
+                        effect.actions.forEach((action) => {
+                          for (let i = 0; i < option.params.length - 2; i++) {
+                            if (paramtype[option.paramtype] === paramtype.relative)
+                              action.args[i] *= 1 + (option.params[i + 2] ?? 0) / 100;
+                            else action.args[i] += option.params[i + 2] ?? 0;
+                          }
+                        });
+                      });
+                    }
+                  }
+                } /* else if (featureType === skillfeaturetype.swap_chain_combat_effect) {
+                  // Unused - no examples
+                } */ else if (featureType === skillfeaturetype.change_dam_critical) {
+                  //Ex: Dark Resurrection (19050) Furious Blow
+                  if ((option.params[0] ?? 0) === 0 || damageData.skillEffectId === (option.params[0] ?? 0)) {
+                    //TODO: some are absolute, other relatives, but i'm pretty sure it's a mistake & all are absolute
+                    rdpsData.critDmgRate += (option.params[1] ?? 0) / 10000;
+                  }
+                }
+                //TODO: change_dam_critical_rate / maybe at least check for tripods & buff in case we overcap, waiting until we get crit stat
+              });
+              combatEffects.forEach((ce) => {
+                rdpsData.critDmgRate += this.getCritMultiplierFromCombatEffect(ce, {
+                  self: owner,
+                  target,
+                  caster: owner,
+                  skill: skillCastedData,
+                  hitOption,
+                  targetCount,
+                });
+              });
+            });
+          });
+          //TODO: check change_skill_constraint, but i think it's not for the buffs but only skill casts -> not required
+        }
+
+        /**
+         * 4- apply all buff group 1 by 1 (multiplicative) to calculate flatGain and each step effGain%
+         *    - dmg: amount=(1-1/buff%)*dmg
+         *    - crit: amountIfCrit=buff%*(dmg-dmg/critDMGStat) / amount=buff% * ( dmg*critDMGStat - dmg)
+         *    - effGain%=1-(dmg/(dmg-amount))
+         *    - flatGain = sum(amount)
+         * - attribute damageGain to each source based on their buff gain% and totalDamageGain%
+         *    - attrDmg = (effGain%/sum(effGain%))*flatGain
+         *
+         */
+
+        //Process crit group as single mult
+        let critSumEffGainRate = 0.0;
+        if (rdpsData.crit.values.length > 0) {
+          let critDmg, whiteDmg;
+          if (isCrit) {
+            critDmg = damageData.damage;
+            whiteDmg = critDmg / rdpsData.critDmgRate;
+          } else {
+            whiteDmg = damageData.damage;
+            critDmg = whiteDmg * rdpsData.critDmgRate;
+          }
+          critSumEffGainRate = ((critDmg - whiteDmg) / critDmg) * rdpsData.crit.sumRate;
+        }
+
+        const totalEffGainRate =
+          (1 + critSumEffGainRate) * (1 + rdpsData.addDmg.sumRate) * rdpsData.multDmg.totalRate - 1;
+        const totalSumGainRate = critSumEffGainRate + rdpsData.addDmg.sumRate + (rdpsData.multDmg.totalRate - 1);
+        const unitRate = (totalEffGainRate * damageData.damage) / totalSumGainRate;
+
+        const critGainUnit = (critSumEffGainRate * unitRate) / rdpsData.crit.sumRate;
+        rdpsData.crit.values.forEach((crit) => {
+          const delta = crit.rate * critGainUnit;
+          const sourceEntityState = this.#game.entities.get(crit.casterEntity.name);
+          if (sourceEntityState) {
+            sourceEntityState.damageInfo.rdpsDamageGiven += delta;
+          }
+          damageOwner.damageInfo.rdpsDamageReceived += delta;
+          skill!.damageInfo.rdpsDamageReceived += delta;
+        });
+
+        rdpsData.addDmg.values.forEach((dmg) => {
+          const delta = dmg.rate * unitRate; //In additive rates, unitRate = addGainUnit
+          const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
+          if (sourceEntityState) {
+            sourceEntityState.damageInfo.rdpsDamageGiven += delta;
+          }
+          damageOwner.damageInfo.rdpsDamageReceived += delta;
+          skill!.damageInfo.rdpsDamageReceived += delta;
+        });
+
+        const multGainUnit = ((rdpsData.multDmg.totalRate - 1) * unitRate) / rdpsData.multDmg.sumRate;
+        rdpsData.multDmg.values.forEach((dmg) => {
+          const delta = dmg.rate * multGainUnit;
+          const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
+          if (sourceEntityState) {
+            sourceEntityState.damageInfo.rdpsDamageGiven += delta;
+          }
+          damageOwner.damageInfo.rdpsDamageReceived += delta;
+          skill!.damageInfo.rdpsDamageReceived += delta;
+        });
+      }
+      //#endregion
+
+      //TODO: include rdps & some other processing into breakdown
       const breakdown: Breakdown = {
         timestamp: +time,
         damage: damageData.damage,
@@ -402,7 +906,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         debuffedBy: [...mappedSeOnTarget],
       };
 
-      const breakdownOwner = BigInt('0x' + damageOwner.id)
+      const breakdownOwner = BigInt("0x" + damageOwner.id);
       this.addBreakdown(breakdownOwner, skillId, breakdown);
     }
 
@@ -421,6 +925,125 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
     if (this.#game.fightStartedOn === 0) this.#game.fightStartedOn = +time;
     this.#game.lastCombatPacket = +time;
+  }
+  getBuffAfterTripods(oBuff: SkillBuff | undefined, entity: Entity, damageData: DamageData): SkillBuff | undefined {
+    if (!oBuff || entity.entityType !== EntityType.Player) return oBuff;
+
+    // ! same as with combatEffect, be careful not to edit originals
+    const buff = structuredClone(oBuff);
+    (entity as Player).skills.get(damageData.skillId)?.tripods.forEach((tripodData) => {
+      tripodData.options.forEach((tripod) => {
+        const featureType = skillfeaturetype[tripod.type];
+        if (featureType === skillfeaturetype.change_buff_stat) {
+          // change_buff_stat    -> (modify passiveoption stats)
+          //                  -> [0,    210426,   39,       18,   40,       18]
+          //                      idk   buffId   stattype  val   stattype  val
+          //                                    |    pair1     |      pair2    |
+          //    when "paramtype": "relative" -> newStat = oldStat * (1+val/100)
+          //    when "paramtype": "absolute" -> newStat = oldStat + val
+          // params[0] seems to be same as params[3] (or abs(params[3]))
+          // it is probably used for tripod display (not buff display)
+          // that's why tripod display is bugged on codex for Guardian Tune - Powerful Protection
+          // they use the real value instead of the display value
+          // https://lostarkcodex.com/us/skill/21250
+
+          if ((tripod.params[0] ?? 0) === 0 || damageData.skillEffectId === (tripod.params[0] ?? 0)) {
+            if (buff.id === (tripod.params[1] ?? 0)) {
+              const changeMap = new Map<stattype, number>();
+              for (let i = 2; i < tripod.params.length; i += 2) {
+                if (tripod.params[i] && tripod.params[i + 1])
+                  changeMap.set(tripod.params[i] ?? 0, tripod.params[i + 1] ?? 0);
+              }
+              buff.passiveoption.forEach((passive) => {
+                const change = changeMap.get(stattype[passive.keystat]);
+                if (addontype[passive.type] === addontype.stat && change) {
+                  if (paramtype[tripod.paramtype] === paramtype.absolute) passive.value += change;
+                  else passive.value *= 1 + change / 100; //relative
+                }
+                //TODO: addon can be skill_group_cooldown_reduction, and in that case we update value using params[2]
+                // ex Reaper - Piercing Blade (26110) - Brand Activation (261170)
+              });
+            }
+          }
+        } else if (featureType === skillfeaturetype.add_buff_stat) {
+          // add_buff_stat      -> (same as change_buff_stat, but create a new stat one)
+          //    always "absolute"
+
+          if ((tripod.params[0] ?? 0) === 0 || damageData.skillEffectId === (tripod.params[0] ?? 0)) {
+            if (buff.id === (tripod.params[1] ?? 0)) {
+              const keystat = stattype[tripod.params[2] ?? 0];
+              const value = tripod.params[3] ?? 0;
+              //TODO: we may need to check if the stat already exist ?
+              if (keystat && value !== undefined)
+                //Value can be equal to 0, in case base value is 0, but that it is modified later on
+                buff.passiveoption.push({
+                  type: "stat",
+                  keystat: keystat as keyof typeof stattype,
+                  keyindex: 0,
+                  value: value,
+                });
+            }
+          }
+        } else if (featureType === skillfeaturetype.change_buff_param) {
+          // change_buff_param -> (modify statuseffectvalues)
+          //    when "absolute": just replace old buff param values (first 3 values are skipped, 2nd is buffId)
+          //    when "relative": multiply each buff value with the respective (1+val/100)
+          //"statuseffectvalues": [0, 10000, 1, 2, 212402],
+          //        [0, 212404, 0, 0, 10000, 1, 2, 212402]
+          //
+          if (
+            buff.statuseffectvalues &&
+            ((tripod.params[0] ?? 0) === 0 || damageData.skillEffectId === (tripod.params[0] ?? 0))
+          ) {
+            //TODO: understand how tripod.paramtype[2] works
+            // when absolute tripod.paramtype[2] === 0
+            // when relative tripod.paramtype[2] === 1 -> except for buff 200307
+
+            if (buff.id === (tripod.params[1] ?? 0)) {
+              if ((tripod.paramtype[2] ?? 0) === paramtype.absolute) {
+                buff.statuseffectvalues = tripod.params.slice(3);
+              } else {
+                //relative
+                const newValues = [];
+                for (let i = 0; i < Math.max(buff.statuseffectvalues.length, tripod.params.length - 3); i++) {
+                  if (tripod.params[i + 3]) {
+                    newValues.push((buff.statuseffectvalues[i] ?? 0) * (1 + (tripod.params[i + 3] ?? 0) / 100));
+                  }
+                }
+                buff.statuseffectvalues = newValues;
+              }
+            }
+          }
+        }
+      });
+    });
+    return buff;
+  }
+  getCritMultiplierFromCombatEffect(
+    ce: CombatEffect | undefined,
+    ceConditionData: Partial<CombatEffectConditionData>
+  ): number {
+    if (!ce) return 0;
+    let critDmgRate = 0;
+
+    ce.effects
+      .filter((effect) =>
+        effect.actions.find(
+          (action) => combateffectactiontype[action.type] === combateffectactiontype.modify_critical_multiplier
+        )
+      )
+      .forEach((effect) => {
+        if (this.#data.isCombatEffectConditionsValid({ effect, ...ceConditionData })) {
+          effect.actions
+            .filter(
+              (action) => combateffectactiontype[action.type] === combateffectactiontype.modify_critical_multiplier
+            )
+            .forEach((action) => {
+              critDmgRate += (action.args[0] ?? 0) / 100;
+            });
+        }
+      });
+    return critDmgRate;
   }
   onStartSkill(owner: Entity, skillId: number, time: Date) {
     const entity = this.updateEntity(
@@ -624,9 +1247,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       id: 0,
       name: "",
       icon: "",
-      damageDealt: 0,
-      damageDealtDebuffedBySupport: 0,
-      damageDealtBuffedBySupport: 0,
+      damageInfo: {
+        damageDealt: 0,
+        rdpsDamageReceived: 0,
+        rdpsDamageGiven: 0,
+        damageDealtDebuffedBySupport: 0,
+        damageDealtBuffedBySupport: 0,
+      },
       maxDamage: 0,
       hits: {
         casts: 0,
@@ -663,9 +1290,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       gearScore: 0,
       currentHp: 0,
       maxHp: 0,
-      damageDealt: 0,
-      damageDealtDebuffedBySupport: 0,
-      damageDealtBuffedBySupport: 0,
+      damageInfo: {
+        damageDealt: 0,
+        rdpsDamageReceived: 0,
+        rdpsDamageGiven: 0,
+        damageDealtDebuffedBySupport: 0,
+        damageDealtBuffedBySupport: 0,
+      },
       healingDone: 0,
       shieldDone: 0,
       damageTaken: 0,
@@ -698,12 +1329,12 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
 
   getBroadcast(): GameState {
-    const clone: GameState = { ...this.#game }
+    const clone: GameState = { ...this.#game };
 
     clone.entities = new Map();
     this.#game.entities.forEach((entity, id) => {
       // Skip all entities that are not players (if live)
-      if (!entity.isPlayer && !entity.isEsther) return
+      if (!entity.isPlayer && !entity.isEsther) return;
       clone.entities.set(id, { ...entity });
     });
 
@@ -756,13 +1387,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     }
   }
 
-/**
- * Returns the breakdowns for the given entity and skill, or undefined if none exist.
- *
- * @param entityId The ID of the entity to get the breakdowns for.
- * @param skillId The ID of the skill to get the breakdowns for.
- * @returns The breakdowns for the given entity and skill, or undefined if none exist.
- */
+  /**
+   * Returns the breakdowns for the given entity and skill, or undefined if none exist.
+   *
+   * @param entityId The ID of the entity to get the breakdowns for.
+   * @param skillId The ID of the skill to get the breakdowns for.
+   * @returns The breakdowns for the given entity and skill, or undefined if none exist.
+   */
   getBreakdowns(entityId: bigint, skillId: number): Breakdown[] | undefined {
     const entityBreakdown = this.#entityToSkillBreakdown.get(entityId);
     if (!entityBreakdown) return undefined;
@@ -790,14 +1421,14 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
    * @param entityStates The entity states to apply the breakdowns to.
    * @param reset Whether to clear the stored breakdowns afterwards.
    */
-  applyBreakdowns(entityStates: Map<string, EntityState>, reset = true) {;
+  applyBreakdowns(entityStates: Map<string, EntityState>, reset = true) {
     entityStates.forEach((entity) => {
       entity.skills.forEach((skill) => {
-        const id = BigInt('0x' + entity.id)
+        const id = BigInt("0x" + entity.id);
         const breakdowns = this.getBreakdowns(id, skill.id);
         if (breakdowns) skill.breakdown = [...breakdowns];
-      })
-    })
+      });
+    });
     if (reset) this.resetBreakdowns();
   }
 
@@ -811,4 +1442,6 @@ export type DamageData = {
   modifier: number;
   targetCurHp: number;
   targetMaxHp: number;
+  damageAttr: damageattr; //note: damageAttr=8 when damage=0
+  damageType: damagetype; //note: damageAttr=2 when damage=0
 };

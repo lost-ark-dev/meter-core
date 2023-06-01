@@ -1,16 +1,16 @@
 // Auto Generated, do not edit.
 import type { Read } from "../../stream";
 export type ZoneStatusEffectData = {
-  StackCount: number;
-  Id: number;
-  InstanceId: bigint;
-  Target: number;
+  stackCount: number;
+  id: number;
+  instanceId: bigint;
+  target: number;
 };
 export function read(reader: Read) {
   const data = {} as ZoneStatusEffectData;
-  data.StackCount = reader.u8();
-  data.Id = reader.u32();
-  data.InstanceId = reader.u64();
-  data.Target = reader.u8();
+  data.stackCount = reader.u8();
+  data.id = reader.u32();
+  data.instanceId = reader.u64();
+  data.target = reader.u8();
   return data;
 }

@@ -1,5 +1,5 @@
 import type { Skill } from "../data";
-export const PARSED_LOG_VERSION = 18;
+export const PARSED_LOG_VERSION = 19;
 
 export enum StatusEffectTarget {
   OTHER,
@@ -75,6 +75,14 @@ export interface HealSource {
   expires: number;
 }
 
+export interface DamageInfo {
+  damageDealt: number;
+  rdpsDamageReceived: number;
+  rdpsDamageGiven: number;
+  damageDealtDebuffedBySupport: number;
+  damageDealtBuffedBySupport: number;
+}
+
 //TODO: minimize entityState default by marking fields as optional & checking for default in vue
 export interface EntityState {
   lastUpdate: number;
@@ -92,9 +100,7 @@ export interface EntityState {
   gearScore: number;
   currentHp: number;
   maxHp: number;
-  damageDealt: number;
-  damageDealtDebuffedBySupport: number;
-  damageDealtBuffedBySupport: number;
+  damageInfo: DamageInfo;
   healingDone: number;
   shieldDone: number;
   damageTaken: number;
@@ -128,9 +134,7 @@ export interface EntitySkills {
   id: number;
   name: string;
   icon: string | undefined;
-  damageDealt: number;
-  damageDealtDebuffedBySupport: number;
-  damageDealtBuffedBySupport: number;
+  damageInfo: DamageInfo;
   maxDamage: number;
   hits: Hits;
   breakdown: Breakdown[];

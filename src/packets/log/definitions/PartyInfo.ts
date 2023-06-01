@@ -2,33 +2,32 @@ import type { Read, Write } from "../../stream";
 import type { PKTPartyInfo } from "../../generated/types";
 import * as PartyMemberData from "../structures/PartyMemberData";
 export type PartyInfo = {
-  RaidInstanceId: number;
-  LootGrade: number;
-  PartyType: number;
-  PartyInstanceId: number;
-  PartyLootType: number;
-  MemberDatas: PartyMemberData.PartyMemberDataLog[];
+  raidInstanceId: number;
+  lootGrade: number;
+  partyType: number;
+  partyInstanceId: number;
+  partyLootType: number;
+  memberDatas: PartyMemberData.PartyMemberDataLog[];
 };
 export function read(reader: Read, version: number) {
   const data = {} as PartyInfo;
-  data.RaidInstanceId = reader.u32();
-  data.LootGrade = reader.u32();
-  data.PartyType = reader.u8();
-  data.PartyInstanceId = reader.u32();
-  data.PartyLootType = reader.u8();
-  data.MemberDatas = reader.array(reader.u16(), () => PartyMemberData.read(reader, version), 40);
+  data.raidInstanceId = reader.u32();
+  data.lootGrade = reader.u32();
+  data.partyType = reader.u8();
+  data.partyInstanceId = reader.u32();
+  data.partyLootType = reader.u8();
+  data.memberDatas = reader.array(reader.u16(), () => PartyMemberData.read(reader, version), 40);
   return data;
 }
 export function write(writer: Write, data: PartyInfo | PKTPartyInfo) {
-  writer.u32(data.RaidInstanceId);
-  writer.u32(data.LootGrade);
-  writer.u8(data.PartyType);
-  writer.u32(data.PartyInstanceId);
-  writer.u8(data.PartyLootType);
-  writer.array(data.MemberDatas, { maxLen: 40, lenType: "u16" }, (obj: PartyMemberData.PartyMemberDataLog) => {
+  writer.u32(data.raidInstanceId);
+  writer.u32(data.lootGrade);
+  writer.u8(data.partyType);
+  writer.u32(data.partyInstanceId);
+  writer.u8(data.partyLootType);
+  writer.array(data.memberDatas, { maxLen: 40, lenType: "u16" }, (obj: PartyMemberData.PartyMemberDataLog) => {
     PartyMemberData.write(writer, obj);
   });
 }
 
-export const logId = 17;
 export const name = "PartyInfo";

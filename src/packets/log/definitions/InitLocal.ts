@@ -4,9 +4,9 @@ import * as StatusEffectData from "../structures/StatusEffectData";
 import * as AbilityData from "../structures/AbilityData";
 import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 export type InitLocal = {
-  statPair: { StatType: number; Value: bigint }[];
+  statPair: { statType: number; value: bigint }[];
   statusEffectDatas: StatusEffectData.StatusEffectDataLog[];
-  addonSkillFeatureList: { addonSkillFeatureIdList: number[]; SkillId: number }[];
+  addonSkillFeatureList: { addonSkillFeatureIdList: number[]; skillId: number }[];
   abilityDataList: AbilityData.AbilityDataLog[];
 };
 export function read(reader: Read, version: number) {
@@ -14,9 +14,9 @@ export function read(reader: Read, version: number) {
   data.statPair = reader.array(
     reader.u16(),
     () => {
-      const l = {} as any;
-      l.StatType = reader.u8();
-      l.Value = ReadNBytesInt64.read(reader, version);
+      const l = {} as { statType: number; value: bigint };
+      l.statType = reader.u8();
+      l.value = ReadNBytesInt64.read(reader, version);
       return l;
     },
     152
@@ -25,9 +25,9 @@ export function read(reader: Read, version: number) {
   data.addonSkillFeatureList = reader.array(
     reader.u16(),
     () => {
-      const n = {} as any;
+      const n = {} as { addonSkillFeatureIdList: number[]; skillId: number };
       n.addonSkillFeatureIdList = reader.array(reader.u16(), () => reader.u32(), 5);
-      n.SkillId = reader.u32();
+      n.skillId = reader.u32();
       return n;
     },
     200
@@ -36,9 +36,9 @@ export function read(reader: Read, version: number) {
   return data;
 }
 export function write(writer: Write, data: InitLocal | PKTInitLocal) {
-  writer.array(data.statPair, { maxLen: 152, lenType: "u16" }, (obj: { StatType: number; Value: bigint }) => {
-    writer.u8(obj.StatType);
-    ReadNBytesInt64.write(writer, obj.Value);
+  writer.array(data.statPair, { maxLen: 152, lenType: "u16" }, (obj: { statType: number; value: bigint }) => {
+    writer.u8(obj.statType);
+    ReadNBytesInt64.write(writer, obj.value);
   });
   writer.array(data.statusEffectDatas, { maxLen: 80, lenType: "u16" }, (obj: StatusEffectData.StatusEffectDataLog) => {
     StatusEffectData.write(writer, obj);
@@ -46,11 +46,11 @@ export function write(writer: Write, data: InitLocal | PKTInitLocal) {
   writer.array(
     data.addonSkillFeatureList,
     { maxLen: 200, lenType: "u16" },
-    (obj: { addonSkillFeatureIdList: number[]; SkillId: number }) => {
+    (obj: { addonSkillFeatureIdList: number[]; skillId: number }) => {
       writer.array(obj.addonSkillFeatureIdList, { maxLen: 5, lenType: "u16" }, (obj2: number) => {
         writer.u32(obj2);
       });
-      writer.u32(obj.SkillId);
+      writer.u32(obj.skillId);
     }
   );
   writer.array(data.abilityDataList, { maxLen: 100, lenType: "u16" }, (obj: AbilityData.AbilityDataLog) => {
@@ -58,5 +58,4 @@ export function write(writer: Write, data: InitLocal | PKTInitLocal) {
   });
 }
 
-export const logId = 10;
 export const name = "InitLocal";

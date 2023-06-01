@@ -43,3 +43,7 @@ export { name as ZoneObjectUnpublishNotify } from "./definitions/ZoneObjectUnpub
 export { name as ZoneStatusEffectAddNotify } from "./definitions/ZoneStatusEffectAddNotify";
 export { name as ZoneStatusEffectRemoveNotify } from "./definitions/ZoneStatusEffectRemoveNotify";
 export { name as SkillCastNotify } from "./definitions/SkillCastNotify";
+export { name as IdentityStanceChangeNotify } from "./definitions/IdentityStanceChangeNotify";
+export { name as EquipChangeNotify } from "./definitions/EquipChangeNotify";
+export { name as EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChangeNotify";
+export { name as InitItem } from "./definitions/InitItem";

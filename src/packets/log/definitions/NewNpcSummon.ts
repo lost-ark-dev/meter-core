@@ -2,22 +2,21 @@ import type { Read, Write } from "../../stream";
 import type { PKTNewNpcSummon } from "../../generated/types";
 import * as NpcData from "../structures/NpcData";
 export type NewNpcSummon = {
-  PublishReason: number;
-  OwnerId: bigint;
-  NpcData: NpcData.NpcDataLog;
+  publishReason: number;
+  ownerId: bigint;
+  npcData: NpcData.NpcDataLog;
 };
 export function read(reader: Read, version: number) {
   const data = {} as NewNpcSummon;
-  data.PublishReason = reader.u8();
-  data.OwnerId = reader.u64();
-  data.NpcData = NpcData.read(reader, version);
+  data.publishReason = reader.u8();
+  data.ownerId = reader.u64();
+  data.npcData = NpcData.read(reader, version);
   return data;
 }
 export function write(writer: Write, data: NewNpcSummon | PKTNewNpcSummon) {
-  writer.u8(data.PublishReason);
-  writer.u64(data.OwnerId);
-  NpcData.write(writer, data.NpcData);
+  writer.u8(data.publishReason);
+  writer.u64(data.ownerId);
+  NpcData.write(writer, data.npcData);
 }
 
-export const logId = 13;
 export const name = "NewNpcSummon";

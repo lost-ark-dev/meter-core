@@ -14,5 +14,4 @@ export function write(writer: Write, data: PassiveStatusEffectRemoveNotify | PKT
   });
 }
 
-export const logId = 25;
 export const name = "PassiveStatusEffectRemoveNotify";

@@ -1,19 +1,19 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTStatusEffectDurationNotify = {
-  TargetId: bigint;
-  ExpirationTick: bigint;
-  EffectInstanceId: number;
+  targetId: bigint;
+  expirationTick: bigint;
+  effectInstanceId: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTStatusEffectDurationNotify;
   reader.skip(1);
-  data.TargetId = reader.u64();
+  data.targetId = reader.u64();
   reader.skip(1);
-  data.ExpirationTick = reader.u64();
+  data.expirationTick = reader.u64();
   reader.skip(1);
-  data.EffectInstanceId = reader.u32();
+  data.effectInstanceId = reader.u32();
   return data;
 }
 export const name = "PKTStatusEffectDurationNotify";

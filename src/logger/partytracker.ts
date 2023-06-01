@@ -2,7 +2,6 @@ import type { PartyInfo } from "../packets/log/types";
 import { type Entity, EntityType, type Player } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
 import type { PCIdMapper } from "./pcidmapper";
-import { u32tof32 } from "./utils";
 
 export class PartyTracker {
   private characterIdToPartyId: Map<bigint, number>;
@@ -130,29 +129,29 @@ export class PartyTracker {
     const parsed = pkt.parsed;
     if (!parsed) return;
     // this means the party is collapsing because you are the only one left
-    if (parsed.MemberDatas.length === 1 && parsed.MemberDatas[0]?.Name === localPlayer.name) {
-      this.remove(parsed.PartyInstanceId, parsed.MemberDatas[0].Name);
+    if (parsed.memberDatas.length === 1 && parsed.memberDatas[0]?.name === localPlayer.name) {
+      this.remove(parsed.partyInstanceId, parsed.memberDatas[0].name);
       return;
     }
-    this.removePartyMappings(parsed.PartyInstanceId);
-    for (const pm of parsed.MemberDatas) {
-      if (pm.CharacterId === localPlayer.characterId) {
-        this.setOwnName(pm.Name);
+    this.removePartyMappings(parsed.partyInstanceId);
+    for (const pm of parsed.memberDatas) {
+      if (pm.characterId === localPlayer.characterId) {
+        this.setOwnName(pm.name);
       }
       // Update player info based on party info
-      const entityId = this.#pcIdMapper.getEntityId(pm.CharacterId);
+      const entityId = this.#pcIdMapper.getEntityId(pm.characterId);
       if (entityId) {
         const ent = entities.get(entityId);
-        if (ent && ent.entityType === EntityType.Player && ent.name !== pm.Name) {
+        if (ent && ent.entityType === EntityType.Player && ent.name !== pm.name) {
           const p = ent as Player;
-          p.gearLevel = u32tof32(pm.GearLevel);
-          p.name = pm.Name;
-          p.class = pm.ClassId;
+          p.gearLevel = pm.gearLevel;
+          p.name = pm.name;
+          p.class = pm.classId;
         }
       }
 
       // Add to party
-      this.add(parsed.RaidInstanceId, parsed.PartyInstanceId, pm.CharacterId, entityId, pm.Name);
+      this.add(parsed.raidInstanceId, parsed.partyInstanceId, pm.characterId, entityId, pm.name);
     }
   }
 }

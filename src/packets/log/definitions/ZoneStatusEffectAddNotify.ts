@@ -19,5 +19,4 @@ export function write(writer: Write, data: ZoneStatusEffectAddNotify | PKTZoneSt
   );
 }
 
-export const logId = 44;
 export const name = "ZoneStatusEffectAddNotify";

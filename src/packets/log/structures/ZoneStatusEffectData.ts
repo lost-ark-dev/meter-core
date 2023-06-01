@@ -1,19 +1,19 @@
 import type { Read, Write } from "../../stream";
 import type { ZoneStatusEffectData } from "../../generated/structures/ZoneStatusEffectData";
 export type ZoneStatusEffectDataLog = {
-  StackCount: number;
-  Target: number;
-  Id: number;
+  stackCount: number;
+  target: number;
+  id: number;
 };
 export function read(reader: Read, version: number) {
   const data = {} as ZoneStatusEffectDataLog;
-  data.StackCount = reader.u8();
-  data.Target = reader.u8();
-  data.Id = reader.u32();
+  data.stackCount = reader.u8();
+  data.target = reader.u8();
+  data.id = reader.u32();
   return data;
 }
 export function write(writer: Write, data: ZoneStatusEffectDataLog | ZoneStatusEffectData) {
-  writer.u8(data.StackCount);
-  writer.u8(data.Target);
-  writer.u32(data.Id);
+  writer.u8(data.stackCount);
+  writer.u8(data.target);
+  writer.u32(data.id);
 }

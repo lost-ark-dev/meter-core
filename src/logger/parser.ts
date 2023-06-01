@@ -1,13 +1,30 @@
 import { TypedEmitter } from "tiny-typed-emitter";
-import type { MeterData } from "../data";
-import { stattype, triggersignaltype } from "../packets/generated/enums";
+import type { MeterData, PassiveOption, SkillFeatureOption } from "../data";
+import {
+  damageattr,
+  equipcategory,
+  itemcategory,
+  itemstoragetype,
+  skillfeaturetype,
+  stattype,
+  triggersignaltype,
+} from "../packets/generated/enums";
 import type { GameState, GameTrackerOptions } from "./data";
-import { EntityTracker, EntityType, type Entity, type Projectile } from "./entityTracker";
+import {
+  EntityTracker,
+  EntityType,
+  type Entity,
+  type Projectile,
+  Player,
+  PlayerSet,
+  TripodData,
+} from "./entityTracker";
 import { GameTracker } from "./gameTracker";
 import type { Logger } from "./logger";
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
 import { StatusEffectTargetType, StatusTracker, type StatusEffect } from "./statustracker";
+import { TripodIndex } from "../packets/common/TripodIndex";
 
 export class Parser extends TypedEmitter<ParserEvent> {
   #logger: Logger;
@@ -55,14 +72,29 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("CounterAttackNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        const source = this.#entityTracker.entities.get(parsed.SourceId);
+        const source = this.#entityTracker.entities.get(parsed.sourceId);
         if (source) this.#gameTracker.onCounterAttack(source, pkt.time);
       })
       .on("DeathNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        const target = this.#entityTracker.entities.get(parsed.TargetId);
+        const target = this.#entityTracker.entities.get(parsed.targetId);
         if (target) this.#gameTracker.onDeath(target, pkt.time);
+      })
+      .on("EquipChangeNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        const player = this.#entityTracker.entities.get(parsed.objectId);
+        if (!player || player.entityType !== EntityType.Player) return;
+        (player as Player).itemSet = this.#entityTracker.getPlayerSetOptions(parsed.equipItemDataList);
+      })
+      .on("IdentityStanceChangeNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        const entity = this.#entityTracker.entities.get(parsed.objectId);
+        if (entity && entity.entityType === EntityType.Player) {
+          (entity as Player).stance = parsed.stance;
+        }
       })
       .on("IdentityGaugeChangeNotify", (pkt) => {})
       .on("InitAbility", (pkt) => {})
@@ -90,6 +122,13 @@ export class Parser extends TypedEmitter<ParserEvent> {
           );
         }
       })
+      .on("InitItem", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed || parsed.storageType !== itemstoragetype.equip) return;
+
+        //Get localplayer playerSet
+        this.#entityTracker.localPlayer.itemSet = this.#entityTracker.getPlayerSetOptions(parsed.itemDataList);
+      })
       .on("MigrationExecute", (pkt) => {
         //Ignore if we already know characterId
         if (this.#entityTracker.localPlayer.characterId !== 0n) return;
@@ -97,16 +136,15 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!parsed) return;
         // Found no way to map AccountId & CharacterId, but this should be always ? true
         this.#entityTracker.localPlayer.characterId =
-          parsed.Account_CharacterId1 < parsed.Account_CharacterId2
-            ? parsed.Account_CharacterId1
-            : parsed.Account_CharacterId2;
+          parsed.account_CharacterId1 < parsed.account_CharacterId2
+            ? parsed.account_CharacterId1
+            : parsed.account_CharacterId2;
       })
       .on("NewNpc", (pkt) => {
         const npcEntity = this.#entityTracker.processNewNpc(pkt);
 
         if (npcEntity && pkt.parsed) {
-          const statsMap = this.#data.getStatPairMap(pkt.parsed.NpcStruct.statPair);
-
+          const statsMap = this.#data.getStatPairMap(pkt.parsed.npcStruct.statPair);
           this.#gameTracker.updateOrCreateEntity(
             npcEntity,
             {
@@ -126,7 +164,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const npcEntity = this.#entityTracker.processNewNpcSummon(pkt);
 
         if (npcEntity && pkt.parsed) {
-          const statsMap = this.#data.getStatPairMap(pkt.parsed.NpcData.statPair);
+          const statsMap = this.#data.getStatPairMap(pkt.parsed.npcData.statPair);
 
           this.#gameTracker.updateOrCreateEntity(
             npcEntity,
@@ -147,7 +185,9 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const player = this.#entityTracker.processNewPC(pkt);
 
         if (player && pkt.parsed) {
-          const statsMap = this.#data.getStatPairMap(pkt.parsed.PCStruct.statPair);
+          //Get playerSet
+          player.itemSet = this.#entityTracker.getPlayerSetOptions(pkt.parsed.pcStruct.equipItemDataList);
+          const statsMap = this.#data.getStatPairMap(pkt.parsed.pcStruct.statPair);
           this.#gameTracker.updateOrCreateEntity(
             player,
             {
@@ -167,12 +207,13 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         const projectile: Projectile = {
-          entityId: parsed.projectileInfo.ProjectileId,
+          entityId: parsed.projectileInfo.projectileId,
           entityType: EntityType.Projectile,
-          name: parsed.projectileInfo.ProjectileId.toString(16),
-          ownerId: parsed.projectileInfo.OwnerId,
-          skillEffectId: parsed.projectileInfo.SkillEffect,
-          skillId: parsed.projectileInfo.SkillId,
+          name: parsed.projectileInfo.projectileId.toString(16),
+          ownerId: parsed.projectileInfo.ownerId,
+          skillEffectId: parsed.projectileInfo.skillEffect,
+          skillId: parsed.projectileInfo.skillId,
+          stats: new Map(),
         };
         this.#entityTracker.entities.set(projectile.entityId, projectile);
       })
@@ -183,7 +224,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("PartyLeaveResult", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#partyTracker.remove(parsed.PartyInstanceId, parsed.Name);
+        this.#partyTracker.remove(parsed.partyInstanceId, parsed.name);
       })
       .on("PartyPassiveStatusEffectAddNotify", (pkt) => {})
       .on("PartyPassiveStatusEffectRemoveNotify", (pkt) => {})
@@ -191,12 +232,12 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         for (const effect of parsed.statusEffectDatas) {
-          const sourceId: bigint = parsed.PlayerIdOnRefresh !== 0n ? parsed.PlayerIdOnRefresh : effect.SourceId;
+          const sourceId: bigint = parsed.playerIdOnRefresh !== 0n ? parsed.playerIdOnRefresh : effect.sourceId;
           const sourceEnt = this.#entityTracker.getSourceEntity(sourceId);
           this.#statusTracker.RegisterStatusEffect(
             this.#statusTracker.buildStatusEffect(
               effect,
-              parsed.CharacterId,
+              parsed.characterId,
               sourceEnt.entityId,
               StatusEffectTargetType.Party,
               pkt.time
@@ -209,17 +250,17 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!parsed) return;
         for (const effectId of parsed.statusEffectIds)
           this.#statusTracker.RemoveStatusEffect(
-            parsed.CharacterId,
+            parsed.characterId,
             effectId,
             StatusEffectTargetType.Party,
-            parsed.Reason,
+            parsed.reason,
             pkt.time
           );
       })
       .on("PartyStatusEffectResultNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#partyTracker.add(parsed.RaidInstanceId, parsed.PartyInstanceId, parsed.CharacterId);
+        this.#partyTracker.add(parsed.raidInstanceId, parsed.partyInstanceId, parsed.characterId);
       })
       .on("PassiveStatusEffectAddNotify", (pkt) => {})
       .on("PassiveStatusEffectRemoveNotify", (pkt) => {})
@@ -232,36 +273,41 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("RemoveObject", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for (const upo of parsed.unpublishedObjects) this.#statusTracker.RemoveLocalObject(upo.ObjectId, pkt.time);
+        for (const upo of parsed.unpublishedObjects) this.#statusTracker.RemoveLocalObject(upo.objectId, pkt.time);
       })
       .on("SkillCastNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
         // Same as SkillStartNotify, but only for identity skills (seems like so at least)
-        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsed.Caster);
-        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsed.SkillId);
+        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsed.caster);
+        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsed.skillId);
         //TODO: use this to grab cast info (skill Level, tripods, runes) for further processing
-        this.#gameTracker.onStartSkill(ownerEntity, parsed.SkillId, pkt.time);
+        this.#gameTracker.onStartSkill(ownerEntity, parsed.skillId, pkt.time);
       })
       .on("SkillDamageAbnormalMoveNotify", (pkt) => {
         const parsedDmg = pkt.parsed;
         if (!parsedDmg) return;
-        const ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.SourceId);
-        parsedDmg.SkillDamageAbnormalMoveEvents.forEach((event) => {
-          const targetEntity = this.#entityTracker.getOrCreateEntity(event.skillDamageEvent.TargetId);
-          const sourceEntity = this.#entityTracker.getOrCreateEntity(parsedDmg.SourceId);
+        const ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.sourceId);
+        parsedDmg.skillDamageAbnormalMoveEvents.forEach((event) => {
+          const targetEntity = this.#entityTracker.getOrCreateEntity(event.skillDamageEvent.targetId);
+          const sourceEntity = this.#entityTracker.getOrCreateEntity(parsedDmg.sourceId);
+          targetEntity.stats.set(stattype.hp, event.skillDamageEvent.curHp);
+          targetEntity.stats.set(stattype.max_hp, event.skillDamageEvent.maxHp);
           this.#gameTracker.onDamage(
             ownerEntity,
             sourceEntity,
             targetEntity,
             {
-              skillId: parsedDmg.SkillId,
-              skillEffectId: parsedDmg.SkillEffectId,
-              damage: Number(event.skillDamageEvent.Damage),
-              modifier: event.skillDamageEvent.Modifier,
-              targetCurHp: Number(event.skillDamageEvent.CurHp),
-              targetMaxHp: Number(event.skillDamageEvent.MaxHp),
+              skillId: parsedDmg.skillId,
+              skillEffectId: parsedDmg.skillEffectId,
+              damage: Number(event.skillDamageEvent.damage),
+              modifier: event.skillDamageEvent.modifier,
+              targetCurHp: Number(event.skillDamageEvent.curHp),
+              targetMaxHp: Number(event.skillDamageEvent.maxHp),
+              damageAttr: event.skillDamageEvent.damageAttr ?? damageattr.none,
+              damageType: event.skillDamageEvent.damageType,
             },
+            parsedDmg.skillDamageAbnormalMoveEvents.length,
             pkt.time
           );
         });
@@ -269,23 +315,26 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("SkillDamageNotify", (pkt) => {
         const parsedDmg = pkt.parsed;
         if (!parsedDmg) return;
-        const ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.SourceId);
+        const ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsedDmg.sourceId);
 
-        parsedDmg.SkillDamageEvents.forEach((event) => {
-          const targetEntity = this.#entityTracker.getOrCreateEntity(event.TargetId);
-          const sourceEntity = this.#entityTracker.getOrCreateEntity(parsedDmg.SourceId);
+        parsedDmg.skillDamageEvents.forEach((event) => {
+          const targetEntity = this.#entityTracker.getOrCreateEntity(event.targetId);
+          const sourceEntity = this.#entityTracker.getOrCreateEntity(parsedDmg.sourceId);
           this.#gameTracker.onDamage(
             ownerEntity,
             sourceEntity,
             targetEntity,
             {
-              skillId: parsedDmg.SkillId,
-              skillEffectId: parsedDmg.SkillEffectId,
-              damage: Number(event.Damage),
-              modifier: event.Modifier,
-              targetCurHp: Number(event.CurHp),
-              targetMaxHp: Number(event.MaxHp),
+              skillId: parsedDmg.skillId,
+              skillEffectId: parsedDmg.skillEffectId,
+              damage: Number(event.damage),
+              modifier: event.modifier,
+              targetCurHp: Number(event.curHp),
+              targetMaxHp: Number(event.maxHp),
+              damageAttr: event.damageAttr ?? damageattr.none,
+              damageType: event.damageType,
             },
+            parsedDmg.skillDamageEvents.length,
             pkt.time
           );
         });
@@ -296,19 +345,69 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("SkillStartNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsed.SourceId);
-        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsed.SkillId);
+        let ownerEntity: Entity = this.#entityTracker.getSourceEntity(parsed.sourceId);
+        ownerEntity = this.#entityTracker.guessIsPlayer(ownerEntity, parsed.skillId);
+
+        if (ownerEntity.entityType === EntityType.Player) {
+          const player = ownerEntity as Player;
+          let skill = player.skills.get(parsed.skillId);
+          if (!skill) {
+            skill = { effects: new Set(), tripods: new Map() };
+            player.skills.set(parsed.skillId, skill);
+          }
+          skill.level = parsed.skillLevel;
+          if (parsed.skillOptionData.tripodIndex && parsed.skillOptionData.tripodLevel) {
+            if (!skill.tripods) {
+              skill.tripods = new Map();
+            }
+            for (const [idx, tripodRow] of (["first", "second", "third"] as (keyof TripodIndex)[]).entries()) {
+              if (parsed.skillOptionData.tripodIndex[tripodRow] === 0) {
+                // Tripod tier is not set
+                //Cleanup tripods of the same tier
+                for (let num = 1; num <= 3; num++) {
+                  skill.tripods.delete(3 * idx + num);
+                }
+                continue;
+              }
+              const tripodIdx = 3 * idx + parsed.skillOptionData.tripodIndex[tripodRow];
+              const tripodLevel = parsed.skillOptionData.tripodLevel[tripodRow];
+              let tripodData = skill.tripods.get(tripodIdx);
+              //Tripod hasn't changed: do not update effect
+              if (tripodData && tripodLevel === tripodData.level) continue;
+
+              //Tripod is init or has changed level
+
+              //Cleanup tripods of the same tier
+              for (let num = 1; num <= 3; num++) {
+                skill.tripods.delete(3 * idx + num);
+              }
+              const effect = this.#data.skillFeature.get(parsed.skillId)?.get(tripodIdx);
+              let options: SkillFeatureOption[] = [];
+              if (effect) {
+                //Process options
+                effect.entries.forEach((entry) => {
+                  if (entry.level !== 0 && entry.level !== tripodLevel) return;
+                  options.push(entry);
+                });
+              }
+              skill.tripods.set(tripodIdx, {
+                level: parsed.skillOptionData.tripodLevel[tripodRow],
+                options: options.sort((a, b) => b.level - a.level),
+              });
+            }
+          }
+        }
         //TODO: use this to grab cast info (skill Level, tripods, runes) for further processing
-        this.#gameTracker.onStartSkill(ownerEntity, parsed.SkillId, pkt.time);
+        this.#gameTracker.onStartSkill(ownerEntity, parsed.skillId, pkt.time);
       })
       .on("StatusEffectAddNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        const sourceEnt = this.#entityTracker.getSourceEntity(parsed.statusEffectData.SourceId);
+        const sourceEnt = this.#entityTracker.getSourceEntity(parsed.statusEffectData.sourceId);
         this.#statusTracker.RegisterStatusEffect(
           this.#statusTracker.buildStatusEffect(
             parsed.statusEffectData,
-            parsed.ObjectId,
+            parsed.objectId,
             sourceEnt.entityId,
             StatusEffectTargetType.Local,
             pkt.time
@@ -319,9 +418,9 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const parsed = pkt.parsed;
         if (!parsed) return;
         this.#statusTracker.UpdateDuration(
-          parsed.EffectInstanceId,
-          parsed.TargetId,
-          parsed.ExpirationTick,
+          parsed.effectInstanceId,
+          parsed.targetId,
+          parsed.expirationTick,
           StatusEffectTargetType.Local
         );
       })
@@ -330,14 +429,24 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!parsed) return;
         for (const effectId of parsed.statusEffectIds)
           this.#statusTracker.RemoveStatusEffect(
-            parsed.ObjectId,
+            parsed.objectId,
             effectId,
             StatusEffectTargetType.Local,
-            parsed.Reason,
+            parsed.reason,
             pkt.time
           );
       })
-      .on("StatusEffectSyncDataNotify", (pkt) => {})
+      .on("StatusEffectSyncDataNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        this.#statusTracker.SyncStatusEffect(
+          parsed.effectInstanceId,
+          parsed.characterId,
+          parsed.objectId,
+          parsed.value,
+          this.#entityTracker.localPlayer.characterId
+        );
+      })
       .on("TriggerBossBattleStatus", (pkt) => {
         this.#gameTracker.onPhaseTransition(2, pkt.time);
       })
@@ -345,7 +454,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("TriggerStartNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        switch (parsed.TriggerSignalType) {
+        switch (parsed.triggerSignalType) {
           case triggersignaltype.dungeon_phase1_clear:
           case triggersignaltype.dungeon_phase2_clear:
           case triggersignaltype.dungeon_phase3_clear:
@@ -370,32 +479,21 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("ZoneObjectUnpublishNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        this.#statusTracker.RemoveLocalObject(parsed.ObjectId, pkt.time);
+        this.#statusTracker.RemoveLocalObject(parsed.objectId, pkt.time);
       })
       .on("ZoneStatusEffectAddNotify", (pkt) => {})
-      .on("StatusEffectSyncDataNotify", (pkt) => {
-        const parsed = pkt.parsed;
-        if (!parsed) return;
-        this.#statusTracker.SyncStatusEffect(
-          parsed.EffectInstanceId,
-          parsed.CharacterId,
-          parsed.ObjectId,
-          parsed.Value,
-          this.#entityTracker.localPlayer.characterId
-        );
-      })
       .on("TroopMemberUpdateMinNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
         if (parsed.statusEffectDatas.length > 0) {
           for (const se of parsed.statusEffectDatas) {
-            const objectId = this.#pcIdMapper.getEntityId(parsed.CharacterId);
-            const newValCandidate1: number = se.Value ? se.Value.readUInt32LE() : 0;
-            const newValCandidate2: number = se.Value ? se.Value.readUInt32LE(8) : 0;
+            const objectId = this.#pcIdMapper.getEntityId(parsed.characterId);
+            const newValCandidate1: number = se.value ? se.value.readUInt32LE() : 0;
+            const newValCandidate2: number = se.value ? se.value.readUInt32LE(8) : 0;
             const newVal = newValCandidate1 < newValCandidate2 ? newValCandidate1 : newValCandidate2;
             this.#statusTracker.SyncStatusEffect(
-              se.EffectInstanceId,
-              parsed.CharacterId,
+              se.effectInstanceId,
+              parsed.characterId,
               objectId,
               newVal,
               this.#entityTracker.localPlayer.characterId

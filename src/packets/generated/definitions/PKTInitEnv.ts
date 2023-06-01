@@ -2,33 +2,33 @@
 import { Read } from "../../stream";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
 export type PKTInitEnv = {
-  Unk0: bigint;
-  Unk1: number;
-  Unk2: number;
-  PlayerId: bigint;
-  Unk4: number;
-  struct_557: string;
+  unk0: bigint;
+  unk1: number;
+  unk2: number;
+  playerId: bigint;
+  unk4: number;
+  struct_574: string;
   lostArkDateTime: LostArkDateTime.LostArkDateTime;
-  struct_27: { struct_543: string; struct_557: string; versionString: string }[];
+  struct_30: { struct_560: string; struct_574: string; versionString: string }[];
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTInitEnv;
-  data.Unk0 = reader.u64();
-  data.Unk1 = reader.u8();
-  data.Unk2 = reader.u32();
-  data.PlayerId = reader.u64();
-  data.Unk4 = reader.u32();
-  data.struct_557 = reader.string(128);
+  data.unk0 = reader.u64();
+  data.unk1 = reader.u8();
+  data.unk2 = reader.u32();
+  data.playerId = reader.u64();
+  data.unk4 = reader.u32();
+  data.struct_574 = reader.string(128);
   data.lostArkDateTime = LostArkDateTime.read(reader);
-  data.struct_27 = reader.array(
+  data.struct_30 = reader.array(
     reader.u16(),
     () => {
-      const g = {} as any;
-      g.struct_543 = reader.string(32);
-      g.struct_557 = reader.string(128);
-      g.versionString = reader.string(64);
-      return g;
+      const i = {} as { struct_560: string; struct_574: string; versionString: string };
+      i.struct_560 = reader.string(32);
+      i.struct_574 = reader.string(128);
+      i.versionString = reader.string(64);
+      return i;
     },
     64
   );

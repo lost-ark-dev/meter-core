@@ -46,6 +46,10 @@ export interface LogStreamEvent {
   ZoneStatusEffectAddNotify: (pkt: LogEvent<types.ZoneStatusEffectAddNotify>) => void;
   ZoneStatusEffectRemoveNotify: (pkt: LogEvent<types.ZoneStatusEffectRemoveNotify>) => void;
   SkillCastNotify: (pkt: LogEvent<types.SkillCastNotify>) => void;
+  IdentityStanceChangeNotify: (pkt: LogEvent<types.IdentityStanceChangeNotify>) => void;
+  EquipChangeNotify: (pkt: LogEvent<types.EquipChangeNotify>) => void;
+  EquipLifeToolChangeNotify: (pkt: LogEvent<types.EquipLifeToolChangeNotify>) => void;
+  InitItem: (pkt: LogEvent<types.InitItem>) => void;
   logData: (data: Buffer) => void;
   fileEnd: (output: string) => void;
   "*": (name: string, pkt: LogEvent<Object>) => void;

@@ -1,10 +1,13 @@
-import type { MeterData } from "../data";
+import type { ItemSetCount, ItemSetData, MeterData, PassiveOption, SkillFeatureOption } from "../data";
+import { TripodIndex } from "../packets/common/TripodIndex";
+import { TripodLevel } from "../packets/common/TripodLevel";
+import { equipcategory, npcgrade, stattype } from "../packets/generated/enums";
+import { EquipItemDataLog } from "../packets/log/structures/EquipItemData";
 import type { InitEnv, InitPC, NewNpc, NewNpcSummon, NewPC } from "../packets/log/types";
 import type { LogEvent } from "./logEvent";
 import type { PartyTracker } from "./partytracker";
 import type { PCIdMapper } from "./pcidmapper";
 import { StatusEffectTargetType, StatusTracker } from "./statustracker";
-import { u32tof32 } from "./utils";
 
 export class EntityTracker {
   #pcIdMapper: PCIdMapper;
@@ -28,24 +31,29 @@ export class EntityTracker {
       class: 0,
       gearLevel: 0,
       characterId: 0n,
+      stance: 0,
+      stats: new Map(),
+      skills: new Map(),
     };
   }
   processNewPC(pkt: LogEvent<NewPC>): Player | undefined {
     const parsed = pkt.parsed;
     if (!parsed) return;
-
     const player: Player = {
-      entityId: parsed.PCStruct.PlayerId,
+      entityId: parsed.pcStruct.playerId,
       entityType: EntityType.Player,
-      name: parsed.PCStruct.Name,
-      class: parsed.PCStruct.ClassId,
-      gearLevel: u32tof32(parsed.PCStruct.GearLevel),
-      characterId: parsed.PCStruct.CharacterId,
+      name: parsed.pcStruct.name,
+      class: parsed.pcStruct.classId,
+      gearLevel: parsed.pcStruct.maxItemLevel,
+      characterId: parsed.pcStruct.characterId,
+      stance: 0,
+      stats: this.#data.getStatPairMap(parsed.pcStruct.statPair),
+      skills: new Map(),
     };
     this.entities.set(player.entityId, player);
     const oldEntityId = this.#pcIdMapper.getEntityId(player.characterId);
     if (oldEntityId) {
-      this.#partyTracker.changeEntityId(oldEntityId, parsed.PCStruct.PlayerId);
+      this.#partyTracker.changeEntityId(oldEntityId, parsed.pcStruct.playerId);
     }
     this.#pcIdMapper.addMapping(player.characterId, player.entityId);
     this.#partyTracker.completeEntry(player.characterId, player.entityId);
@@ -57,16 +65,19 @@ export class EntityTracker {
     const parsed = pkt.parsed;
     if (!parsed) return;
 
-    if (this.localPlayer.entityId !== 0n) this.#partyTracker.changeEntityId(this.localPlayer.entityId, parsed.PlayerId);
+    if (this.localPlayer.entityId !== 0n) this.#partyTracker.changeEntityId(this.localPlayer.entityId, parsed.playerId);
 
     this.entities.clear(); //TODO: here we clear entities, this might be uncompatible with keeping previous encounter visible
     const player: Player = {
-      entityId: parsed.PlayerId,
+      entityId: parsed.playerId,
       entityType: EntityType.Player,
       name: this.localPlayer.name,
       class: this.localPlayer.class,
       gearLevel: this.localPlayer.gearLevel,
       characterId: this.localPlayer.characterId,
+      stance: this.localPlayer.stance,
+      stats: this.localPlayer.stats,
+      skills: this.localPlayer.skills,
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
@@ -74,7 +85,7 @@ export class EntityTracker {
     this.#statusTracker.Clear(pkt.time);
     if (player.characterId !== 0n) this.#pcIdMapper.addMapping(player.characterId, player.entityId);
     if (this.localPlayer && this.localPlayer.characterId && this.localPlayer.characterId > 0n)
-      this.#partyTracker.completeEntry(this.localPlayer.characterId, parsed.PlayerId);
+      this.#partyTracker.completeEntry(this.localPlayer.characterId, parsed.playerId);
   }
   processInitPC(pkt: LogEvent<InitPC>): Player | undefined {
     const parsed = pkt.parsed;
@@ -82,25 +93,28 @@ export class EntityTracker {
 
     this.entities.clear(); //TODO: here we clear entities, this might be uncompatible with keeping previous encounter visible
     const player: Player = {
-      entityId: parsed.PlayerId,
+      entityId: parsed.playerId,
       entityType: EntityType.Player,
-      name: parsed.Name,
-      class: parsed.ClassId,
-      gearLevel: u32tof32(parsed.GearLevel),
-      characterId: parsed.CharacterId,
+      name: parsed.name,
+      class: parsed.classId,
+      gearLevel: parsed.gearLevel,
+      characterId: parsed.characterId,
+      stance: 0,
+      stats: this.#data.getStatPairMap(parsed.statPair),
+      skills: new Map(),
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
     this.#pcIdMapper.addMapping(player.characterId, player.entityId);
-    this.#partyTracker.setOwnName(parsed.Name);
-    this.#partyTracker.completeEntry(player.characterId, parsed.PlayerId);
-    this.#statusTracker.RemoveLocalObject(parsed.PlayerId, pkt.time);
+    this.#partyTracker.setOwnName(parsed.name);
+    this.#partyTracker.completeEntry(player.characterId, parsed.playerId);
+    this.#statusTracker.RemoveLocalObject(parsed.playerId, pkt.time);
     for (const se of parsed.statusEffectDatas) {
-      const sourceEntity = this.getSourceEntity(se.SourceId);
+      const sourceEntity = this.getSourceEntity(se.sourceId);
       this.#statusTracker.RegisterStatusEffect(
         this.#statusTracker.buildStatusEffect(
           se,
-          parsed.PlayerId,
+          parsed.playerId,
           sourceEntity.entityId,
           StatusEffectTargetType.Local,
           pkt.time
@@ -114,31 +128,39 @@ export class EntityTracker {
     if (!parsed) return;
 
     let isBoss = false;
-    const npcData = this.#data.npc.get(parsed.NpcStruct.TypeId);
-    if (npcData && ["boss", "raid", "epic_raid", "commander"].includes(npcData.grade)) {
+    const npcData = this.#data.npc.get(parsed.npcStruct.typeId);
+    if (
+      npcData &&
+      [npcgrade.boss, npcgrade.raid, npcgrade.epic_raid, npcgrade.commander].includes(npcgrade[npcData.grade])
+    ) {
       isBoss = true;
     }
     const npc: Npc = {
-      entityId: parsed.NpcStruct.ObjectId,
+      entityId: parsed.npcStruct.objectId,
       entityType: EntityType.Npc,
-      name: npcData?.name ?? parsed.NpcStruct.ObjectId.toString(16),
-      typeId: parsed.NpcStruct.TypeId,
+      name: npcData?.name ?? parsed.npcStruct.objectId.toString(16),
+      typeId: parsed.npcStruct.typeId,
       isBoss,
+      grade: npcData?.grade ?? "none",
+      pushimmune: npcData?.pushimmune ?? false,
+      stats: this.#data.getStatPairMap(parsed.npcStruct.statPair),
+      level: parsed.npcStruct.level,
+      balanceLevel: parsed.npcStruct.balanceLevel ?? parsed.npcStruct.level,
     };
-    const esther = this.#data.getNpcEsther(parsed.NpcStruct.TypeId);
+    const esther = this.#data.getNpcEsther(parsed.npcStruct.typeId);
     if (esther !== undefined) {
       npc.entityType = EntityType.Esther;
       npc.name = esther.name;
       (npc as Esther).icon = esther.icon;
     }
     this.entities.set(npc.entityId, npc);
-    this.#statusTracker.RemoveLocalObject(parsed.NpcStruct.ObjectId, pkt.time);
-    for (const se of parsed.NpcStruct.statusEffectDatas) {
-      const sourceEntity = this.getSourceEntity(se.SourceId);
+    this.#statusTracker.RemoveLocalObject(parsed.npcStruct.objectId, pkt.time);
+    for (const se of parsed.npcStruct.statusEffectDatas) {
+      const sourceEntity = this.getSourceEntity(se.sourceId);
       this.#statusTracker.RegisterStatusEffect(
         this.#statusTracker.buildStatusEffect(
           se,
-          parsed.NpcStruct.ObjectId,
+          parsed.npcStruct.objectId,
           sourceEntity.entityId,
           StatusEffectTargetType.Local,
           pkt.time
@@ -152,25 +174,30 @@ export class EntityTracker {
     if (!parsed) return;
 
     let isBoss = false;
-    const npc = this.#data.npc.get(parsed.NpcData.TypeId);
+    const npc = this.#data.npc.get(parsed.npcData.typeId);
     if (npc && ["boss", "raid", "epic_raid", "commander"].includes(npc.grade)) {
       isBoss = true;
     }
     const summon: Summon = {
-      entityId: parsed.NpcData.ObjectId,
+      entityId: parsed.npcData.objectId,
       entityType: EntityType.Summon,
-      name: npc?.name ?? parsed.NpcData.ObjectId.toString(16),
-      ownerId: parsed.OwnerId,
-      typeId: parsed.NpcData.TypeId,
+      name: npc?.name ?? parsed.npcData.objectId.toString(16),
+      ownerId: parsed.ownerId,
+      typeId: parsed.npcData.typeId,
       isBoss,
+      grade: npc?.grade ?? "none",
+      pushimmune: npc?.pushimmune ?? false,
+      stats: this.#data.getStatPairMap(parsed.npcData.statPair),
+      level: parsed.npcData.level,
+      balanceLevel: parsed.npcData.balanceLevel ?? parsed.npcData.level,
     };
-    this.#statusTracker.RemoveLocalObject(parsed.NpcData.ObjectId, pkt.time);
-    for (const se of parsed.NpcData.statusEffectDatas) {
-      const sourceEntity = this.getSourceEntity(se.SourceId);
+    this.#statusTracker.RemoveLocalObject(parsed.npcData.objectId, pkt.time);
+    for (const se of parsed.npcData.statusEffectDatas) {
+      const sourceEntity = this.getSourceEntity(se.sourceId);
       this.#statusTracker.RegisterStatusEffect(
         this.#statusTracker.buildStatusEffect(
           se,
-          parsed.NpcData.ObjectId,
+          parsed.npcData.objectId,
           sourceEntity.entityId,
           StatusEffectTargetType.Local,
           pkt.time
@@ -180,7 +207,41 @@ export class EntityTracker {
     this.entities.set(summon.entityId, summon);
     return summon;
   }
-
+  getPlayerSetOptions(itemDataList: { id?: number; slot?: number }[]): PassiveOption[] {
+    const playerSet: Map<string /*name*/, Map<number /*level*/, number /*count*/>> = new Map();
+    itemDataList.forEach((item) => {
+      if (item.id && item.slot && item.slot >= equipcategory.weapon && item.slot <= equipcategory.armor_pauldron) {
+        const itemSet = this.#data.itemSet.items.get(item.id);
+        if (itemSet) {
+          let setEntry = playerSet.get(itemSet.setname);
+          if (!setEntry) {
+            setEntry = new Map();
+            playerSet.set(itemSet.setname, setEntry);
+          }
+          setEntry.set(itemSet.level, (setEntry.get(itemSet.level) ?? 0) + 1);
+        }
+      }
+    });
+    const effectiveOptions: PassiveOption[] = [];
+    playerSet.forEach((v, setName) => {
+      const effect = this.#data.itemSet.seteffects.get(setName);
+      if (!effect) return;
+      let maxCountApplied = 0;
+      let higherLevelCount = 0;
+      for (const [level, count] of [...v.entries()].sort((a, b) => b[0] - a[0])) {
+        const effectLevel = effect.get(level);
+        if (!effectLevel) return;
+        for (const [requiredLevel, options] of [...effectLevel.entries()]) {
+          if (requiredLevel > maxCountApplied && count + higherLevelCount >= requiredLevel) {
+            effectiveOptions.push(...options.options);
+            maxCountApplied = Math.max(maxCountApplied, requiredLevel);
+          }
+        }
+        higherLevelCount = count;
+      }
+    });
+    return effectiveOptions;
+  }
   getSourceEntity(id: bigint): Entity {
     let entity = this.entities.get(id);
     if (entity?.entityType === EntityType.Projectile) {
@@ -194,6 +255,7 @@ export class EntityTracker {
       entityId: id,
       entityType: EntityType.Npc,
       name: id.toString(16),
+      stats: new Map(),
     };
     this.entities.set(id, newEntity);
     return newEntity;
@@ -212,6 +274,9 @@ export class EntityTracker {
           class: classId,
           gearLevel: player.gearLevel,
           characterId: player.characterId,
+          stance: player.stance,
+          stats: player.stats,
+          skills: new Map(),
         };
       } else {
         newEntity = {
@@ -221,6 +286,9 @@ export class EntityTracker {
           class: classId,
           gearLevel: 0,
           characterId: 0n,
+          stance: 0,
+          stats: new Map(),
+          skills: new Map(),
         };
       }
       this.entities.set(entity.entityId, newEntity);
@@ -231,7 +299,7 @@ export class EntityTracker {
   getOrCreateEntity(entityId: bigint): Entity {
     let ent = this.entities.get(entityId);
     if (!ent) {
-      ent = { entityId, entityType: EntityType.Unknown, name: entityId.toString(16) };
+      ent = { entityId, entityType: EntityType.Unknown, name: entityId.toString(16), stats: new Map() };
       this.entities.set(entityId, ent);
     }
     return ent;
@@ -251,19 +319,28 @@ export type Entity = {
   entityId: bigint;
   entityType: EntityType;
   name: string;
+  stats: Map<stattype, bigint>;
 };
+export type PlayerSet = Map<ItemSetData, { count: number; level: number; effects: ItemSetCount }>;
 
 export type Player = Entity & {
   entityType: EntityType.Player;
   class: number;
   gearLevel: number;
   characterId: bigint;
+  stance: number;
+  skills: Map<number /* skillid */, PlayerSkillData>;
+  itemSet?: PassiveOption[]; // TODO: store PassiveOption instead, and reprocess all items on change ?
 };
 
 export type Npc = Entity & {
   entityType: EntityType.Npc | EntityType.Summon | EntityType.Esther;
   typeId: number;
   isBoss: boolean;
+  grade: keyof typeof npcgrade;
+  pushimmune: boolean;
+  level: number;
+  balanceLevel: number;
 };
 
 export type Esther = Npc & {
@@ -282,3 +359,13 @@ export type Projectile = Entity & {
   skillEffectId: number;
   skillId: number;
 };
+
+export type PlayerSkillData = {
+  effects: Set<number>;
+  tripods: Map<number /* tripodindex */, TripodData>;
+  level?: number;
+  gems?: unknown;
+  rune?: unknown;
+  //skillData with db info ?
+};
+export type TripodData = { level: number; options: SkillFeatureOption[] };

@@ -6,9 +6,13 @@ export { opcode as PKTAuthTokenResult } from "./definitions/PKTAuthTokenResult";
 export { opcode as PKTBlockSkillStateNotify } from "./definitions/PKTBlockSkillStateNotify";
 export { opcode as PKTCounterAttackNotify } from "./definitions/PKTCounterAttackNotify";
 export { opcode as PKTDeathNotify } from "./definitions/PKTDeathNotify";
+export { opcode as PKTEquipChangeNotify } from "./definitions/PKTEquipChangeNotify";
+export { opcode as PKTEquipLifeToolChangeNotify } from "./definitions/PKTEquipLifeToolChangeNotify";
+export { opcode as PKTIdentityStanceChangeNotify } from "./definitions/PKTIdentityStanceChangeNotify";
 export { opcode as PKTInitAbility } from "./definitions/PKTInitAbility";
 export { opcode as PKTInitEnv } from "./definitions/PKTInitEnv";
 export { opcode as PKTInitPC } from "./definitions/PKTInitPC";
+export { opcode as PKTInitItem } from "./definitions/PKTInitItem";
 export { opcode as PKTInitLocal } from "./definitions/PKTInitLocal";
 export { opcode as PKTMigrationExecute } from "./definitions/PKTMigrationExecute";
 export { opcode as PKTNewNpc } from "./definitions/PKTNewNpc";
@@ -46,3 +50,4 @@ export { opcode as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentit
 export { opcode as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
 export { opcode as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
 export { opcode as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";
+export { opcode as PKTPCInspectResult } from "./definitions/PKTPCInspectResult";

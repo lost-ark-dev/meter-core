@@ -7,5 +7,4 @@ export function read(reader: Read, version: number) {
 }
 export function write(writer: Write, data: RaidBossKillNotify | PKTRaidBossKillNotify) {}
 
-export const logId = 26;
 export const name = "RaidBossKillNotify";

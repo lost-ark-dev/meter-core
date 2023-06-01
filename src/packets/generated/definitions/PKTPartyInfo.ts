@@ -2,22 +2,22 @@
 import { Read } from "../../stream";
 import * as PartyMemberData from "../structures/PartyMemberData";
 export type PKTPartyInfo = {
-  RaidInstanceId: number;
-  LootGrade: number;
-  PartyLootType: number;
-  PartyInstanceId: number;
-  MemberDatas: PartyMemberData.PartyMemberData[];
-  PartyType: number;
+  raidInstanceId: number;
+  lootGrade: number;
+  partyLootType: number;
+  partyInstanceId: number;
+  memberDatas: PartyMemberData.PartyMemberData[];
+  partyType: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTPartyInfo;
-  data.RaidInstanceId = reader.u32();
-  data.LootGrade = reader.u32();
-  data.PartyLootType = reader.u8();
-  data.PartyInstanceId = reader.u32();
-  data.MemberDatas = reader.array(reader.u16(), () => PartyMemberData.read(reader), 40);
-  data.PartyType = reader.u8();
+  data.raidInstanceId = reader.u32();
+  data.lootGrade = reader.u32();
+  data.partyLootType = reader.u8();
+  data.partyInstanceId = reader.u32();
+  data.memberDatas = reader.array(reader.u16(), () => PartyMemberData.read(reader), 40);
+  data.partyType = reader.u8();
   return data;
 }
 export const name = "PKTPartyInfo";

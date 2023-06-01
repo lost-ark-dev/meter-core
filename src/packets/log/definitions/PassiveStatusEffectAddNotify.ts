@@ -14,5 +14,4 @@ export function write(writer: Write, data: PassiveStatusEffectAddNotify | PKTPas
   });
 }
 
-export const logId = 24;
 export const name = "PassiveStatusEffectAddNotify";

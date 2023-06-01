@@ -1,7 +1,7 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-b78dad88.js';
-import { a as GameState } from '../data-322e7383.js';
+import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-4d6c6db2.js';
+import { a as GameState } from '../data-f92f56d2.js';
 import 'oodle';
 
 declare class Read {
@@ -68,19 +68,10 @@ declare class Write {
     }, callbackfn: (...args: any[]) => any): void;
 }
 
-declare class LogEvent<T> {
-    #private;
-    time: Date;
-    constructor(pkt: T, logId: number, write: (writer: Write, data: T) => void);
-    constructor(data: Buffer, logId: number, time: Date, read: (reader: Read) => T, write: (writer: Write, data: T) => void);
-    get parsed(): T | undefined;
-    get serialized(): Buffer | undefined;
-}
-
 type AbilityDataLog = {
-    Points: number;
-    Id: number;
-    Level: number;
+    points: number;
+    id: number;
+    level: number;
 };
 
 type AbilityChangeNotify = {
@@ -88,39 +79,39 @@ type AbilityChangeNotify = {
 };
 
 type ActiveAbilityLog = {
-    FeatureType: number;
-    Level: number;
+    featureType: number;
+    level: number;
 };
 
 type ActiveAbilityNotify = {
     activeAbilityList: ActiveAbilityLog[];
-    ObjectId: bigint;
+    objectId: bigint;
 };
 
 type AddonSkillFeatureChangeNotify = {
-    ObjectId: bigint;
+    objectId: bigint;
     addonSkillFeatureList: {
         addonSkillFeatureIdList: number[];
-        SkillId: number;
+        skillId: number;
     }[];
 };
 
 type BlockSkillStateNotify = {
-    ParalyzationMaxPoint: number;
-    Type: number;
-    ObjectId: bigint;
-    ParalyzationPoint: number;
+    paralyzationMaxPoint: number;
+    type: number;
+    objectId: bigint;
+    paralyzationPoint: number;
 };
 
 type CounterAttackNotify = {
-    SourceId: bigint;
-    TargetId: bigint;
-    Type: number;
+    sourceId: bigint;
+    targetId: bigint;
+    type: number;
 };
 
 type DeathNotify = {
-    SourceId: bigint;
-    TargetId: bigint;
+    sourceId: bigint;
+    targetId: bigint;
 };
 
 type InitAbility = {
@@ -128,109 +119,126 @@ type InitAbility = {
 };
 
 type InitEnv = {
-    PlayerId: bigint;
+    playerId: bigint;
 };
 
 type StatusEffectDataLog = {
-    SkillLevel: number;
-    OccurTime: LostArkDateTime;
-    StatusEffectId: number;
-    SourceId: bigint;
-    TotalTime: number;
-    EndTick: bigint;
-    Value?: Buffer;
-    EffectInstanceId: number;
+    skillLevel: number;
+    occurTime: LostArkDateTime;
+    statusEffectId: number;
+    sourceId: bigint;
+    totalTime: number;
+    endTick: bigint;
+    value?: Buffer;
+    effectInstanceId: number;
+    stackCount: number;
 };
 
 type InitPC = {
     statPair: {
-        StatType: number;
-        Value: bigint;
+        statType: number;
+        value: bigint;
     }[];
-    Name: string;
-    Level: number;
+    name: string;
+    level: number;
     statusEffectDatas: StatusEffectDataLog[];
-    CharacterId: bigint;
-    GearLevel: number;
-    PlayerId: bigint;
-    ClassId: number;
+    characterId: bigint;
+    gearLevel: number;
+    playerId: bigint;
+    classId: number;
 };
 
 type InitLocal = {
     statPair: {
-        StatType: number;
-        Value: bigint;
+        statType: number;
+        value: bigint;
     }[];
     statusEffectDatas: StatusEffectDataLog[];
     addonSkillFeatureList: {
         addonSkillFeatureIdList: number[];
-        SkillId: number;
+        skillId: number;
     }[];
     abilityDataList: AbilityDataLog[];
 };
 
 type MigrationExecute = {
-    Account_CharacterId1: bigint;
-    ServerAddr: string;
-    Account_CharacterId2: bigint;
+    account_CharacterId1: bigint;
+    serverAddr: string;
+    account_CharacterId2: bigint;
 };
 
 type NpcDataLog = {
-    SpawnIndex: number;
-    ObjectId: bigint;
-    TransitIndex?: number;
-    Position: Vector3F;
+    spawnIndex: number;
+    objectId: bigint;
+    transitIndex?: number;
+    position: Vector3F;
     statusEffectDatas: StatusEffectDataLog[];
-    DirectionYaw: Angle;
+    directionYaw: Angle;
     statPair: {
-        StatType: number;
-        Value: bigint;
+        statType: number;
+        value: bigint;
     }[];
-    TypeId: number;
+    typeId: number;
+    level: number;
+    balanceLevel?: number;
 };
 
 type NewNpc = {
-    NpcStruct: NpcDataLog;
+    npcStruct: NpcDataLog;
 };
 
 type NewNpcSummon = {
-    PublishReason: number;
-    OwnerId: bigint;
-    NpcData: NpcDataLog;
+    publishReason: number;
+    ownerId: bigint;
+    npcData: NpcDataLog;
 };
 
-type PCLogStruct = {
-    GearLevel: number;
+type EquipItemDataLog = {
+    slot: number;
+    level: number;
+    itemTint: Buffer;
+    expireTime: LostArkDateTime;
+    id: number;
+};
+
+type PCStructLog = {
+    maxItemLevel: number;
     statPair: {
-        StatType: number;
-        Value: bigint;
+        statType: number;
+        value: bigint;
     }[];
-    Name: string;
-    Heading: Angle;
-    CharacterId: bigint;
-    PlayerId: bigint;
+    name: string;
+    heading: Angle;
+    characterId: bigint;
+    playerId: bigint;
     addonSkillFeatureList: {
         addonSkillFeatureIdList: number[];
-        SkillId: number;
+        skillId: number;
     }[];
-    ClassId: number;
-    Level: number;
+    classId: number;
+    level: number;
     statusEffectDatas: StatusEffectDataLog[];
+    avgItemLevel: number;
+    position: Vector3F;
+    equipItemDataList: EquipItemDataLog[];
+    equipLifeToolDataList: EquipItemDataLog[];
+    guildName: string;
+    guildId: number;
 };
 
 type NewPC = {
-    PCStruct: PCLogStruct;
+    pcStruct: PCStructLog;
 };
 
 type ProjectileLogInfo = {
     tripodIndex: TripodIndex;
-    ChainSkillEffect: number;
-    SkillEffect: number;
-    SkillId: number;
-    TargetObjectId: bigint;
-    OwnerId: bigint;
-    SkillLevel: number;
-    ProjectileId: bigint;
+    chainSkillEffect: number;
+    skillEffect: number;
+    skillId: number;
+    targetObjectId: bigint;
+    ownerId: bigint;
+    skillLevel: number;
+    projectileId: bigint;
     tripodLevel: TripodLevel;
 };
 
@@ -239,74 +247,74 @@ type NewProjectile = {
 };
 
 type ParalyzationStateNotify = {
-    Enable: boolean;
-    ParalyzationPoint: number;
-    DecreasePoint: number;
-    ParalyzationMaxPoint: number;
-    NoHitCheckTime: number;
-    HitCheckTime: number;
-    ObjectId: bigint;
+    enable: boolean;
+    paralyzationPoint: number;
+    decreasePoint: number;
+    paralyzationMaxPoint: number;
+    noHitCheckTime: number;
+    hitCheckTime: number;
+    objectId: bigint;
 };
 
 type PartyMemberDataLog = {
-    MaxHp: bigint;
-    CharacterId: bigint;
-    Position: Vector3F;
-    TransitIndex: number;
-    CurHp: bigint;
-    CharacterLevel: number;
-    GearLevel: number;
-    ZoneId: number;
-    PartyMemberNumber: number;
-    Name: string;
-    ZoneInstId: bigint;
-    WorldId: number;
-    ClassId: number;
-    Auths: number;
+    maxHp: bigint;
+    characterId: bigint;
+    position: Vector3F;
+    transitIndex: number;
+    curHp: bigint;
+    characterLevel: number;
+    gearLevel: number;
+    zoneId: number;
+    partyMemberNumber: number;
+    name: string;
+    zoneInstId: bigint;
+    worldId: number;
+    classId: number;
+    auths: number;
 };
 
 type PartyInfo = {
-    RaidInstanceId: number;
-    LootGrade: number;
-    PartyType: number;
-    PartyInstanceId: number;
-    PartyLootType: number;
-    MemberDatas: PartyMemberDataLog[];
+    raidInstanceId: number;
+    lootGrade: number;
+    partyType: number;
+    partyInstanceId: number;
+    partyLootType: number;
+    memberDatas: PartyMemberDataLog[];
 };
 
 type PartyLeaveResult = {
-    PartyLeaveType: number;
-    PartyInstanceId: number;
-    Name: string;
+    partyLeaveType: number;
+    partyInstanceId: number;
+    name: string;
 };
 
 type PartyPassiveStatusEffectAddNotify = {
-    ObjectId: bigint;
+    objectId: bigint;
     passiveStatusEffectList: number[];
-    Unk0_m: number;
+    unk0_m: number;
 };
 
 type PartyPassiveStatusEffectRemoveNotify = {
-    ObjectId: bigint;
+    objectId: bigint;
     passiveStatusEffectList: number[];
 };
 
 type PartyStatusEffectAddNotify = {
-    CharacterId: bigint;
+    characterId: bigint;
     statusEffectDatas: StatusEffectDataLog[];
-    PlayerIdOnRefresh: bigint;
+    playerIdOnRefresh: bigint;
 };
 
 type PartyStatusEffectRemoveNotify = {
-    CharacterId: bigint;
+    characterId: bigint;
     statusEffectIds: number[];
-    Reason: number;
+    reason: number;
 };
 
 type PartyStatusEffectResultNotify = {
-    PartyInstanceId: number;
-    RaidInstanceId: number;
-    CharacterId: bigint;
+    partyInstanceId: number;
+    raidInstanceId: number;
+    characterId: bigint;
 };
 
 type PassiveStatusEffectAddNotify = {
@@ -322,8 +330,8 @@ type RaidBossKillNotify = {};
 type RaidResult = {};
 
 type UnpublishObjectLog = {
-    UnpublishReason: number;
-    ObjectId: bigint;
+    unpublishReason: number;
+    objectId: bigint;
 };
 
 type RemoveObject = {
@@ -331,128 +339,128 @@ type RemoveObject = {
 };
 
 type SkillDamageEventLog = {
-    Modifier: number;
-    TargetId: bigint;
-    DamageType: number;
-    DamageAttr?: number;
-    CurHp: bigint;
-    Unk3_m: number;
-    MaxHp: bigint;
-    Damage: bigint;
+    modifier: number;
+    targetId: bigint;
+    damageType: number;
+    damageAttr?: number;
+    curHp: bigint;
+    unk3_m: number;
+    maxHp: bigint;
+    damage: bigint;
 };
 
 type SkillDamageAbnormalMoveEventLog = {
-    SkillMoveOptionData: SkillMoveOptionData;
-    Destination: Vector3F;
-    Position: Vector3F;
+    skillMoveOptionData: SkillMoveOptionData;
+    destination: Vector3F;
+    position: Vector3F;
     skillDamageEvent: SkillDamageEventLog;
 };
 
 type SkillDamageAbnormalMoveNotify = {
-    SkillId: number;
-    SkillDamageAbnormalMoveEvents: SkillDamageAbnormalMoveEventLog[];
-    SkillEffectId: number;
-    SourceId: bigint;
+    skillId: number;
+    skillDamageAbnormalMoveEvents: SkillDamageAbnormalMoveEventLog[];
+    skillEffectId: number;
+    sourceId: bigint;
 };
 
 type SkillDamageNotify = {
-    SkillLevel: number;
-    SourceId: bigint;
-    SkillId: number;
-    SkillDamageEvents: SkillDamageEventLog[];
-    SkillEffectId: number;
+    skillLevel: number;
+    sourceId: bigint;
+    skillId: number;
+    skillDamageEvents: SkillDamageEventLog[];
+    skillEffectId: number;
 };
 
 type SkillStageNotify = {
-    SourceId: bigint;
-    SkillId: number;
-    Stage: number;
+    sourceId: bigint;
+    skillId: number;
+    stage: number;
 };
 
 type SkillStartNotify = {
-    SourceId: bigint;
-    CurDirectionYaw: Angle;
-    NewDirectionYaw: Angle;
-    AimTargetPosition: Vector3F;
-    PitchRotation?: Angle;
-    AiStateId?: number;
-    CurPosition: Vector3F;
-    Unk1_m?: number;
-    SkillLevel: number;
-    NewPosition: Vector3F;
-    SkillId: number;
-    SkillOptionData: SkillOptionData;
+    sourceId: bigint;
+    curDirectionYaw: Angle;
+    newDirectionYaw: Angle;
+    aimTargetPosition: Vector3F;
+    pitchRotation?: Angle;
+    aiStateId?: number;
+    curPosition: Vector3F;
+    unk1_m?: number;
+    skillLevel: number;
+    newPosition: Vector3F;
+    skillId: number;
+    skillOptionData: SkillOptionData;
 };
 
 type StatusEffectAddNotify = {
     statusEffectData: StatusEffectDataLog;
-    ObjectId: bigint;
-    New: boolean;
+    objectId: bigint;
+    new: boolean;
 };
 
 type StatusEffectRemoveNotify = {
     statusEffectIds: number[];
-    ObjectId: bigint;
-    Reason: number;
+    objectId: bigint;
+    reason: number;
 };
 
 type StatusEffectDurationNotify = {
-    EffectInstanceId: number;
-    TargetId: bigint;
-    ExpirationTick: bigint;
+    effectInstanceId: number;
+    targetId: bigint;
+    expirationTick: bigint;
 };
 
 type StatusEffectSyncDataNotify = {
-    ObjectId: bigint;
-    EffectInstanceId: number;
-    CharacterId: bigint;
-    Value: number;
+    objectId: bigint;
+    effectInstanceId: number;
+    characterId: bigint;
+    value: number;
 };
 
 type TriggerBossBattleStatus = {
-    Step: number;
-    Unk2_m: boolean;
-    TriggerId: number;
+    step: number;
+    unk2_m: boolean;
+    triggerId: number;
 };
 
 type TriggerFinishNotify = {
-    PacketResultCode: number;
-    TriggerId: number;
-    Unk0_m: number;
-    InvolvedPCs: bigint[];
+    packetResultCode: number;
+    triggerId: number;
+    unk0_m: number;
+    involvedPCs: bigint[];
 };
 
 type TriggerStartNotify = {
-    TriggerId: number;
-    TriggerSignalType: number;
-    SourceId: bigint;
-    InvolvedPCs: bigint[];
+    triggerId: number;
+    triggerSignalType: number;
+    sourceId: bigint;
+    involvedPCs: bigint[];
 };
 
 type TroopMemberUpdateMinNotify = {
-    MaxHp: bigint;
-    CharacterId: bigint;
-    Unk0_m: number;
+    maxHp: bigint;
+    characterId: bigint;
+    unk0_m: number;
     statusEffectDatas: StatusEffectDataLog[];
-    Position: bigint;
-    CurHp: bigint;
+    position: bigint;
+    curHp: bigint;
 };
 
 type IdentityGaugeChangeNotify = {
-    IdentityGauge1: number;
-    IdentityGauge2: number;
-    IdentityGauge3: number;
-    PlayerId: bigint;
+    identityGauge1: number;
+    identityGauge2: number;
+    identityGauge3: number;
+    playerId: bigint;
 };
 
 type ZoneObjectUnpublishNotify = {
-    ObjectId: bigint;
+    objectId: bigint;
 };
 
 type ZoneStatusEffectDataLog = {
-    StackCount: number;
-    Target: number;
-    Id: number;
+    stackCount: number;
+    target: number;
+    id: number;
 };
 
 type ZoneStatusEffectAddNotify = {
@@ -460,14 +468,55 @@ type ZoneStatusEffectAddNotify = {
 };
 
 type ZoneStatusEffectRemoveNotify = {
-    StatusEffectId: number;
+    statusEffectId: number;
 };
 
 type SkillCastNotify = {
-    SkillLevel: number;
-    Caster: bigint;
-    SkillId: number;
+    skillLevel: number;
+    caster: bigint;
+    skillId: number;
 };
+
+type IdentityStanceChangeNotify = {
+    objectId: bigint;
+    stance: number;
+};
+
+type EquipChangeNotify = {
+    objectId: bigint;
+    equipItemDataList: EquipItemDataLog[];
+};
+
+type EquipLifeToolChangeNotify = {
+    objectId: bigint;
+    equipLifeToolDataList: EquipItemDataLog[];
+};
+
+type ItemDataLog = {
+    serialNumber?: bigint;
+    id?: number;
+    level?: number;
+    slot?: number;
+    durability?: number;
+    unk1_6_m?: number;
+    flag?: number;
+    expireTime?: LostArkDateTime;
+    lockUpdateTime?: LostArkDateTime;
+};
+
+type InitItem = {
+    itemDataList: ItemDataLog[];
+    storageType: number;
+};
+
+declare class LogEvent<T> {
+    #private;
+    time: Date;
+    constructor(pkt: T, logId: number, write: (writer: Write, data: T) => void);
+    constructor(data: Buffer, logId: number, time: Date, read: (reader: Read) => T, write: (writer: Write, data: T) => void);
+    get parsed(): T | undefined;
+    get serialized(): Buffer | undefined;
+}
 
 interface LogStreamEvent {
     AbilityChangeNotify: (pkt: LogEvent<AbilityChangeNotify>) => void;
@@ -515,6 +564,10 @@ interface LogStreamEvent {
     ZoneStatusEffectAddNotify: (pkt: LogEvent<ZoneStatusEffectAddNotify>) => void;
     ZoneStatusEffectRemoveNotify: (pkt: LogEvent<ZoneStatusEffectRemoveNotify>) => void;
     SkillCastNotify: (pkt: LogEvent<SkillCastNotify>) => void;
+    IdentityStanceChangeNotify: (pkt: LogEvent<IdentityStanceChangeNotify>) => void;
+    EquipChangeNotify: (pkt: LogEvent<EquipChangeNotify>) => void;
+    EquipLifeToolChangeNotify: (pkt: LogEvent<EquipLifeToolChangeNotify>) => void;
+    InitItem: (pkt: LogEvent<InitItem>) => void;
     logData: (data: Buffer) => void;
     fileEnd: (output: string) => void;
     "*": (name: string, pkt: LogEvent<Object>) => void;

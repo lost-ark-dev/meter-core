@@ -936,6 +936,12 @@ export enum stattype {
   resource_recovery_rate = 149,
   weapon_dam = 151,
 }
+export enum statuseffecttargettooltiptype {
+  none = 0,
+  self = 1,
+  party = 2,
+  self_party = 3,
+}
 export enum statuseffectcategory {
   buff = 0,
   debuff = 1,

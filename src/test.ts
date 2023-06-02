@@ -68,12 +68,10 @@ if (testLive) {
   const test = new Map();
   const logger = new ReplayLogger();
   let count = 0;
-  /*
-  logger.on("NewNpc", (pkt) => {
+  logger.on("StatusEffectAddNotify", (pkt) => {
     if (!pkt.parsed) return;
-    console.log(pkt.parsed.npcStruct.balanceLevel, pkt.parsed.npcStruct.level, pkt.parsed.npcStruct.typeId);
+    if (pkt.parsed.statusEffectData.statusEffectId === 281706) console.log(pkt.parsed);
   });
-  */
   const parser = new Parser(logger, meterData, {
     isLive: false,
     splitOnPhaseTransition: true,
@@ -81,7 +79,7 @@ if (testLive) {
   logger.readLogByChunk(path.resolve("test.raw"));
   logger.on("fileEnd", () => {
     console.log(count);
-    console.log(parser.encounters);
+    //console.log(parser.encounters);
   });
 }
 

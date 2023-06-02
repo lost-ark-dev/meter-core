@@ -13,6 +13,7 @@ import {
   paramtype,
   skillfeaturetype,
   stattype,
+  statuseffecttargettooltiptype,
 } from "./packets/generated/enums";
 import { Entity, EntityType, Player, Npc as NpcEntity } from "./logger/entityTracker";
 export type Npc = {
@@ -47,7 +48,7 @@ export type SkillBuff = {
   type: string; // statuseffecttype
   statuseffectvalues?: number[];
   buffcategory: keyof typeof buffshowprioritycategory;
-  target: string;
+  target: keyof typeof statuseffecttargettooltiptype;
   uniquegroup: number;
   overlapFlag: number;
   passiveoption: PassiveOption[];

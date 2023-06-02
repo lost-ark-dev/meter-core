@@ -4,7 +4,7 @@ import type { StatusEffectDataLog } from "../packets/log/structures/StatusEffect
 import type { NewPC } from "../packets/log/types";
 import { type Entity, EntityType, type Player } from "./entityTracker";
 import type { PartyTracker } from "./partytracker";
-import { statuseffectexpiredreasontype } from "../packets/generated/enums";
+import { statuseffectexpiredreasontype, statuseffecttargettooltiptype } from "../packets/generated/enums";
 
 export enum StatusEffectTargetType {
   Party = 0,
@@ -38,6 +38,7 @@ export interface StatusEffect {
   targetId: TargetId;
   sourceId: TargetId;
   type: StatusEffectTargetType;
+  dbTarget: keyof typeof statuseffecttargettooltiptype;
   value: number;
   category: StatusEffectCategory;
   buffCategory: StatusEffectBuffCategory;
@@ -483,6 +484,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       statusEffectId: se.statusEffectId,
       targetId: targetId,
       type: targetType,
+      dbTarget: effectInfo?.target ?? "none",
       value: newVal,
       buffCategory: statusEffectBuffCategory,
       category: statusEffectCategory,
@@ -534,7 +536,17 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
               shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
               pktTime
             );
-      for (const se of targetEffects) statusEffectsOnTarget.push([se.statusEffectId, se.sourceId, se.stackCount]);
+      for (const se of targetEffects) {
+        //Filter out debuffs that are on target but that should only apply to caster
+        if (
+          se.type === StatusEffectTargetType.Local &&
+          se.category === StatusEffectCategory.Debuff &&
+          se.sourceId !== sourceEntity.entityId &&
+          se.dbTarget === "self"
+        )
+          continue;
+        statusEffectsOnTarget.push([se.statusEffectId, se.sourceId, se.stackCount]);
+      }
     }
     return [statusEffectsOnSource, statusEffectsOnTarget];
   }

@@ -622,6 +622,12 @@ declare enum stattype {
     resource_recovery_rate = 149,
     weapon_dam = 151
 }
+declare enum statuseffecttargettooltiptype {
+    none = 0,
+    self = 1,
+    party = 2,
+    self_party = 3
+}
 
 declare const enum EntityType {
     Unknown = 0,
@@ -668,7 +674,7 @@ type SkillBuff = {
     type: string;
     statuseffectvalues?: number[];
     buffcategory: keyof typeof buffshowprioritycategory;
-    target: string;
+    target: keyof typeof statuseffecttargettooltiptype;
     uniquegroup: number;
     overlapFlag: number;
     passiveoption: PassiveOption[];

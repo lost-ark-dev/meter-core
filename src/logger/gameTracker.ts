@@ -566,6 +566,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
                   //There, every attack power buff of that same type (skill_damage_sub_rate_2) is added together (instead of being multiplied)
                   //But it is still multiplied with other buffs
                   //TODO: weight in spec efficiency for Serenade of Courage
+                  //TODO: we have to include own synergies there, so that the share is processed correctly
                   const val = passive.value;
                   if (val !== 0) {
                     const rate = (val / 10000) * stackCount;
@@ -856,7 +857,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         const totalEffGainRate =
           (1 + critSumEffGainRate) * (1 + rdpsData.addDmg.sumRate) * rdpsData.multDmg.totalRate - 1;
         const totalSumGainRate = critSumEffGainRate + rdpsData.addDmg.sumRate + (rdpsData.multDmg.totalRate - 1);
-        const unitRate = (totalEffGainRate * damageData.damage) / totalSumGainRate;
+        const unitRate = (totalEffGainRate * damageData.damage) / (totalSumGainRate * (1 + totalEffGainRate));
 
         const critGainUnit = (critSumEffGainRate * unitRate) / rdpsData.crit.sumRate;
         rdpsData.crit.values.forEach((crit) => {
@@ -881,6 +882,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
         const multGainUnit = ((rdpsData.multDmg.totalRate - 1) * unitRate) / rdpsData.multDmg.sumRate;
         rdpsData.multDmg.values.forEach((dmg) => {
+          //const delta = dmg.rate * multGainUnit;
           const delta = dmg.rate * multGainUnit;
           const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
           if (sourceEntityState) {

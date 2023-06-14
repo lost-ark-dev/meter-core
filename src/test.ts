@@ -68,14 +68,12 @@ if (testLive) {
   const test = new Map();
   const logger = new ReplayLogger();
   let count = 0;
-  logger.on("StatusEffectAddNotify", (pkt) => {
-    if (!pkt.parsed) return;
-    if (pkt.parsed.statusEffectData.statusEffectId === 281706) console.log(pkt.parsed);
-  });
+  /*
   const parser = new Parser(logger, meterData, {
     isLive: false,
     splitOnPhaseTransition: true,
   });
+  */
   logger.readLogByChunk(path.resolve("test.raw"));
   logger.on("fileEnd", () => {
     console.log(count);
@@ -83,7 +81,6 @@ if (testLive) {
   });
 }
 
-/*
 const opcodes: { [key: number]: string } = {};
 try {
   readFileSync("../dump/opcodes.map", "utf-8")
@@ -108,42 +105,7 @@ for (const server of [6010, 6020, 6030, 6040]) {
       console.error(e);
     }
   });
-  stream.on("PKTNewNpc", (pkt) => {
-    console.log(
-      JSON.stringify(
-        pkt.parsed,
-        (_, v) => {
-          if (typeof v === "bigint") return v.toString() + "n";
-          else if (typeof v === "object" && v.type === "Buffer") {
-            return v.data.map((x: number) => x.toString(16).padStart(2, "0")).join("");
-          } else return v;
-        },
-        2
-      )
-    );
-  });
-  let total = 0;
-  let count = 0;
-  stream.on("PKTSkillDamageNotify", (pkt) => {
-    if (pkt.parsed?.skillId === 17040) return;
-    const dmg = pkt.parsed?.skillDamageEvents[0]?.damage;
-    if (dmg) {
-      if (dmg < 12000) {
-        console.log(`Cleared mean dmg: ${total / count}`);
-        total = 0;
-        count = 0;
-      } else {
-        total += Number(dmg);
-        count++;
-        console.log(
-          `Mean: ${total / count} - hit: ${dmg} - total hits: ${count} - diff: ${Math.abs(
-            total / count - (total - Number(dmg)) / (count - 1)
-          )}`
-        );
-      }
-    }
-  });
-  
+
   stream.on("*", (data, opcode, compression, xor) => {
     try {
       const decomp = decompressor.decrypt(data, opcode, compression, xor);
@@ -152,7 +114,5 @@ for (const server of [6010, 6020, 6030, 6040]) {
       console.error(e);
     }
   });
-  
 }
-*/
 console.log("Logging");

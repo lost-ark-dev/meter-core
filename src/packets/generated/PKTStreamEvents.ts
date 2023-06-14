@@ -53,6 +53,5 @@ export interface PKTStreamEvents {
   PKTZoneObjectUnpublishNotify: (pkt: PKT<types.PKTZoneObjectUnpublishNotify>) => void;
   PKTZoneStatusEffectAddNotify: (pkt: PKT<types.PKTZoneStatusEffectAddNotify>) => void;
   PKTZoneStatusEffectRemoveNotify: (pkt: PKT<types.PKTZoneStatusEffectRemoveNotify>) => void;
-  PKTPCInspectResult: (pkt: PKT<types.PKTPCInspectResult>) => void;
   "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
 }

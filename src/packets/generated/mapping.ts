@@ -81,5 +81,4 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
     codes.PKTZoneStatusEffectRemoveNotify,
     [names.PKTZoneStatusEffectRemoveNotify, reads.PKTZoneStatusEffectRemoveNotify],
   ],
-  [codes.PKTPCInspectResult, [names.PKTPCInspectResult, reads.PKTPCInspectResult]],
 ]);

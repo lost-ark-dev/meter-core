@@ -3,14 +3,14 @@ import { Read } from "../../stream";
 import * as AbilityData from "../structures/AbilityData";
 export type PKTInitAbility = {
   abilityDataList: AbilityData.AbilityData[];
-  struct_129: Buffer;
+  struct_130: Buffer;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTInitAbility;
   data.abilityDataList = reader.array(reader.u16(), () => AbilityData.read(reader), 100);
-  data.struct_129 = reader.bytes(reader.u16(), 348, 48);
+  data.struct_130 = reader.bytes(reader.u16(), 348, 48);
   return data;
 }
 export const name = "PKTInitAbility";
-export const opcode = 1278;
+export const opcode = 44384;

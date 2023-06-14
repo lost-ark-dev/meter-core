@@ -10,9 +10,9 @@ export function read(buf: Buffer) {
   const data = {} as PKTTriggerBossBattleStatus;
   data.triggerId = reader.u32();
   data.unk2_m = reader.bool();
-  reader.skip(1);
+  reader.skip(2);
   data.step = reader.u32();
   return data;
 }
 export const name = "PKTTriggerBossBattleStatus";
-export const opcode = 23399;
+export const opcode = 31690;

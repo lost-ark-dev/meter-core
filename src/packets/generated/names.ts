@@ -50,4 +50,3 @@ export { name as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityG
 export { name as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
 export { name as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
 export { name as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";
-export { name as PKTPCInspectResult } from "./definitions/PKTPCInspectResult";

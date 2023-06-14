@@ -1,37 +1,44 @@
 // Auto Generated, do not edit.
 import type { Read } from "../../stream";
-import * as Struct_636 from "../structures/Struct_636";
 export type Struct_642 = {
   unk0: number;
-  unk1: number;
-  struct_391: Buffer;
-  unk3: number;
-  struct_256: Buffer;
+  struct_436: Buffer;
+  unk2: number;
+  struct_237: Buffer;
+  unk1_0?: number;
+  unk1_1?: number;
+  struct_185?: Buffer;
   unk5: number;
-  unk6: bigint;
-  struct_233: Struct_636.Struct_636[];
-  unk8: number;
-  struct_235: Buffer;
-  unk10: number;
-  unk11: number;
-  unk12: number;
-  struct_489: Buffer;
+  struct_269: Buffer;
+  unk7: number;
+  struct_231: Buffer;
+  struct_228?: Buffer;
+  itemTint: Buffer;
+  unk13_0?: Buffer;
+  unk14: number;
+  unk15: number;
+  unk16: number;
 };
 export function read(reader: Read) {
   const data = {} as Struct_642;
   data.unk0 = reader.u32();
-  data.unk1 = reader.u32();
-  data.struct_391 = reader.bytes(reader.u16(), 2, 10);
-  data.unk3 = reader.u8();
-  data.struct_256 = reader.bytes(reader.u16(), 2, 9);
+  data.struct_436 = reader.bytes(reader.u16(), 3, 10);
+  data.unk2 = reader.u32();
+  data.struct_237 = reader.bytes(reader.u16(), 10, 29);
+  if (reader.bool() /*unk0*/) {
+    data.unk1_0 = reader.u32();
+    data.unk1_1 = reader.u32();
+    data.struct_185 = reader.bytes(reader.u16(), 5, 30);
+  }
   data.unk5 = reader.u32();
-  data.unk6 = reader.u64();
-  data.struct_233 = reader.array(reader.u16(), () => Struct_636.read(reader), 3);
-  data.unk8 = reader.u32();
-  data.struct_235 = reader.bytes(reader.u16(), 10, 18);
-  data.unk10 = reader.u32();
-  data.unk11 = reader.u16();
-  data.unk12 = reader.u32();
-  data.struct_489 = reader.bytes(reader.u16(), 10, 9);
+  data.struct_269 = reader.bytes(reader.u16(), 3, 21);
+  data.unk7 = reader.u32();
+  data.struct_231 = reader.bytes(reader.u16(), 3, 7);
+  if (reader.bool()) data.struct_228 = reader.bytes(reader.u16(), 2, 32);
+  data.itemTint = reader.bytes(reader.u16(), 3, 14);
+  if (reader.bool()) data.unk13_0 = reader.bytes(9);
+  data.unk14 = reader.u32();
+  data.unk15 = reader.u32();
+  data.unk16 = reader.u8();
   return data;
 }

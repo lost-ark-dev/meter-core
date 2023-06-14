@@ -50,4 +50,3 @@ export { opcode as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentit
 export { opcode as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
 export { opcode as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
 export { opcode as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";
-export { opcode as PKTPCInspectResult } from "./definitions/PKTPCInspectResult";

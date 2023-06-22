@@ -1,17 +1,18 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { M as MeterData, G as GameTrackerOptions, a as GameState } from '../data-d19f1667.js';
+import { M as MeterData, G as GameTrackerOptions, a as GameState } from '../data-fd4bd5c2.js';
 import { Logger } from './logger.js';
 import '../decompressor.js';
 import 'oodle';
-import '../pkt-stream-43f37469.js';
+import '../pkt-stream-e47bc714.js';
 
 declare class Parser extends TypedEmitter<ParserEvent> {
     #private;
-    constructor(logger: Logger, data: MeterData, options: Partial<GameTrackerOptions>);
+    constructor(logger: Logger, data: MeterData, clientId: string, options: Partial<GameTrackerOptions>);
     broadcastStateChange(): void;
     reset(): void;
     cancelReset(): void;
     updateOptions(options: Partial<GameTrackerOptions>): void;
+    onConnect(ip: string): void;
     get encounters(): GameState[];
 }
 interface ParserEvent {

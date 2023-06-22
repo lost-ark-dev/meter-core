@@ -29,6 +29,7 @@ export { opcode as PKTPartyStatusEffectRemoveNotify } from "./definitions/PKTPar
 export { opcode as PKTPartyStatusEffectResultNotify } from "./definitions/PKTPartyStatusEffectResultNotify";
 export { opcode as PKTPassiveStatusEffectAddNotify } from "./definitions/PKTPassiveStatusEffectAddNotify";
 export { opcode as PKTPassiveStatusEffectRemoveNotify } from "./definitions/PKTPassiveStatusEffectRemoveNotify";
+export { opcode as PKTRaidBegin } from "./definitions/PKTRaidBegin";
 export { opcode as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { opcode as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { opcode as PKTRemoveObject } from "./definitions/PKTRemoveObject";
@@ -47,6 +48,7 @@ export { opcode as PKTTriggerFinishNotify } from "./definitions/PKTTriggerFinish
 export { opcode as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNotify";
 export { opcode as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
 export { opcode as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";
+export { opcode as PKTZoneMemberLoadStatusNotify } from "./definitions/PKTZoneMemberLoadStatusNotify";
 export { opcode as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
 export { opcode as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
 export { opcode as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";

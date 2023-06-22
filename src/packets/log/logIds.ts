@@ -48,4 +48,8 @@ export const enum logId {
   EquipChangeNotify = 48,
   EquipLifeToolChangeNotify = 49,
   InitItem = 50,
+  ZoneMemberLoadStatusNotify = 51,
+  RaidBegin = 52,
+
+  APP_StatApi = 60000,
 }

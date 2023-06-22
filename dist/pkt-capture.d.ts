@@ -114,6 +114,7 @@ interface IPktCapture {
 }
 interface PktCaptureEvents {
     packet: (buf: Buffer) => void;
+    connect: (ip: string) => void;
 }
 interface PktCapture extends IPktCapture {
 }
@@ -126,6 +127,7 @@ declare abstract class PktCapture extends TypedEmitter<PktCaptureEvents> impleme
 }
 interface PktCaptureAllEvents {
     packet: (buf: Buffer, deviceName: string) => void;
+    connect: (ip: string, deviceName: string) => void;
 }
 declare enum PktCaptureMode {
     MODE_PCAP = 0,

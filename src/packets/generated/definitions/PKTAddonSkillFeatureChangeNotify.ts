@@ -23,4 +23,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTAddonSkillFeatureChangeNotify";
-export const opcode = 25550;
+export const opcode = 56531;

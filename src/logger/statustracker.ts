@@ -223,6 +223,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
           this.RegisterValueUpdate(statusEffect, statusEffect.value, 0);
       }
     }
+    return statusEffect;
   }
   public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType, pktTime: Date): Array<StatusEffect> {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];

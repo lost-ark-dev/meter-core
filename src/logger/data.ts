@@ -78,6 +78,7 @@ export interface HealSource {
 export interface DamageInfo {
   damageDealt: number;
   rdpsDamageReceived: number;
+  rdpsDamageReceivedSupp: number;
   rdpsDamageGiven: number;
   damageDealtDebuffedBySupport: number;
   damageDealtBuffedBySupport: number;
@@ -115,6 +116,8 @@ export interface EntityState {
   damagePreventedByShieldBy: Map<number, number>;
   shieldDoneBy: Map<number, number>;
   shieldReceivedBy: Map<number, number>;
+  statApiValid: boolean;
+  //TODO: include stats & tripods
 }
 
 export interface Breakdown {

@@ -32,6 +32,7 @@ export interface PKTStreamEvents {
   PKTPartyStatusEffectResultNotify: (pkt: PKT<types.PKTPartyStatusEffectResultNotify>) => void;
   PKTPassiveStatusEffectAddNotify: (pkt: PKT<types.PKTPassiveStatusEffectAddNotify>) => void;
   PKTPassiveStatusEffectRemoveNotify: (pkt: PKT<types.PKTPassiveStatusEffectRemoveNotify>) => void;
+  PKTRaidBegin: (pkt: PKT<types.PKTRaidBegin>) => void;
   PKTRaidBossKillNotify: (pkt: PKT<types.PKTRaidBossKillNotify>) => void;
   PKTRaidResult: (pkt: PKT<types.PKTRaidResult>) => void;
   PKTRemoveObject: (pkt: PKT<types.PKTRemoveObject>) => void;
@@ -50,6 +51,7 @@ export interface PKTStreamEvents {
   PKTTriggerStartNotify: (pkt: PKT<types.PKTTriggerStartNotify>) => void;
   PKTTroopMemberUpdateMinNotify: (pkt: PKT<types.PKTTroopMemberUpdateMinNotify>) => void;
   PKTIdentityGaugeChangeNotify: (pkt: PKT<types.PKTIdentityGaugeChangeNotify>) => void;
+  PKTZoneMemberLoadStatusNotify: (pkt: PKT<types.PKTZoneMemberLoadStatusNotify>) => void;
   PKTZoneObjectUnpublishNotify: (pkt: PKT<types.PKTZoneObjectUnpublishNotify>) => void;
   PKTZoneStatusEffectAddNotify: (pkt: PKT<types.PKTZoneStatusEffectAddNotify>) => void;
   PKTZoneStatusEffectRemoveNotify: (pkt: PKT<types.PKTZoneStatusEffectRemoveNotify>) => void;

@@ -137,4 +137,11 @@ export const logMapping = new Map<
     [names.EquipLifeToolChangeNotify, reads.EquipLifeToolChangeNotify, writes.EquipLifeToolChangeNotify],
   ],
   [logId.InitItem, [names.InitItem, reads.InitItem, writes.InitItem]],
+  [logId.RaidBegin, [names.RaidBegin, reads.RaidBegin, writes.RaidBegin]],
+  [
+    logId.ZoneMemberLoadStatusNotify,
+    [names.ZoneMemberLoadStatusNotify, reads.ZoneMemberLoadStatusNotify, writes.ZoneMemberLoadStatusNotify],
+  ],
+
+  [logId.APP_StatApi, [names.APP_StatApi, reads.APP_StatApi, writes.APP_StatApi]],
 ]);

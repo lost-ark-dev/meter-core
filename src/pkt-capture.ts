@@ -23,6 +23,7 @@ interface IPktCapture {
 interface PktCapture extends IPktCapture {}
 interface PktCaptureEvents {
   packet: (buf: Buffer) => void;
+  connect: (ip: string) => void;
 }
 abstract class PktCapture extends TypedEmitter<PktCaptureEvents> implements IPktCapture {
   tcpTracker: TCPTracker;
@@ -42,6 +43,7 @@ abstract class PktCapture extends TypedEmitter<PktCaptureEvents> implements IPkt
       session.on("payload_recv", (data: Buffer) => {
         this.emit("packet", data);
       });
+      if (session.dst) this.emit("connect", session.dst);
     });
   }
   dispatchPacket(packet: Buffer): void {
@@ -104,6 +106,7 @@ class RawSocketCapture extends PktCapture {
 }
 interface PktCaptureAllEvents {
   packet: (buf: Buffer, deviceName: string) => void;
+  connect: (ip: string, deviceName: string) => void;
 }
 export enum PktCaptureMode {
   MODE_PCAP,
@@ -139,6 +142,7 @@ export class PktCaptureAll extends TypedEmitter<PktCaptureAllEvents> {
               });
               // re-emit
               pcapc.on("packet", (buf) => this.emit("packet", buf, device.name));
+              pcapc.on("connect", (ip) => this.emit("connect", ip, device.name));
               this.captures.set(device.name, pcapc);
               pcapc.listen();
             } catch (e) {

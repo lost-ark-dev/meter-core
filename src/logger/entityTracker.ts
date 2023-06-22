@@ -1,7 +1,7 @@
 import type { ItemSetCount, ItemSetData, MeterData, PassiveOption, SkillFeatureOption } from "../data";
 import { TripodIndex } from "../packets/common/TripodIndex";
 import { TripodLevel } from "../packets/common/TripodLevel";
-import { equipcategory, npcgrade, stattype } from "../packets/generated/enums";
+import { equipcategory, npcgrade, playerclass, stattype } from "../packets/generated/enums";
 import { EquipItemDataLog } from "../packets/log/structures/EquipItemData";
 import type { InitEnv, InitPC, NewNpc, NewNpcSummon, NewPC } from "../packets/log/types";
 import type { LogEvent } from "./logEvent";
@@ -34,6 +34,7 @@ export class EntityTracker {
       stance: 0,
       stats: new Map(),
       skills: new Map(),
+      items: {},
     };
   }
   processNewPC(pkt: LogEvent<NewPC>): Player | undefined {
@@ -49,6 +50,7 @@ export class EntityTracker {
       stance: 0,
       stats: this.#data.getStatPairMap(parsed.pcStruct.statPair),
       skills: new Map(),
+      items: {},
     };
     this.entities.set(player.entityId, player);
     const oldEntityId = this.#pcIdMapper.getEntityId(player.characterId);
@@ -59,6 +61,21 @@ export class EntityTracker {
     this.#partyTracker.completeEntry(player.characterId, player.entityId);
 
     this.#statusTracker.newPC(parsed, this.localPlayer.characterId, pkt.time);
+
+    //Items
+    player.itemSet = this.getPlayerSetOptions(parsed.pcStruct.equipItemDataList);
+
+    const equipList: PlayerItemData[] = [];
+    parsed.pcStruct.equipItemDataList.forEach((item) => {
+      if (item.id !== undefined && item.slot !== undefined) equipList.push({ id: item.id, slot: item.slot });
+    });
+    player.items.equipList = equipList;
+
+    const lifeToolList: PlayerItemData[] = [];
+    parsed.pcStruct.equipLifeToolDataList.forEach((item) => {
+      if (item.id !== undefined && item.slot !== undefined) lifeToolList.push({ id: item.id, slot: item.slot });
+    });
+    player.items.lifeToolList = lifeToolList;
     return player;
   }
   processInitEnv(pkt: LogEvent<InitEnv>) {
@@ -78,6 +95,7 @@ export class EntityTracker {
       stance: this.localPlayer.stance,
       stats: this.localPlayer.stats,
       skills: this.localPlayer.skills,
+      items: {},
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
@@ -102,6 +120,7 @@ export class EntityTracker {
       stance: 0,
       stats: this.#data.getStatPairMap(parsed.statPair),
       skills: new Map(),
+      items: {},
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
@@ -277,6 +296,7 @@ export class EntityTracker {
           stance: player.stance,
           stats: player.stats,
           skills: new Map(),
+          items: {},
         };
       } else {
         newEntity = {
@@ -289,6 +309,7 @@ export class EntityTracker {
           stance: 0,
           stats: new Map(),
           skills: new Map(),
+          items: {},
         };
       }
       this.entities.set(entity.entityId, newEntity);
@@ -303,6 +324,9 @@ export class EntityTracker {
       this.entities.set(entityId, ent);
     }
     return ent;
+  }
+  getEntityByName(name: string) {
+    return [...this.entities.values()].find((e) => e.name === name);
   }
 }
 
@@ -325,12 +349,20 @@ export type PlayerSet = Map<ItemSetData, { count: number; level: number; effects
 
 export type Player = Entity & {
   entityType: EntityType.Player;
-  class: number;
+  class: playerclass;
   gearLevel: number;
   characterId: bigint;
   stance: number;
   skills: Map<number /* skillid */, PlayerSkillData>;
   itemSet?: PassiveOption[]; // TODO: store PassiveOption instead, and reprocess all items on change ?
+  items: {
+    lifeToolList?: PlayerItemData[];
+    equipList?: PlayerItemData[];
+  };
+};
+export type PlayerItemData = {
+  id: number;
+  slot: number;
 };
 
 export type Npc = Entity & {

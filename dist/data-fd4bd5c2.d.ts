@@ -74,6 +74,7 @@ interface HealSource {
 interface DamageInfo {
     damageDealt: number;
     rdpsDamageReceived: number;
+    rdpsDamageReceivedSupp: number;
     rdpsDamageGiven: number;
     damageDealtDebuffedBySupport: number;
     damageDealtBuffedBySupport: number;
@@ -109,6 +110,7 @@ interface EntityState {
     damagePreventedByShieldBy: Map<number, number>;
     shieldDoneBy: Map<number, number>;
     shieldReceivedBy: Map<number, number>;
+    statApiValid: boolean;
 }
 interface Breakdown {
     timestamp: number;
@@ -758,6 +760,10 @@ type CombatEffectConditionData = {
     hitOption?: hitoption;
     targetCount?: number;
 };
+type StatQueryFilter = {
+    zone: Set<number>;
+    raid: Set<number>;
+};
 declare class MeterData {
     dbPath: string;
     modulePath: string;
@@ -771,6 +777,7 @@ declare class MeterData {
     combatEffect: Map<number, CombatEffect>;
     esther: Esther[];
     itemSet: ItemSet;
+    statQueryFilter: StatQueryFilter;
     constructor(meterDataPath?: string);
     processEnumData(data: {
         [key: string]: {
@@ -821,6 +828,10 @@ declare class MeterData {
             };
         };
     }): void;
+    procesStatQueryFilter(data: {
+        zone: number[];
+        raid: number[];
+    }): void;
     getNpcName(id: number): string;
     getClassName(id: number): string;
     getSkillName(id: number): string;
@@ -842,4 +853,4 @@ declare class MeterData {
     loadDbs(basePath: string): void;
 }
 
-export { Breakdown as B, CombatEffect as C, DamageStatistics as D, EntityState as E, GameTrackerOptions as G, HealSource as H, ItemSetData as I, MeterData as M, Npc as N, PARSED_LOG_VERSION as P, StatusEffectTarget as S, GameState as a, StatusEffectBuffTypeFlags as b, StatusEffect as c, StatusEffectSource as d, GameStateNew as e, DamageInfo as f, EntitySkills as g, Hits as h, Skill as i, SkillBuff as j, SkillFeature as k, SkillFeatureLevelData as l, SkillFeatureOption as m, PassiveOption as n, CombatEffectDetail as o, CombatEffectCondition as p, CombatEffectAction as q, SkillEffect as r, Esther as s, ItemSet as t, ItemSetLevel as u, ItemSetCount as v, CombatEffectConditionData as w };
+export { Breakdown as B, CombatEffect as C, DamageStatistics as D, EntityState as E, GameTrackerOptions as G, HealSource as H, ItemSetData as I, MeterData as M, Npc as N, PARSED_LOG_VERSION as P, StatusEffectTarget as S, GameState as a, StatusEffectBuffTypeFlags as b, StatusEffect as c, StatusEffectSource as d, GameStateNew as e, DamageInfo as f, EntitySkills as g, Hits as h, Skill as i, SkillBuff as j, SkillFeature as k, SkillFeatureLevelData as l, SkillFeatureOption as m, PassiveOption as n, CombatEffectDetail as o, CombatEffectCondition as p, CombatEffectAction as q, SkillEffect as r, Esther as s, ItemSet as t, ItemSetLevel as u, ItemSetCount as v, CombatEffectConditionData as w, StatQueryFilter as x };

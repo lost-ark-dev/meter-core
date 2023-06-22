@@ -50,7 +50,13 @@ export interface LogStreamEvent {
   EquipChangeNotify: (pkt: LogEvent<types.EquipChangeNotify>) => void;
   EquipLifeToolChangeNotify: (pkt: LogEvent<types.EquipLifeToolChangeNotify>) => void;
   InitItem: (pkt: LogEvent<types.InitItem>) => void;
+  RaidBegin: (pkt: LogEvent<types.RaidBegin>) => void;
+  ZoneMemberLoadStatusNotify: (pkt: LogEvent<types.ZoneMemberLoadStatusNotify>) => void;
+
   logData: (data: Buffer) => void;
   fileEnd: (output: string) => void;
+
+  APP_StatApi: (pkt: LogEvent<types.APP_StatApi>) => void;
+
   "*": (name: string, pkt: LogEvent<Object>) => void;
 }

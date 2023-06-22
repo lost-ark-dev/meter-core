@@ -47,3 +47,7 @@ export { read as IdentityStanceChangeNotify } from "./definitions/IdentityStance
 export { read as EquipChangeNotify } from "./definitions/EquipChangeNotify";
 export { read as EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChangeNotify";
 export { read as InitItem } from "./definitions/InitItem";
+export { read as RaidBegin } from "./definitions/RaidBegin";
+export { read as ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
+
+export { read as APP_StatApi } from "./app/APP_StatApi";

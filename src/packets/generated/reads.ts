@@ -29,6 +29,7 @@ export { read as PKTPartyStatusEffectRemoveNotify } from "./definitions/PKTParty
 export { read as PKTPartyStatusEffectResultNotify } from "./definitions/PKTPartyStatusEffectResultNotify";
 export { read as PKTPassiveStatusEffectAddNotify } from "./definitions/PKTPassiveStatusEffectAddNotify";
 export { read as PKTPassiveStatusEffectRemoveNotify } from "./definitions/PKTPassiveStatusEffectRemoveNotify";
+export { read as PKTRaidBegin } from "./definitions/PKTRaidBegin";
 export { read as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { read as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { read as PKTRemoveObject } from "./definitions/PKTRemoveObject";
@@ -47,6 +48,7 @@ export { read as PKTTriggerFinishNotify } from "./definitions/PKTTriggerFinishNo
 export { read as PKTTriggerStartNotify } from "./definitions/PKTTriggerStartNotify";
 export { read as PKTTroopMemberUpdateMinNotify } from "./definitions/PKTTroopMemberUpdateMinNotify";
 export { read as PKTIdentityGaugeChangeNotify } from "./definitions/PKTIdentityGaugeChangeNotify";
+export { read as PKTZoneMemberLoadStatusNotify } from "./definitions/PKTZoneMemberLoadStatusNotify";
 export { read as PKTZoneObjectUnpublishNotify } from "./definitions/PKTZoneObjectUnpublishNotify";
 export { read as PKTZoneStatusEffectAddNotify } from "./definitions/PKTZoneStatusEffectAddNotify";
 export { read as PKTZoneStatusEffectRemoveNotify } from "./definitions/PKTZoneStatusEffectRemoveNotify";

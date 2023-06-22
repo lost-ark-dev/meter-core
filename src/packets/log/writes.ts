@@ -47,3 +47,7 @@ export { write as IdentityStanceChangeNotify } from "./definitions/IdentityStanc
 export { write as EquipChangeNotify } from "./definitions/EquipChangeNotify";
 export { write as EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChangeNotify";
 export { write as InitItem } from "./definitions/InitItem";
+export { write as RaidBegin } from "./definitions/RaidBegin";
+export { write as ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
+
+export { write as APP_StatApi } from "./app/APP_StatApi";

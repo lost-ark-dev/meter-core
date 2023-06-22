@@ -1,5 +1,4 @@
 import { createReadStream, createWriteStream, readFileSync } from "fs";
-import { inspect } from "util";
 import { MeterData } from "./data";
 import { Decompressor } from "./decompressor";
 import { LiveLogger, Logger, ReplayLogger } from "./logger/logger";
@@ -7,9 +6,15 @@ import { PktCaptureAll, PktCaptureMode } from "./pkt-capture";
 import { PKTStream } from "./pkt-stream";
 import { Parser } from "./logger/parser";
 import path from "path";
-import type { LogEvent } from "./logger/logEvent";
-import { damagetype, hitflag } from "./packets/generated/enums";
+import { LogEvent } from "./logger/logEvent";
+import { damagetype, hitflag, itemstoragetype, triggersignaltype } from "./packets/generated/enums";
 import * as reads from "./packets/generated/reads";
+import { logId } from "./packets/log/logIds";
+import { logMapping } from "./packets/log/logMapping";
+import * as Vector3F from "./packets/common/Vector3F";
+import { Read } from "./packets/stream";
+
+import { inspect } from "util";
 inspect.defaultOptions.depth = null; //Use to console log full objects for debug
 
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
@@ -42,12 +47,7 @@ function logEvent(name: string, pkt: LogEvent<any>) {
 /*
 console.log(
   JSON.stringify(
-    reads.PKTNewNpc(
-      Buffer.from(
-        "00000400000200090001f470020242061bf470021c42064d42064f420651005300550001fa0000000000eb196039040442003200b73f01020000000052a50000000000000052e0311f0000000000000000000000e40000000400a7c2690c00000000f47002e80300000000a7c2690c00000000f47002e80301000000a7c2690c000000004206e80300000100a7c2690c000000004206e80301000100",
-        "hex"
-      )
-    ),
+    reads.PKTZoneMemberLoadStatusNotify(Buffer.from("", "hex")),
     (_, v) => {
       if (typeof v === "bigint") return v.toString() + "n";
       else if (typeof v === "object" && v.type === "Buffer") {
@@ -58,29 +58,34 @@ console.log(
   )
 );
 */
-
 const testLive = false;
 if (testLive) {
-  const logger = new LiveLogger(stream, decompressor, path.resolve("test.raw"));
-  //const parser = new Parser(logger, meterData);
+  const logger = new LiveLogger(stream, decompressor, path.resolve("../logs/test.raw"));
+
+  const parser = new Parser(logger, meterData, "test_client", {
+    isLive: true,
+    resetAfterPhaseTransition: true,
+  });
   //logger.on("*", logEvent);
 } else {
   const test = new Map();
   const logger = new ReplayLogger();
+
   let count = 0;
-  /*
-  const parser = new Parser(logger, meterData, {
-    isLive: false,
-    splitOnPhaseTransition: true,
+  const m = new Map<number, string | undefined>();
+  const parser = new Parser(logger, meterData, "test_client", {
+    isLive: true,
+    resetAfterPhaseTransition: true,
   });
-  */
-  logger.readLogByChunk(path.resolve("test.raw"));
+  //logger.on("APP_StatApi", (pkt) => logEvent("APP_StatApi", pkt));
+  logger.readLogByChunk(path.resolve("../logs/test.raw"));
   logger.on("fileEnd", () => {
     console.log(count);
+    //parser.encounters;
     //console.log(parser.encounters);
   });
 }
-
+/*
 const opcodes: { [key: number]: string } = {};
 try {
   readFileSync("../dump/opcodes.map", "utf-8")
@@ -105,7 +110,14 @@ for (const server of [6010, 6020, 6030, 6040]) {
       console.error(e);
     }
   });
-
+  
+  // stream.on("PKTRaidTimerStart", (pkt) => {
+  //   console.log(pkt.parsed);
+  // });
+  // stream.on("PKTNpcFuryInfoNotify", (pkt) => {
+  //   console.log(pkt.parsed);
+  // });
+ 
   stream.on("*", (data, opcode, compression, xor) => {
     try {
       const decomp = decompressor.decrypt(data, opcode, compression, xor);
@@ -115,4 +127,5 @@ for (const server of [6010, 6020, 6030, 6040]) {
     }
   });
 }
+*/
 console.log("Logging");

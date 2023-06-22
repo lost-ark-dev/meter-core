@@ -47,3 +47,7 @@ export type { IdentityStanceChangeNotify } from "./definitions/IdentityStanceCha
 export type { EquipChangeNotify } from "./definitions/EquipChangeNotify";
 export type { EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChangeNotify";
 export type { InitItem } from "./definitions/InitItem";
+export type { RaidBegin } from "./definitions/RaidBegin";
+export type { ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
+
+export type { APP_StatApi } from "./app/APP_StatApi";

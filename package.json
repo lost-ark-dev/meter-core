@@ -12,11 +12,13 @@
   },
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,ts}\"",
-    "build": "tsc --noEmit && tsup",
-    "build:test": "tsup src/test.ts --clean --no-config",
-    "test": "tsc --noEmit && tsup src/test.ts --clean --no-config --sourcemap --&& node ./dist/test.js"
+    "build": "tsc --noEmit && tsup --minify",
+    "build:debug": "tsc --noEmit && tsup",
+    "build:test": "tsup src/test.ts src/logger/logger.ts --clean --no-config --sourcemap",
+    "test": "tsc --noEmit && tsup src/test.ts --clean --no-config --sourcemap && node ./dist/test.js"
   },
   "dependencies": {
+    "axios": "^1.3.6",
     "cap": "^0.2.1",
     "is-admin": "^3.0.0",
     "lz4-napi": "^2.2.0",

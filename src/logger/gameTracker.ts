@@ -8,6 +8,7 @@ import {
   hitflag,
   hitoption,
   paramtype,
+  playerclass,
   skillfeaturetype,
   stattype,
 } from "../packets/generated/enums";
@@ -20,6 +21,8 @@ import type { LogEvent } from "./logEvent";
 import type { ParserEvent } from "./parser";
 import type { StatusTracker } from "./statustracker";
 import { CombatEffect } from "../data";
+import { PlayerStatCacheStatus, StatApi } from "./statapi";
+import { ApiStatType } from "../packets/common/api";
 
 const defaultOptions: GameTrackerOptions = {
   isLive: true,
@@ -33,6 +36,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
   #entityTracker: EntityTracker;
   #statusTracker: StatusTracker;
+  #statApi: StatApi;
   #data: MeterData;
   options: GameTrackerOptions;
 
@@ -45,12 +49,14 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   constructor(
     entityTracker: EntityTracker,
     statusTracker: StatusTracker,
+    statApi: StatApi,
     data: MeterData,
     options: Partial<GameTrackerOptions>
   ) {
     super();
     this.#entityTracker = entityTracker;
     this.#statusTracker = statusTracker;
+    this.#statApi = statApi;
     this.#data = data;
     this.options = { ...defaultOptions, ...options };
 
@@ -123,6 +129,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0) // no player damage dealt OR taken
     ) {
       const curState = structuredClone(this.#game);
+
+      curState.entities.forEach((entity) => {
+        if (!entity.isPlayer) return;
+        entity.statApiValid = this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
+      });
+      curState.localPlayer = this.#entityTracker.localPlayer.name;
+
       this.applyBreakdowns(curState.entities);
 
       this.encounters.push(curState);
@@ -207,7 +220,6 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     )
       return;
 
-    //TODO: implement phaseTransitionRequest
     if (
       this.phaseTransitionResetRequest &&
       this.phaseTransitionResetRequestTime > 0 &&
@@ -436,7 +448,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
        * addontype=="stat" && keystat=="physical_inc_sub_rate_2" -> resistance on yourself
        * addontype=="stat" && keystat=="magical_inc_sub_rate_2" -> resistance on yourself
        * addontype=="stat" && keystat=="skill_damage_sub_rate_2" -> bard's buble etc
-       * addontype=="stat" && keystat=="def_x"/"def_y"      -> used by dark nades & Dagger bracelet
+       * TODO addontype=="stat" && keystat=="def_x"/"def_y"      -> used by dark nades & Dagger bracelet
+       * TODO addontype=="stat" && keystat=="attack_power_rate"  -> used by strength orb, but as it's additive we need to handle every other sources, including engravings like cursed doll 
        *
        *
        *
@@ -499,18 +512,36 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             totalRate: 1.0,
             values: Array<RdpsBuffData>(),
           },
-          addDmg: {
+          atkPowSubRate2: {
+            //Contains self, as it's additive
+            selfSumRate: 0.0,
             sumRate: 0.0,
             values: Array<RdpsBuffData>(),
           },
+          atkPowSubRate1: {
+            sumRate: 0.0,
+            totalRate: 1.0,
+            values: Array<RdpsBuffData>(),
+          },
+          skillDamRate: {
+            //Contains self, as it's additive
+            selfSumRate: 0.0,
+            sumRate: 0.0,
+            values: Array<RdpsBuffData>(),
+          },
+          atkPowAmplify: {
+            //Keep the highest
+            values: Array<RdpsBuffData>(),
+          },
           crit: {
+            //Contains self, as it's additive
+            selfSumRate: 0.0,
             sumRate: 0.0,
             values: Array<RdpsBuffData>(),
           },
           critDmgRate: 2.0,
         };
         // Process only if source is a player, excluding support of the rdps processing for now
-        //TODO: include support buffs (will require full atk power sources emulation (bc of 15% of base atk power that is additive) & spec for bard's serenade)
         statusEffectsOnSource.forEach(([buffId, sourceEntityId, stackCount]) => {
           const casterEntity = this.#entityTracker.entities.get(sourceEntityId);
           if (!casterEntity) return;
@@ -546,63 +577,131 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             casterEntity.entityType === EntityType.Player &&
             sourceEntityId !== owner.entityId
           ) {
-            //TODO: we need caster base atk power to process support 15% of caster's atk power buff
+            //Get %gain from target & source base aktpower (statApi)
+            //If atk power is unknown, default to equal atkpower (+15%)
+            //Only the best effect will be kept
+
+            const val = buff.statuseffectvalues[0] ?? 0;
+            if (val !== 0) {
+              let rate = (val / 10000) * stackCount;
+              const casterBaseAtkPower = this.#statApi
+                .getStats(casterEntity.name)
+                ?.find((s) => s.id === ApiStatType.ATKPOWER)?.value;
+              const targetBaseAtkPower = this.#statApi
+                .getStats(owner.name)
+                ?.find((s) => s.id === ApiStatType.ATKPOWER)?.value;
+
+              if (casterBaseAtkPower && targetBaseAtkPower) {
+                rate *= casterBaseAtkPower / targetBaseAtkPower;
+              }
+              rdpsData.atkPowAmplify.values.push({
+                casterEntity,
+                rate,
+              });
+            }
           }
           buff.passiveoption.forEach((passive) => {
             if (addontype[passive.type] === addontype.stat) {
-              if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
-                if (passive.keystat === "critical_hit_rate") {
-                  // Only Lance of judgment
-                  const val = passive.value;
-                  if (val !== 0) {
-                    const rate = (val / 10000) * stackCount;
-                    rdpsData.crit.values.push({
+              if (passive.keystat === "attack_power_sub_rate_2") {
+                //There, every attack power buff of that same type (attack_power_sub_rate_2) is added together (instead of being multiplied)
+                //But it is still multiplied with other buffs
+                const val = passive.value;
+                if (val !== 0) {
+                  let rate = (val / 10000) * stackCount;
+                  if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+                    rdpsData.atkPowSubRate2.values.push({
                       casterEntity,
                       rate,
                     });
-                    rdpsData.crit.sumRate += rate;
+                    rdpsData.atkPowSubRate2.sumRate += rate;
+                  } else {
+                    rdpsData.atkPowSubRate2.selfSumRate += rate;
                   }
-                } else if (passive.keystat === "attack_power_sub_rate_2") {
-                  //There, every attack power buff of that same type (skill_damage_sub_rate_2) is added together (instead of being multiplied)
-                  //But it is still multiplied with other buffs
-                  //TODO: weight in spec efficiency for Serenade of Courage
-                  //TODO: we have to include own synergies there, so that the share is processed correctly
-                  const val = passive.value;
-                  if (val !== 0) {
-                    const rate = (val / 10000) * stackCount;
-                    rdpsData.addDmg.values.push({
+                }
+              } else if (passive.keystat === "attack_power_sub_rate_1") {
+                const val = passive.value;
+                if (val !== 0) {
+                  let rate = (val / 10000) * stackCount;
+                  if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+                    rdpsData.atkPowSubRate1.values.push({
                       casterEntity,
                       rate,
                     });
-                    rdpsData.addDmg.sumRate += rate;
+                    rdpsData.atkPowSubRate1.sumRate += rate;
+                    rdpsData.atkPowSubRate1.totalRate *= 1 + rate;
                   }
-                } else if (passive.keystat === "skill_damage_sub_rate_2") {
-                  //TODO: maybe buffs from that same category are added together as well, hard to try it out :/
-                  const val = passive.value;
-                  if (val !== 0) {
-                    const rate = (val / 10000) * stackCount;
-                    rdpsData.multDmg.values.push({
+                }
+              } else if (passive.keystat === "skill_damage_rate") {
+                //Yearning
+                //TODO: we need to know weapon quality (and therefore additional damage from weapon), and emulate all buffs that increase skill_damage_rate because they are additive
+                //This is an additive buff, so we'll keep track of all of them (including self buffs), and get the upgrade being rate/sumRate
+                //gain = rate/(1+sumRate-rate)
+                //where rate is the sum of applied rate (after removing the personal part)
+                const val = passive.value;
+                if (val !== 0) {
+                  const rate = (val / 10000) * stackCount;
+
+                  if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+                    rdpsData.skillDamRate.values.push({
                       casterEntity,
                       rate,
                     });
-                    rdpsData.multDmg.sumRate += rate;
-                    rdpsData.multDmg.totalRate *= 1 + rate;
+                    rdpsData.skillDamRate.sumRate += rate;
+                  } else {
+                    rdpsData.skillDamRate.selfSumRate += rate;
                   }
-                } else if (passive.keystat === "skill_damage_rate") {
-                  //Yearning
-                  //TODO: we need to know weapon quality (and therefore additional damage from weapon), and emulate all buffs that increase skill_damage_rate because they are additive
-                  /*
-                  const val = passive.value;
-                  if (val !== 0) {
-                    const rate = (val / 10000) * stackCount;
-                    rdpsData.multDmg.values.push({
-                      casterEntity,
-                      rate,
-                    });
-                    rdpsData.multDmg.sumRate += rate;
-                    rdpsData.multDmg.totalRate *= 1 + rate;
+                }
+              }
+            }
+            if (passive.keystat === "critical_hit_rate") {
+              // Only Lance of judgment
+              const val = passive.value;
+              if (val !== 0) {
+                const rate = (val / 10000) * stackCount;
+                if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+                  rdpsData.crit.values.push({
+                    casterEntity,
+                    rate,
+                  });
+                  rdpsData.crit.sumRate += rate;
+                } else {
+                  rdpsData.crit.selfSumRate += rate;
+                }
+              }
+            }
+            if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+              if (passive.keystat === "skill_damage_sub_rate_2") {
+                const val = passive.value;
+                if (val !== 0) {
+                  let rate = (val / 10000) * stackCount;
+                  //TODO: dynamic from dbs ?
+                  //We're using base spec (after pet) there, but we'll have to make sure that there are no buffs that can increase spec
+                  //Value=(spec/specRate)*stattype.identityvalue1_rate/10000
+                  //specRate -> table PCLevel
+                  //stattype.identityvalue1_rate (108) -> table PCStatCoeficient
+                  //ex: 1600spec -> (1600/0.0699)*0.35/10000 = 0.80114 -> 3 bubble buff (0.15) will become 0.15*(1+0.80114) = 0.27
+
+                  const spec =
+                    this.#statApi.getStats(casterEntity.name)?.find((s) => s.id === ApiStatType.SPEC)?.value ?? 0;
+                  switch ((casterEntity as Player).class) {
+                    case playerclass.bard:
+                      rate *= 1 + ((spec / 0.0699) * 0.35) / 10000; //0.05% per point
+                      break;
+                    case playerclass.holyknight:
+                      rate *= 1 + ((spec / 0.0699) * 0.63) / 10000; //0.09% per point
+                      break;
+                    case playerclass.yinyangshi:
+                      rate *= 1 + ((spec / 0.0699) * 0.38) / 10000; //0.054% per point
+                      break;
+                    default:
+                      break;
                   }
-                  */
+                  rdpsData.multDmg.values.push({
+                    casterEntity,
+                    rate,
+                  });
+                  rdpsData.multDmg.sumRate += rate;
+                  rdpsData.multDmg.totalRate *= 1 + rate;
                 }
               } else {
                 //Process self buffs
@@ -630,22 +729,30 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         statusEffectsOnTarget.forEach(([debuffId, sourceEntityId, stackCount]) => {
           const casterEntity = this.#entityTracker.entities.get(sourceEntityId);
           //On target doesn't have interesting self buffs, so we can filter there
-          if (!casterEntity || casterEntity.entityType !== EntityType.Player || sourceEntityId === owner.entityId)
-            return;
+          if (!casterEntity) return;
           const debuff = this.getBuffAfterTripods(this.#data.skillBuff.get(debuffId), casterEntity, damageData);
           if (!debuff) return;
-          // Check for defense reduction or crit resistance that are issued from players
           if (debuff.type === "instant_stat_amplify" && debuff.statuseffectvalues) {
             //Crit resistance
             const val = debuff.statuseffectvalues[0] ?? 0;
             if (val !== 0) {
               const rate = (val / 10000) * stackCount;
-              rdpsData.crit.values.push({
-                casterEntity,
-                rate,
-              });
-              rdpsData.crit.sumRate += rate;
+              if (casterEntity.entityType === EntityType.Player && sourceEntityId !== owner.entityId) {
+                rdpsData.crit.values.push({
+                  casterEntity,
+                  rate,
+                });
+                rdpsData.crit.sumRate += rate;
+              } else {
+                rdpsData.crit.selfSumRate += rate;
+              }
             }
+          }
+          if (casterEntity.entityType !== EntityType.Player || sourceEntityId === owner.entityId) return;
+          // Check for defense reduction or crit resistance that are issued from players
+          if (debuff.type === "instant_stat_amplify" && debuff.statuseffectvalues) {
+            //Crit resistance
+            const val = debuff.statuseffectvalues[0] ?? 0;
             if (damageData.damageType === damagetype.physics) {
               //Phys. Defense
               const val = debuff.statuseffectvalues[2] ?? 0;
@@ -811,6 +918,11 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
                     //TODO: some are absolute, other relatives, but i'm pretty sure it's a mistake & all are absolute
                     rdpsData.critDmgRate += (option.params[1] ?? 0) / 10000;
                   }
+                } else if (featureType === skillfeaturetype.change_dam_critical_rate) {
+                  //Ex: Dark Resurrection (19050) Furious Blow
+                  if ((option.params[0] ?? 0) === 0 || damageData.skillEffectId === (option.params[0] ?? 0)) {
+                    rdpsData.crit.selfSumRate += (option.params[1] ?? 0) / 10000;
+                  }
                 }
                 //TODO: change_dam_critical_rate / maybe at least check for tripods & buff in case we overcap, waiting until we get crit stat
               });
@@ -829,6 +941,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
           //TODO: check change_skill_constraint, but i think it's not for the buffs but only skill casts -> not required
         }
 
+        //Add weapon quality skill_damage_rate if known
+        if (rdpsData.skillDamRate.values.length > 0) {
+          const targetWeaponSkillDmg = this.#statApi
+            .getStats(owner.name)
+            ?.find((s) => s.id === ApiStatType.SKILLDMG)?.value;
+          if (targetWeaponSkillDmg) rdpsData.skillDamRate.selfSumRate += targetWeaponSkillDmg / 10000;
+        }
         /**
          * 4- apply all buff group 1 by 1 (multiplicative) to calculate flatGain and each step effGain%
          *    - dmg: amount=(1-1/buff%)*dmg
@@ -841,56 +960,97 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
          */
 
         //Process crit group as single mult
+        //Crit processing sample (https://www.desmos.com/calculator/aj2ddpzixz) TODO: modify for wiki graphs
         let critSumEffGainRate = 0.0;
         if (rdpsData.crit.values.length > 0) {
-          let critDmg, whiteDmg;
-          if (isCrit) {
-            critDmg = damageData.damage;
-            whiteDmg = critDmg / rdpsData.critDmgRate;
-          } else {
-            whiteDmg = damageData.damage;
-            critDmg = whiteDmg * rdpsData.critDmgRate;
-          }
-          critSumEffGainRate = ((critDmg - whiteDmg) / critDmg) * rdpsData.crit.sumRate;
+          //Get base crit from stats
+          rdpsData.crit.selfSumRate +=
+            (this.#statApi.getStats(owner.name)?.find((s) => s.id === ApiStatType.CRIT)?.value ?? 0) / 0.2794 / 10000;
+          //Handling overcap. The contribution is still shared equally, but it only benefits from the extra
+          //ex: base 80%, bonus 20+20=40%, we orvercap and only keep 20% total to reach 100%, and then the 20% remaning are shared between the 2 original 20%
+          const cappedSumRate = Math.min(Math.max(0, 1 - rdpsData.crit.selfSumRate), rdpsData.crit.sumRate);
+
+          //Process
+          critSumEffGainRate =
+            (cappedSumRate * rdpsData.critDmgRate - cappedSumRate) /
+            (rdpsData.crit.selfSumRate * rdpsData.critDmgRate - rdpsData.crit.selfSumRate + 1);
         }
+        //attack_power_amplify pick highest
+        const attack_power_amplify =
+          rdpsData.atkPowAmplify.values.length <= 0
+            ? ({ rate: 0 } as RdpsBuffData)
+            : rdpsData.atkPowAmplify.values.reduce((prev, curr) => {
+                return prev.rate > curr.rate ? prev : curr;
+              });
 
         const totalEffGainRate =
-          (1 + critSumEffGainRate) * (1 + rdpsData.addDmg.sumRate) * rdpsData.multDmg.totalRate - 1;
-        const totalSumGainRate = critSumEffGainRate + rdpsData.addDmg.sumRate + (rdpsData.multDmg.totalRate - 1);
-        const unitRate = (totalEffGainRate * damageData.damage) / (totalSumGainRate * (1 + totalEffGainRate));
+          (1 + critSumEffGainRate) *
+            (1 + rdpsData.atkPowSubRate2.sumRate / (1 + rdpsData.atkPowSubRate2.selfSumRate)) *
+            (1 + rdpsData.skillDamRate.sumRate / (1 + rdpsData.skillDamRate.selfSumRate)) *
+            (1 + attack_power_amplify.rate) *
+            rdpsData.multDmg.totalRate *
+            rdpsData.atkPowSubRate1.totalRate -
+          1;
+        const totalSumGainRate =
+          critSumEffGainRate +
+          rdpsData.atkPowSubRate2.sumRate / (1 + rdpsData.atkPowSubRate2.selfSumRate) +
+          rdpsData.skillDamRate.sumRate / (1 + rdpsData.skillDamRate.selfSumRate) +
+          attack_power_amplify.rate +
+          (rdpsData.multDmg.totalRate - 1) +
+          (rdpsData.atkPowSubRate1.totalRate - 1);
+        //if (totalSumGainRate > 0)
+        {
+          const unitRate = (totalEffGainRate * damageData.damage) / (totalSumGainRate * (1 + totalEffGainRate));
 
-        const critGainUnit = (critSumEffGainRate * unitRate) / rdpsData.crit.sumRate;
-        rdpsData.crit.values.forEach((crit) => {
-          const delta = crit.rate * critGainUnit;
-          const sourceEntityState = this.#game.entities.get(crit.casterEntity.name);
-          if (sourceEntityState) {
-            sourceEntityState.damageInfo.rdpsDamageGiven += delta;
-          }
-          damageOwner.damageInfo.rdpsDamageReceived += delta;
-          skill!.damageInfo.rdpsDamageReceived += delta;
-        });
+          //crit
+          const critGainUnit = (critSumEffGainRate * unitRate) / rdpsData.crit.sumRate;
+          rdpsData.crit.values.forEach((crit) => {
+            const delta = crit.rate * critGainUnit;
+            const sourceEntityState = this.#game.entities.get(crit.casterEntity.name);
+            this.applyRdps(damageOwner, sourceEntityState, skill!, delta);
+          });
 
-        rdpsData.addDmg.values.forEach((dmg) => {
-          const delta = dmg.rate * unitRate; //In additive rates, unitRate = addGainUnit
-          const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
-          if (sourceEntityState) {
-            sourceEntityState.damageInfo.rdpsDamageGiven += delta;
-          }
-          damageOwner.damageInfo.rdpsDamageReceived += delta;
-          skill!.damageInfo.rdpsDamageReceived += delta;
-        });
+          //Additive buff sample (https://www.desmos.com/calculator/igszu4cqmr) TODO: modify for wiki graphs
+          //atkPowSubRate2
+          rdpsData.atkPowSubRate2.values.forEach((dmg) => {
+            const delta = (dmg.rate / (1 + rdpsData.atkPowSubRate2.selfSumRate)) * unitRate;
+            const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
+            this.applyRdps(damageOwner, sourceEntityState, skill!, delta);
+          });
 
-        const multGainUnit = ((rdpsData.multDmg.totalRate - 1) * unitRate) / rdpsData.multDmg.sumRate;
-        rdpsData.multDmg.values.forEach((dmg) => {
-          //const delta = dmg.rate * multGainUnit;
-          const delta = dmg.rate * multGainUnit;
-          const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
-          if (sourceEntityState) {
-            sourceEntityState.damageInfo.rdpsDamageGiven += delta;
+          //skillDamRate
+          rdpsData.skillDamRate.values.forEach((dmg) => {
+            const delta = (dmg.rate / (1 + rdpsData.skillDamRate.selfSumRate)) * unitRate;
+            const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
+            this.applyRdps(damageOwner, sourceEntityState, skill!, delta);
+          });
+
+          //multDmg
+          const multGainUnit = ((rdpsData.multDmg.totalRate - 1) * unitRate) / rdpsData.multDmg.sumRate;
+          rdpsData.multDmg.values.forEach((dmg) => {
+            //const delta = dmg.rate * multGainUnit;
+            const delta = dmg.rate * multGainUnit;
+            const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
+            this.applyRdps(damageOwner, sourceEntityState, skill!, delta);
+          });
+
+          //atkPowSubRate1
+          const atkPowSubRate1GainUnit =
+            ((rdpsData.atkPowSubRate1.totalRate - 1) * unitRate) / rdpsData.atkPowSubRate1.sumRate;
+          rdpsData.atkPowSubRate1.values.forEach((dmg) => {
+            //const delta = dmg.rate * multGainUnit;
+            const delta = dmg.rate * atkPowSubRate1GainUnit;
+            const sourceEntityState = this.#game.entities.get(dmg.casterEntity.name);
+            this.applyRdps(damageOwner, sourceEntityState, skill!, delta);
+          });
+
+          //atkPowAmplify
+          if (attack_power_amplify.rate > 0) {
+            const delta = attack_power_amplify.rate * unitRate;
+            const sourceEntityState = this.#game.entities.get(attack_power_amplify.casterEntity?.name);
+            this.applyRdps(damageOwner, sourceEntityState, skill, delta);
           }
-          damageOwner.damageInfo.rdpsDamageReceived += delta;
-          skill!.damageInfo.rdpsDamageReceived += delta;
-        });
+        }
       }
       //#endregion
 
@@ -1047,6 +1207,18 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       });
     return critDmgRate;
   }
+  applyRdps(damageOwner: EntityState, sourceEntityState: EntityState | undefined, skill: EntitySkills, delta: number) {
+    if (sourceEntityState) {
+      sourceEntityState.damageInfo.rdpsDamageGiven += delta;
+    }
+    if (sourceEntityState && this.#data.isSupportClassId(sourceEntityState.classId)) {
+      damageOwner.damageInfo.rdpsDamageReceivedSupp += delta;
+      skill.damageInfo.rdpsDamageReceivedSupp += delta;
+    }
+    damageOwner.damageInfo.rdpsDamageReceived += delta;
+    skill.damageInfo.rdpsDamageReceived += delta;
+  }
+
   onStartSkill(owner: Entity, skillId: number, time: Date) {
     const entity = this.updateEntity(
       owner,
@@ -1252,6 +1424,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       damageInfo: {
         damageDealt: 0,
         rdpsDamageReceived: 0,
+        rdpsDamageReceivedSupp: 0,
         rdpsDamageGiven: 0,
         damageDealtDebuffedBySupport: 0,
         damageDealtBuffedBySupport: 0,
@@ -1295,6 +1468,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       damageInfo: {
         damageDealt: 0,
         rdpsDamageReceived: 0,
+        rdpsDamageReceivedSupp: 0,
         rdpsDamageGiven: 0,
         damageDealtDebuffedBySupport: 0,
         damageDealtBuffedBySupport: 0,
@@ -1326,6 +1500,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       damagePreventedWithShieldOnOthers: 0,
       damagePreventedByShield: 0,
       shieldReceived: 0,
+      statApiValid: false,
     };
     return newEntity;
   }
@@ -1337,6 +1512,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     this.#game.entities.forEach((entity, id) => {
       // Skip all entities that are not players (if live)
       if (!entity.isPlayer && !entity.isEsther) return;
+      entity.statApiValid = this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
       clone.entities.set(id, { ...entity });
     });
 

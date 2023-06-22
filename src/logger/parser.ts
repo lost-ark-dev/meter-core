@@ -1,30 +1,19 @@
 import { TypedEmitter } from "tiny-typed-emitter";
-import type { MeterData, PassiveOption, SkillFeatureOption } from "../data";
-import {
-  damageattr,
-  equipcategory,
-  itemcategory,
-  itemstoragetype,
-  skillfeaturetype,
-  stattype,
-  triggersignaltype,
-} from "../packets/generated/enums";
+import type { MeterData, SkillFeatureOption } from "../data";
+import { damageattr, itemstoragetype, stattype, triggersignaltype } from "../packets/generated/enums";
 import type { GameState, GameTrackerOptions } from "./data";
-import {
-  EntityTracker,
-  EntityType,
-  type Entity,
-  type Projectile,
-  Player,
-  PlayerSet,
-  TripodData,
-} from "./entityTracker";
+import { EntityTracker, EntityType, type Entity, type Projectile, type PlayerItemData, Player } from "./entityTracker";
 import { GameTracker } from "./gameTracker";
-import type { Logger } from "./logger";
+import { type Logger, LiveLogger } from "./logger";
 import { PartyTracker } from "./partytracker";
 import { PCIdMapper } from "./pcidmapper";
 import { StatusEffectTargetType, StatusTracker, type StatusEffect } from "./statustracker";
 import { TripodIndex } from "../packets/common/TripodIndex";
+import { StatApi, ZoneSyncStatus } from "./statapi";
+import { LogEvent } from "./logEvent";
+import { LogStreamEvent } from "../packets/log/LogStreamEvent";
+import { logId } from "../packets/log/logIds";
+import { MigrationExecute as WriteMigrationExecute } from "../packets/log/writes";
 
 export class Parser extends TypedEmitter<ParserEvent> {
   #logger: Logger;
@@ -35,12 +24,13 @@ export class Parser extends TypedEmitter<ParserEvent> {
   #statusTracker: StatusTracker;
   #entityTracker: EntityTracker;
   #gameTracker: GameTracker;
+  #statApi: StatApi;
 
   //TODO: refactor
   #wasWipe: boolean;
   #wasKill: boolean;
 
-  constructor(logger: Logger, data: MeterData, options: Partial<GameTrackerOptions>) {
+  constructor(logger: Logger, data: MeterData, clientId: string, options: Partial<GameTrackerOptions>) {
     super();
     this.#logger = logger;
     this.#data = data;
@@ -49,7 +39,15 @@ export class Parser extends TypedEmitter<ParserEvent> {
     this.#partyTracker = new PartyTracker(this.#pcIdMapper);
     this.#statusTracker = new StatusTracker(this.#partyTracker, this.#data, options.isLive ?? true);
     this.#entityTracker = new EntityTracker(this.#pcIdMapper, this.#partyTracker, this.#statusTracker, this.#data);
-    this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#data, options);
+    this.#statApi = new StatApi(
+      this.#entityTracker,
+      clientId,
+      isLiveLogger(this.#logger, options.isLive) // TOFIX That 2nd check is for loa-details, as tsup, when having multiple entry points does code dupe & the LiveLoger used by loa-details is different from this one
+        ? (this.#logger as LiveLogger)
+        : undefined
+    );
+    this.#gameTracker = new GameTracker(this.#entityTracker, this.#statusTracker, this.#statApi, this.#data, options);
+
     this.#gameTracker.emit = this.emit.bind(this); //forward emits
     /*
     this.#gameTracker.emit = <U extends keyof ParserEvent>(event: U, ...args: Parameters<ParserEvent[U]>): boolean => {
@@ -65,6 +63,13 @@ export class Parser extends TypedEmitter<ParserEvent> {
     }
 
     this.#logger
+      .on("APP_StatApi", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        this.#statApi.updatePlayerStats(parsed.players);
+      })
+      //.on("APP_DroppedPackets", (pkt) => {})
+
       .on("AbilityChangeNotify", (pkt) => {})
       .on("ActiveAbilityNotify", (pkt) => {})
       .on("AddonSkillFeatureChangeNotify", (pkt) => {})
@@ -87,6 +92,24 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const player = this.#entityTracker.entities.get(parsed.objectId);
         if (!player || player.entityType !== EntityType.Player) return;
         (player as Player).itemSet = this.#entityTracker.getPlayerSetOptions(parsed.equipItemDataList);
+
+        const equipList: PlayerItemData[] = [];
+        parsed.equipItemDataList.forEach((item) => {
+          if (item.id !== undefined && item.slot !== undefined) equipList.push({ id: item.id, slot: item.slot });
+        });
+        (player as Player).items.equipList = equipList;
+      })
+      .on("EquipLifeToolChangeNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        const player = this.#entityTracker.entities.get(parsed.objectId);
+        if (!player || player.entityType !== EntityType.Player) return;
+
+        const lifeToolList: PlayerItemData[] = [];
+        parsed.equipLifeToolDataList.forEach((item) => {
+          if (item.id !== undefined && item.slot !== undefined) lifeToolList.push({ id: item.id, slot: item.slot });
+        });
+        (player as Player).items.lifeToolList = lifeToolList;
       })
       .on("IdentityStanceChangeNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -124,21 +147,36 @@ export class Parser extends TypedEmitter<ParserEvent> {
       })
       .on("InitItem", (pkt) => {
         const parsed = pkt.parsed;
-        if (!parsed || parsed.storageType !== itemstoragetype.equip) return;
+        if (!parsed) return;
 
         //Get localplayer playerSet
-        this.#entityTracker.localPlayer.itemSet = this.#entityTracker.getPlayerSetOptions(parsed.itemDataList);
+        if (parsed.storageType === itemstoragetype.equip) {
+          this.#entityTracker.localPlayer.itemSet = this.#entityTracker.getPlayerSetOptions(parsed.itemDataList);
+          const equipList: PlayerItemData[] = [];
+          parsed.itemDataList.forEach((item) => {
+            if (item.id !== undefined && item.slot !== undefined) equipList.push({ id: item.id, slot: item.slot });
+          });
+          this.#entityTracker.localPlayer.items.equipList = equipList;
+        } else if (parsed.storageType === itemstoragetype.life_tool) {
+          const lifeToolList: PlayerItemData[] = [];
+          parsed.itemDataList.forEach((item) => {
+            if (item.id !== undefined && item.slot !== undefined) lifeToolList.push({ id: item.id, slot: item.slot });
+          });
+          this.#entityTracker.localPlayer.items.lifeToolList = lifeToolList;
+        }
       })
       .on("MigrationExecute", (pkt) => {
-        //Ignore if we already know characterId
-        if (this.#entityTracker.localPlayer.characterId !== 0n) return;
+        this.#statApi.zoneSyncStatus = ZoneSyncStatus.INVALID;
         const parsed = pkt.parsed;
         if (!parsed) return;
-        // Found no way to map AccountId & CharacterId, but this should be always ? true
-        this.#entityTracker.localPlayer.characterId =
-          parsed.account_CharacterId1 < parsed.account_CharacterId2
-            ? parsed.account_CharacterId1
-            : parsed.account_CharacterId2;
+        //Ignore if we already know characterId
+        if (this.#entityTracker.localPlayer.characterId === 0n)
+          // Found no way to map AccountId & CharacterId, but this should be always ? true
+          this.#entityTracker.localPlayer.characterId =
+            parsed.account_CharacterId1 < parsed.account_CharacterId2
+              ? parsed.account_CharacterId1
+              : parsed.account_CharacterId2;
+        this.#statApi.ip = pkt.parsed.serverAddr.split(":")[0]!;
       })
       .on("NewNpc", (pkt) => {
         const npcEntity = this.#entityTracker.processNewNpc(pkt);
@@ -186,7 +224,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
 
         if (player && pkt.parsed) {
           //Get playerSet
-          player.itemSet = this.#entityTracker.getPlayerSetOptions(pkt.parsed.pcStruct.equipItemDataList);
           const statsMap = this.#data.getStatPairMap(pkt.parsed.pcStruct.statPair);
           this.#gameTracker.updateOrCreateEntity(
             player,
@@ -248,14 +285,19 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("PartyStatusEffectRemoveNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for (const effectId of parsed.statusEffectIds)
-          this.#statusTracker.RemoveStatusEffect(
+        for (const effectId of parsed.statusEffectIds) {
+          const se = this.#statusTracker.RemoveStatusEffect(
             parsed.characterId,
             effectId,
             StatusEffectTargetType.Party,
             parsed.reason,
             pkt.time
           );
+
+          if (se && se.statusEffectId === 9701) {
+            this.#statApi.syncData();
+          }
+        }
       })
       .on("PartyStatusEffectResultNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -264,6 +306,21 @@ export class Parser extends TypedEmitter<ParserEvent> {
       })
       .on("PassiveStatusEffectAddNotify", (pkt) => {})
       .on("PassiveStatusEffectRemoveNotify", (pkt) => {})
+      .on("RaidBegin", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        if (this.#data.statQueryFilter.raid.has(parsed.raidId))
+          this.#statApi.zoneSyncStatus |= ZoneSyncStatus.RAID_VALID;
+        else this.#statApi.zoneSyncStatus |= ZoneSyncStatus.RAID_INVALID;
+      })
+      .on("ZoneMemberLoadStatusNotify", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        if (this.#data.statQueryFilter.zone.has(parsed.zoneId) && parsed.zoneLevel <= 1)
+          //only normal & hard
+          this.#statApi.zoneSyncStatus |= ZoneSyncStatus.ZONE_VALID;
+        else this.#statApi.zoneSyncStatus |= ZoneSyncStatus.ZONE_INVALID;
+      })
       .on("RaidBossKillNotify", (pkt) => {
         this.#gameTracker.onPhaseTransition(1, pkt.time);
       })
@@ -427,14 +484,18 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("StatusEffectRemoveNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-        for (const effectId of parsed.statusEffectIds)
-          this.#statusTracker.RemoveStatusEffect(
+        for (const effectId of parsed.statusEffectIds) {
+          const se = this.#statusTracker.RemoveStatusEffect(
             parsed.objectId,
             effectId,
             StatusEffectTargetType.Local,
             parsed.reason,
             pkt.time
           );
+          if (se && se.statusEffectId === 9701) {
+            this.#statApi.syncData();
+          }
+        }
       })
       .on("StatusEffectSyncDataNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -473,6 +534,10 @@ export class Parser extends TypedEmitter<ParserEvent> {
             this.#wasKill = false;
             this.#wasWipe = true;
             break;
+          case triggersignaltype.assembled:
+          case triggersignaltype.volume_enter:
+          case triggersignaltype.volume_leave:
+            this.#statApi.syncData();
         }
       })
       .on("TroopMemberUpdateMinNotify", (pkt) => {})
@@ -539,6 +604,27 @@ export class Parser extends TypedEmitter<ParserEvent> {
   updateOptions(options: Partial<GameTrackerOptions>) {
     this.#gameTracker.updateOptions(options);
   }
+
+  onConnect(ip: string) {
+    if (!this.#statApi.ip) {
+      this.#statApi.ip = ip.split(":")[0]!;
+      //Create fake MigrationExecute for log file
+      if (isLiveLogger(this.#logger, this.#gameTracker.options.isLive)) {
+        (this.#logger as LiveLogger).appendLog(
+          new LogEvent(
+            {
+              account_CharacterId1: 0n,
+              serverAddr: ip,
+              account_CharacterId2: 0n,
+            },
+            logId.MigrationExecute,
+            WriteMigrationExecute
+          )
+        );
+      }
+    }
+  }
+
   get encounters() {
     //TODO: parse only ?
     this.#gameTracker.splitEncounter(new Date()); //Date doesn't matter here
@@ -551,4 +637,8 @@ export interface ParserEvent {
   message: (msg: string) => void;
   "reset-state": (game: GameState) => void;
   "state-change": (game: GameState) => void;
+}
+
+function isLiveLogger(logger: Logger, isLive?: boolean) {
+  return logger instanceof LiveLogger || ((logger as LiveLogger).appendLog && isLive);
 }

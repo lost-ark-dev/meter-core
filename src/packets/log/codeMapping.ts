@@ -50,4 +50,6 @@ export const codeMapping = new Map<number, [number]>([
   [codes.PKTEquipChangeNotify, [logId.EquipChangeNotify]],
   [codes.PKTEquipLifeToolChangeNotify, [logId.EquipLifeToolChangeNotify]],
   [codes.PKTInitItem, [logId.InitItem]],
+  [codes.PKTRaidBegin, [logId.RaidBegin]],
+  [codes.PKTZoneMemberLoadStatusNotify, [logId.ZoneMemberLoadStatusNotify]],
 ]);

@@ -142,16 +142,19 @@ export class PartyTracker {
       const entityId = this.#pcIdMapper.getEntityId(pm.characterId);
       if (entityId) {
         const ent = entities.get(entityId);
-        if (ent && ent.entityType === EntityType.Player && ent.name !== pm.name) {
-          const p = ent as Player;
-          p.gearLevel = pm.gearLevel;
-          p.name = pm.name;
-          p.class = pm.classId;
+        if (ent && ent.entityType === EntityType.Player) {
+          if (ent.name !== pm.name) {
+            const p = ent as Player;
+            p.gearLevel = pm.gearLevel;
+            p.name = pm.name;
+            p.class = pm.classId;
+          }
         }
       }
 
       // Add to party
       this.add(parsed.raidInstanceId, parsed.partyInstanceId, pm.characterId, entityId, pm.name);
     }
+    return;
   }
 }

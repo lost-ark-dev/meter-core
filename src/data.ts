@@ -131,6 +131,12 @@ export type CombatEffectConditionData = {
   hitOption?: hitoption;
   targetCount?: number;
 };
+
+export type StatQueryFilter = {
+  zone: Set<number>;
+  raid: Set<number>;
+};
+
 export class MeterData {
   dbPath: string = "";
   modulePath: string;
@@ -145,6 +151,7 @@ export class MeterData {
   combatEffect: Map<number, CombatEffect>;
   esther: Esther[];
   itemSet: ItemSet;
+  statQueryFilter: StatQueryFilter;
 
   constructor(meterDataPath: string = "./meter-core/data") {
     this.modulePath = meterDataPath;
@@ -158,6 +165,7 @@ export class MeterData {
     this.combatEffect = new Map();
     this.esther = [];
     this.itemSet = { items: new Map(), seteffects: new Map() };
+    this.statQueryFilter = { zone: new Set(), raid: new Set() };
   }
 
   processEnumData(data: { [key: string]: { [key: string]: string } }) {
@@ -246,6 +254,11 @@ export class MeterData {
       }
       this.itemSet.seteffects.set(setName, m);
     }
+  }
+
+  procesStatQueryFilter(data: { zone: number[]; raid: number[] }) {
+    this.statQueryFilter.zone = new Set(data.zone);
+    this.statQueryFilter.raid = new Set(data.raid);
   }
 
   getNpcName(id: number) {
@@ -706,5 +719,6 @@ export class MeterData {
     this.processCombatEffectData(JSON.parse(readFileSync(join(basePath, "CombatEffect.json"), "utf-8")));
     this.processEsther(JSON.parse(readFileSync(join(basePath, "Esther.json"), "utf-8")));
     this.processItemSet(JSON.parse(readFileSync(join(basePath, "ItemSet.json"), "utf-8")));
+    this.procesStatQueryFilter(JSON.parse(readFileSync(join(basePath, "StatQueryFilter.json"), "utf-8")));
   }
 }

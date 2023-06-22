@@ -54,6 +54,7 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
     codes.PKTPassiveStatusEffectRemoveNotify,
     [names.PKTPassiveStatusEffectRemoveNotify, reads.PKTPassiveStatusEffectRemoveNotify],
   ],
+  [codes.PKTRaidBegin, [names.PKTRaidBegin, reads.PKTRaidBegin]],
   [codes.PKTRaidBossKillNotify, [names.PKTRaidBossKillNotify, reads.PKTRaidBossKillNotify]],
   [codes.PKTRaidResult, [names.PKTRaidResult, reads.PKTRaidResult]],
   [codes.PKTRemoveObject, [names.PKTRemoveObject, reads.PKTRemoveObject]],
@@ -75,6 +76,7 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTTriggerStartNotify, [names.PKTTriggerStartNotify, reads.PKTTriggerStartNotify]],
   [codes.PKTTroopMemberUpdateMinNotify, [names.PKTTroopMemberUpdateMinNotify, reads.PKTTroopMemberUpdateMinNotify]],
   [codes.PKTIdentityGaugeChangeNotify, [names.PKTIdentityGaugeChangeNotify, reads.PKTIdentityGaugeChangeNotify]],
+  [codes.PKTZoneMemberLoadStatusNotify, [names.PKTZoneMemberLoadStatusNotify, reads.PKTZoneMemberLoadStatusNotify]],
   [codes.PKTZoneObjectUnpublishNotify, [names.PKTZoneObjectUnpublishNotify, reads.PKTZoneObjectUnpublishNotify]],
   [codes.PKTZoneStatusEffectAddNotify, [names.PKTZoneStatusEffectAddNotify, reads.PKTZoneStatusEffectAddNotify]],
   [

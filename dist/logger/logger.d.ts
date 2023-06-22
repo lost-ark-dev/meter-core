@@ -1,7 +1,7 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-43f37469.js';
-import { a as GameState } from '../data-d19f1667.js';
+import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-e47bc714.js';
+import { a as GameState } from '../data-fd4bd5c2.js';
 import 'oodle';
 
 declare class Read {
@@ -509,6 +509,50 @@ type InitItem = {
     storageType: number;
 };
 
+type BossKillDataLog = {
+    npcId: number;
+    isDead: boolean;
+};
+
+type RaidBegin = {
+    raidResult: number;
+    raidId: number;
+    totalTime: bigint;
+    bossKillDataList: BossKillDataLog[];
+    endTick: bigint;
+    startTick: bigint;
+};
+
+type ZoneMemberLoadStatusNotify = {
+    zoneInstId: bigint;
+    zoneId: number;
+    loadComplete: boolean;
+    completeMembers: bigint[];
+    totalMembers: bigint[];
+    firstPCEnterTick: bigint;
+    zoneLevel: number;
+};
+
+declare enum ApiStatType {
+    CRIT = 0,
+    SPEC = 1,
+    SWIFT = 2,
+    EXP = 3,
+    ATKPOWER = 4,
+    SKILLDMG = 5
+}
+type CharacterExportInfo = {
+    name: string;
+    stats: {
+        id: ApiStatType;
+        value: number;
+    }[];
+};
+
+type APP_StatApi = {
+    players: CharacterExportInfo[];
+};
+
 declare class LogEvent<T> {
     #private;
     time: Date;
@@ -568,8 +612,11 @@ interface LogStreamEvent {
     EquipChangeNotify: (pkt: LogEvent<EquipChangeNotify>) => void;
     EquipLifeToolChangeNotify: (pkt: LogEvent<EquipLifeToolChangeNotify>) => void;
     InitItem: (pkt: LogEvent<InitItem>) => void;
+    RaidBegin: (pkt: LogEvent<RaidBegin>) => void;
+    ZoneMemberLoadStatusNotify: (pkt: LogEvent<ZoneMemberLoadStatusNotify>) => void;
     logData: (data: Buffer) => void;
     fileEnd: (output: string) => void;
+    APP_StatApi: (pkt: LogEvent<APP_StatApi>) => void;
     "*": (name: string, pkt: LogEvent<Object>) => void;
 }
 

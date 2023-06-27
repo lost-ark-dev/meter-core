@@ -132,7 +132,9 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
 
       curState.entities.forEach((entity) => {
         if (!entity.isPlayer) return;
-        entity.statApiValid = this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
+        entity.statApiValid =
+          this.#statApi.isCurrentZoneValid() &&
+          this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
       });
       curState.localPlayer = this.#entityTracker.localPlayer.name;
 
@@ -826,7 +828,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             if (isFrontAttack) {
               const frontRate = debuff.statuseffectvalues[0] ?? 0;
               if (frontRate !== 0) {
-                const rate = (frontRate / 10000) * stackCount;
+                const rate = (frontRate / 100) * stackCount;
                 rdpsData.multDmg.values.push({
                   casterEntity,
                   rate,
@@ -838,7 +840,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             if (isBackAttack) {
               const backRate = debuff.statuseffectvalues[4] ?? 0;
               if (backRate !== 0) {
-                const rate = (backRate / 10000) * stackCount;
+                const rate = (backRate / 100) * stackCount;
                 rdpsData.multDmg.values.push({
                   casterEntity,
                   rate,
@@ -1512,7 +1514,9 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     this.#game.entities.forEach((entity, id) => {
       // Skip all entities that are not players (if live)
       if (!entity.isPlayer && !entity.isEsther) return;
-      entity.statApiValid = this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
+      entity.statApiValid =
+        this.#statApi.isCurrentZoneValid() &&
+        this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
       clone.entities.set(id, { ...entity });
     });
 

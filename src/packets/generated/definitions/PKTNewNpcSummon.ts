@@ -17,4 +17,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTNewNpcSummon";
-export const opcode = 8174;
+export const opcode = 57238;

@@ -6,9 +6,9 @@ export type PKTZoneStatusEffectRemoveNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTZoneStatusEffectRemoveNotify;
-  reader.skip(2);
   data.statusEffectId = reader.u32();
+  reader.skip(1);
   return data;
 }
 export const name = "PKTZoneStatusEffectRemoveNotify";
-export const opcode = 34738;
+export const opcode = 43252;

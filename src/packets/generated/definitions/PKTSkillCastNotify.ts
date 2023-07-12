@@ -11,9 +11,9 @@ export function read(buf: Buffer) {
   reader.skip(1);
   data.skillLevel = reader.u8();
   data.caster = reader.u64();
+  reader.skip(1);
   data.skillId = reader.u32();
-  reader.skip(2);
   return data;
 }
 export const name = "PKTSkillCastNotify";
-export const opcode = 2219;
+export const opcode = 11054;

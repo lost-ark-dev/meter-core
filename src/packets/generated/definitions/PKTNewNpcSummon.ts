@@ -10,9 +10,9 @@ export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTNewNpcSummon;
   data.npcData = NpcData.read(reader);
-  reader.skip(17);
+  reader.skip(11);
   data.ownerId = reader.u64();
-  reader.skip(14);
+  reader.skip(20);
   data.publishReason = reader.u8();
   return data;
 }

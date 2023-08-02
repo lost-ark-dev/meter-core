@@ -7,8 +7,8 @@ export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTZoneStatusEffectRemoveNotify;
   data.statusEffectId = reader.u32();
-  reader.skip(1);
+  reader.skip(3);
   return data;
 }
 export const name = "PKTZoneStatusEffectRemoveNotify";
-export const opcode = 43252;
+export const opcode = 23792;

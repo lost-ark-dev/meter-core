@@ -77,7 +77,9 @@ if (testLive) {
     isLive: true,
     resetAfterPhaseTransition: true,
   });
-  //logger.on("APP_StatApi", (pkt) => logEvent("APP_StatApi", pkt));
+  logger.on("*", (name, pkt) => {
+    logEvent(name, pkt);
+  });
   logger.readLogByChunk(path.resolve("../logs/test.raw"));
   logger.on("fileEnd", () => {
     console.log(count);

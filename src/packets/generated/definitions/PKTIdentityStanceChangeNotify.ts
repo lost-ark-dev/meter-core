@@ -7,10 +7,11 @@ export type PKTIdentityStanceChangeNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTIdentityStanceChangeNotify;
-  reader.skip(2);
+  reader.skip(1);
   data.objectId = reader.u64();
+  reader.skip(1);
   data.stance = reader.u8();
   return data;
 }
 export const name = "PKTIdentityStanceChangeNotify";
-export const opcode = 52426;
+export const opcode = 29685;

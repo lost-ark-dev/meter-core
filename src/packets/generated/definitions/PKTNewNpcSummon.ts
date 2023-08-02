@@ -11,9 +11,8 @@ export function read(buf: Buffer) {
   const data = {} as PKTNewNpcSummon;
   data.npcData = NpcData.read(reader);
   data.publishReason = reader.u8();
-  reader.skip(11);
+  reader.skip(31);
   data.ownerId = reader.u64();
-  reader.skip(20);
   return data;
 }
 export const name = "PKTNewNpcSummon";

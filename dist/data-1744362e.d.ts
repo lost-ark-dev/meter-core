@@ -224,7 +224,8 @@ declare enum buffshowprioritycategory {
     identity = 5,
     bracelet = 6,
     battleitem = 7,
-    etc = 8
+    elixir = 8,
+    etc = 9
 }
 declare enum combateffectactiontype {
     none = 0,
@@ -290,7 +291,7 @@ declare enum combateffectconditiontype {
     pc_skill = 28,
     skill_effect_group_set = 29,
     npc_id = 30,
-    identity_element_value_less = 31,
+    identity_gauge0_value_less = 31,
     pc_without_me = 32,
     npc_scaled_level_equal = 33,
     npc_scaled_level_less = 34,
@@ -298,12 +299,14 @@ declare enum combateffectconditiontype {
     not_skill_effect_id = 36,
     abnormal_move_not_immune = 37,
     apply_target_marking = 38,
-    damage_attr = 39
+    damage_attr = 39,
+    identity_element_value_less = 40
 }
 declare enum hitoption {
     back_attack = 0,
     frontal_attack = 1,
-    flank_attack = 2
+    flank_attack = 2,
+    reduce_damage = 3
 }
 declare enum identitycategory {
     none = 0,
@@ -366,7 +369,10 @@ declare enum identitycategory {
     yinyangshi_yang = 57,
     weather_artist_weapon = 58,
     weather_artist_weather = 59,
-    summoner_summon = 60
+    summoner_summon = 60,
+    soul_eater_hollow = 61,
+    soul_eater_killer = 62,
+    soul_eater_death = 63
 }
 declare enum npcgrade {
     none = 0,
@@ -494,7 +500,8 @@ declare enum skillfeaturetype {
     change_skill_effect_cost = 105,
     change_accumulate_dam_rate = 106,
     change_projectile_bank_data_addend = 107,
-    change_identity_category = 108
+    change_identity_category = 108,
+    change_skill_slot_visible_effect = 109
 }
 declare enum stattype {
     none = 0,
@@ -552,6 +559,8 @@ declare enum stattype {
     res_x = 58,
     def_x_x = 59,
     res_x_x = 60,
+    critical_physical_inc_rate = 65,
+    critical_magical_inc_rate = 66,
     def_pen_rate = 67,
     res_pen_rate = 68,
     physical_inc_rate = 69,

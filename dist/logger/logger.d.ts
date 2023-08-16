@@ -1,7 +1,7 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-024e4438.js';
-import { a as GameState } from '../data-fd4bd5c2.js';
+import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-78cbc405.js';
+import { a as GameState } from '../data-1744362e.js';
 import 'oodle';
 
 declare class Read {
@@ -223,7 +223,7 @@ type PCStructLog = {
     equipItemDataList: EquipItemDataLog[];
     equipLifeToolDataList: EquipItemDataLog[];
     guildName: string;
-    guildId: number;
+    guildId: bigint;
 };
 
 type NewPC = {

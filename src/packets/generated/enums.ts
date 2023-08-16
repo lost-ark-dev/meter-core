@@ -72,7 +72,8 @@ export enum buffshowprioritycategory {
   identity = 5,
   bracelet = 6,
   battleitem = 7,
-  etc = 8,
+  elixir = 8,
+  etc = 9,
 }
 export enum combateffectactiontype {
   none = 0,
@@ -138,7 +139,7 @@ export enum combateffectconditiontype {
   pc_skill = 28,
   skill_effect_group_set = 29,
   npc_id = 30,
-  identity_element_value_less = 31,
+  identity_gauge0_value_less = 31,
   pc_without_me = 32,
   npc_scaled_level_equal = 33,
   npc_scaled_level_less = 34,
@@ -147,6 +148,7 @@ export enum combateffectconditiontype {
   abnormal_move_not_immune = 37,
   apply_target_marking = 38,
   damage_attr = 39,
+  identity_element_value_less = 40,
 }
 export enum damageattr {
   none = 0,
@@ -197,6 +199,7 @@ export enum hitoption {
   back_attack = 0,
   frontal_attack = 1,
   flank_attack = 2,
+  reduce_damage = 3,
 }
 export enum identitycategory {
   none = 0,
@@ -260,6 +263,9 @@ export enum identitycategory {
   weather_artist_weapon = 58,
   weather_artist_weather = 59,
   summoner_summon = 60,
+  soul_eater_hollow = 61,
+  soul_eater_killer = 62,
+  soul_eater_death = 63,
 }
 export enum itemcategory {
   na = 0,
@@ -494,7 +500,7 @@ export enum itemcategory {
   general_town_reduce_research_time = 60904,
   general_town_reduce_mission_time = 60905,
   general_town_reduce_all_time = 60906,
-  general_town_jumping_ticket = 60908,
+  general_add_town_activity_point = 60907,
   general_raid_license_finish_1 = 61100,
   general_raid_license_finish_2 = 61101,
   general_raid_license_finish_3 = 61102,
@@ -514,6 +520,10 @@ export enum itemcategory {
   general_ancient_orb = 61602,
   general_town_token = 61700,
   general_aos_equip = 61800,
+  general_add_max_count_daily_epona = 61900,
+  general_add_max_count_weekly_epona = 61901,
+  general_life_energy = 62000,
+  general_life_boosting = 62001,
   general_town_jumping_ticket_bern = 62101,
   general_town_jumping_ticket_lohendel = 62102,
   general_town_jumping_ticket_yorn = 62103,
@@ -636,6 +646,7 @@ export enum itemcategory {
   avatar_weapon_pen = 90229,
   avatar_weapon_umbrella = 90230,
   avatar_weapon_sword_female = 90231,
+  avatar_weapon_scythe = 90232,
   avatar_effect_footstep = 90301,
   astra_equip_will = 100101,
   astra_equip_belief = 100102,
@@ -845,6 +856,7 @@ export enum skillfeaturetype {
   change_accumulate_dam_rate = 106,
   change_projectile_bank_data_addend = 107,
   change_identity_category = 108,
+  change_skill_slot_visible_effect = 109,
 }
 export enum stattype {
   none = 0,
@@ -902,6 +914,8 @@ export enum stattype {
   res_x = 58,
   def_x_x = 59,
   res_x_x = 60,
+  critical_physical_inc_rate = 65,
+  critical_magical_inc_rate = 66,
   def_pen_rate = 67,
   res_pen_rate = 68,
   physical_inc_rate = 69,
@@ -1148,6 +1162,8 @@ export enum statuseffecttype {
   fall_down_immune = 137,
   dynamic_camera = 138,
   bechased_pc = 139,
+  confront = 140,
+  party_drain = 141,
 }
 export enum triggersignaltype {
   none = 0,

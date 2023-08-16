@@ -6,8 +6,8 @@ export type PKTRaidBossKillNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTRaidBossKillNotify;
-  data.unk0 = reader.bytes(5);
+  data.unk0 = reader.bytes(6);
   return data;
 }
 export const name = "PKTRaidBossKillNotify";
-export const opcode = 52939;
+export const opcode = 44916;

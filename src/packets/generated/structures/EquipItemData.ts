@@ -2,20 +2,20 @@
 import type { Read } from "../../stream";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
 export type EquipItemData = {
-  expireTime: LostArkDateTime.LostArkDateTime;
-  slot: number;
   level: number;
+  slot: number;
   id: number;
-  unk5_0?: number;
   itemTint: Buffer;
+  unk5_0?: number;
+  expireTime: LostArkDateTime.LostArkDateTime;
 };
 export function read(reader: Read) {
   const data = {} as EquipItemData;
-  data.expireTime = LostArkDateTime.read(reader);
-  data.slot = reader.u16();
   data.level = reader.u16();
+  data.slot = reader.u16();
   data.id = reader.u32();
-  if (reader.bool()) data.unk5_0 = reader.u8();
   data.itemTint = reader.bytes(reader.u16(), 3, 14);
+  if (reader.bool()) data.unk5_0 = reader.u8();
+  data.expireTime = LostArkDateTime.read(reader);
   return data;
 }

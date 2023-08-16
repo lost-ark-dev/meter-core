@@ -58,7 +58,7 @@ console.log(
   )
 );
 */
-const testLive = false;
+const testLive = true;
 if (testLive) {
   const logger = new LiveLogger(stream, decompressor, path.resolve("../logs/test.raw"));
 
@@ -66,7 +66,7 @@ if (testLive) {
     isLive: true,
     resetAfterPhaseTransition: true,
   });
-  //logger.on("*", logEvent);
+  logger.on("*", logEvent);
 } else {
   const test = new Map();
   const logger = new ReplayLogger();

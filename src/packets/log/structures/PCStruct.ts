@@ -22,7 +22,7 @@ export type PCStructLog = {
   equipItemDataList: EquipItemData.EquipItemDataLog[];
   equipLifeToolDataList: EquipItemData.EquipItemDataLog[];
   guildName: string;
-  guildId: number;
+  guildId: bigint;
 };
 export function read(reader: Read, version: number) {
   const data = {} as PCStructLog;
@@ -61,7 +61,11 @@ export function read(reader: Read, version: number) {
     data.equipItemDataList = reader.array(reader.u16(), () => EquipItemData.read(reader, version), 32);
     data.equipLifeToolDataList = reader.array(reader.u16(), () => EquipItemData.read(reader, version), 9);
     data.guildName = reader.string(20);
-    data.guildId = reader.u32();
+    if (version >= 2) {
+      data.guildId = reader.u64();
+    } else {
+      data.guildId = BigInt(reader.u32());
+    }
   } else {
     // Defaults if possible, so that we don't have to potentially handle undefined
     data.avgItemLevel = data.maxItemLevel;
@@ -69,7 +73,7 @@ export function read(reader: Read, version: number) {
     data.equipItemDataList = [];
     data.equipLifeToolDataList = [];
     data.guildName = "";
-    data.guildId = 0;
+    data.guildId = 0n;
   }
   return data;
 }
@@ -108,5 +112,5 @@ export function write(writer: Write, data: PCStructLog | PCStruct) {
     EquipItemData.write(writer, obj);
   });
   writer.string(data.guildName, 20);
-  writer.u32(data.guildId);
+  writer.u64(data.guildId);
 }

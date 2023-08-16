@@ -16,13 +16,13 @@ export class PKTStream extends TypedEmitter<PKTStreamEvents> {
    */
   read(buf: Buffer): false | void {
     try {
-      if (buf.length < 6) return false;
-      const xor = buf.readUInt8(5);
+      if (buf.length < 8) return false;
+      const xor = buf.readUInt8(7);
       if (xor > 2) return false;
-      const compression = buf.readUInt8(4);
+      const compression = buf.readUInt8(6);
       if (compression > 3) return false;
-      const data = buf.subarray(6);
-      const opcode = buf.readUInt16LE(2);
+      const data = buf.subarray(8);
+      const opcode = buf.readUInt16LE(4);
 
       const pkt = mapping.get(opcode);
       if (pkt) {

@@ -22,6 +22,7 @@ export interface PKTStreamEvents {
   PKTNewNpcSummon: (pkt: PKT<types.PKTNewNpcSummon>) => void;
   PKTNewPC: (pkt: PKT<types.PKTNewPC>) => void;
   PKTNewProjectile: (pkt: PKT<types.PKTNewProjectile>) => void;
+  PKTNewTrap: (pkt: PKT<types.PKTNewTrap>) => void;
   PKTParalyzationStateNotify: (pkt: PKT<types.PKTParalyzationStateNotify>) => void;
   PKTPartyInfo: (pkt: PKT<types.PKTPartyInfo>) => void;
   PKTPartyLeaveResult: (pkt: PKT<types.PKTPartyLeaveResult>) => void;

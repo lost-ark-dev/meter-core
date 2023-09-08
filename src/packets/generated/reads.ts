@@ -19,6 +19,7 @@ export { read as PKTNewNpc } from "./definitions/PKTNewNpc";
 export { read as PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export { read as PKTNewPC } from "./definitions/PKTNewPC";
 export { read as PKTNewProjectile } from "./definitions/PKTNewProjectile";
+export { read as PKTNewTrap } from "./definitions/PKTNewTrap";
 export { read as PKTParalyzationStateNotify } from "./definitions/PKTParalyzationStateNotify";
 export { read as PKTPartyInfo } from "./definitions/PKTPartyInfo";
 export { read as PKTPartyLeaveResult } from "./definitions/PKTPartyLeaveResult";

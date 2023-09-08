@@ -26,6 +26,7 @@ export const mapping = new Map<number, [string, (buf: Buffer) => any]>([
   [codes.PKTNewNpcSummon, [names.PKTNewNpcSummon, reads.PKTNewNpcSummon]],
   [codes.PKTNewPC, [names.PKTNewPC, reads.PKTNewPC]],
   [codes.PKTNewProjectile, [names.PKTNewProjectile, reads.PKTNewProjectile]],
+  [codes.PKTNewTrap, [names.PKTNewTrap, reads.PKTNewTrap]],
   [codes.PKTParalyzationStateNotify, [names.PKTParalyzationStateNotify, reads.PKTParalyzationStateNotify]],
   [codes.PKTPartyInfo, [names.PKTPartyInfo, reads.PKTPartyInfo]],
   [codes.PKTPartyLeaveResult, [names.PKTPartyLeaveResult, reads.PKTPartyLeaveResult]],

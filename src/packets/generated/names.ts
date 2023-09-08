@@ -19,6 +19,7 @@ export { name as PKTNewNpc } from "./definitions/PKTNewNpc";
 export { name as PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export { name as PKTNewPC } from "./definitions/PKTNewPC";
 export { name as PKTNewProjectile } from "./definitions/PKTNewProjectile";
+export { name as PKTNewTrap } from "./definitions/PKTNewTrap";
 export { name as PKTParalyzationStateNotify } from "./definitions/PKTParalyzationStateNotify";
 export { name as PKTPartyInfo } from "./definitions/PKTPartyInfo";
 export { name as PKTPartyLeaveResult } from "./definitions/PKTPartyLeaveResult";

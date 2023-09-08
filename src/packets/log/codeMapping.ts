@@ -52,4 +52,5 @@ export const codeMapping = new Map<number, [number]>([
   [codes.PKTInitItem, [logId.InitItem]],
   [codes.PKTRaidBegin, [logId.RaidBegin]],
   [codes.PKTZoneMemberLoadStatusNotify, [logId.ZoneMemberLoadStatusNotify]],
+  [codes.PKTNewTrap, [logId.NewTrap]],
 ]);

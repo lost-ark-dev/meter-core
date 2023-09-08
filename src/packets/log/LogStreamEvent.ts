@@ -52,6 +52,7 @@ export interface LogStreamEvent {
   InitItem: (pkt: LogEvent<types.InitItem>) => void;
   RaidBegin: (pkt: LogEvent<types.RaidBegin>) => void;
   ZoneMemberLoadStatusNotify: (pkt: LogEvent<types.ZoneMemberLoadStatusNotify>) => void;
+  NewTrap: (pkt: LogEvent<types.NewTrap>) => void;
 
   logData: (data: Buffer) => void;
   fileEnd: (output: string) => void;

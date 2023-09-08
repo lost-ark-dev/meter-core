@@ -545,6 +545,28 @@ type PKTNewProjectile = {
     projectileInfo: ProjectileInfo;
 };
 
+type TrapData = {
+    position: Vector3F;
+    unk1: number;
+    unk2: number;
+    unk3: number;
+    objectId: bigint;
+    unk5: number;
+    unk6: number;
+    ownerId: bigint;
+    unk8: number;
+    unk9: number;
+    skillId: number;
+    skillEffect: number;
+    struct_333?: Buffer;
+};
+
+type PKTNewTrap = {
+    unk0: number;
+    trapData: TrapData;
+    unk2: number;
+};
+
 type PKTParalyzationStateNotify = {
     decreasePoint: number;
     enable: boolean;
@@ -893,6 +915,7 @@ interface PKTStreamEvents {
     PKTNewNpcSummon: (pkt: PKT<PKTNewNpcSummon>) => void;
     PKTNewPC: (pkt: PKT<PKTNewPC>) => void;
     PKTNewProjectile: (pkt: PKT<PKTNewProjectile>) => void;
+    PKTNewTrap: (pkt: PKT<PKTNewTrap>) => void;
     PKTParalyzationStateNotify: (pkt: PKT<PKTParalyzationStateNotify>) => void;
     PKTPartyInfo: (pkt: PKT<PKTPartyInfo>) => void;
     PKTPartyLeaveResult: (pkt: PKT<PKTPartyLeaveResult>) => void;

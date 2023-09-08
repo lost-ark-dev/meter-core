@@ -44,10 +44,15 @@ meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databas
 function logEvent(name: string, pkt: LogEvent<any>) {
   console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
 }
-/*
+
 console.log(
   JSON.stringify(
-    reads.PKTZoneMemberLoadStatusNotify(Buffer.from("", "hex")),
+    reads.PKTSkillDamageNotify(
+      Buffer.from(
+        "0ac65f8d0b00000000dc910000c1b2050001000100241c990a806e877401010102ea63d58674010186b68a0b00000000",
+        "hex"
+      )
+    ),
     (_, v) => {
       if (typeof v === "bigint") return v.toString() + "n";
       else if (typeof v === "object" && v.type === "Buffer") {
@@ -57,7 +62,7 @@ console.log(
     2
   )
 );
-*/
+
 const testLive = true;
 if (testLive) {
   const logger = new LiveLogger(stream, decompressor, path.resolve("../logs/test.raw"));
@@ -66,7 +71,7 @@ if (testLive) {
     isLive: true,
     resetAfterPhaseTransition: true,
   });
-  logger.on("*", logEvent);
+  //logger.on("*", logEvent);
 } else {
   const test = new Map();
   const logger = new ReplayLogger();
@@ -87,7 +92,7 @@ if (testLive) {
     //console.log(parser.encounters);
   });
 }
-/*
+
 const opcodes: { [key: number]: string } = {};
 try {
   readFileSync("../dump/opcodes.map", "utf-8")
@@ -112,14 +117,14 @@ for (const server of [6010, 6020, 6030, 6040]) {
       console.error(e);
     }
   });
-  
+
   // stream.on("PKTRaidTimerStart", (pkt) => {
   //   console.log(pkt.parsed);
   // });
   // stream.on("PKTNpcFuryInfoNotify", (pkt) => {
   //   console.log(pkt.parsed);
   // });
- 
+
   stream.on("*", (data, opcode, compression, xor) => {
     try {
       const decomp = decompressor.decrypt(data, opcode, compression, xor);
@@ -129,5 +134,5 @@ for (const server of [6010, 6020, 6030, 6040]) {
     }
   });
 }
-*/
+
 console.log("Logging");

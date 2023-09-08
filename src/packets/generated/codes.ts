@@ -19,6 +19,7 @@ export { opcode as PKTNewNpc } from "./definitions/PKTNewNpc";
 export { opcode as PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export { opcode as PKTNewPC } from "./definitions/PKTNewPC";
 export { opcode as PKTNewProjectile } from "./definitions/PKTNewProjectile";
+export { opcode as PKTNewTrap } from "./definitions/PKTNewTrap";
 export { opcode as PKTParalyzationStateNotify } from "./definitions/PKTParalyzationStateNotify";
 export { opcode as PKTPartyInfo } from "./definitions/PKTPartyInfo";
 export { opcode as PKTPartyLeaveResult } from "./definitions/PKTPartyLeaveResult";

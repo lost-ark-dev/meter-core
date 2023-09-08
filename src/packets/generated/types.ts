@@ -19,6 +19,7 @@ export type { PKTNewNpc } from "./definitions/PKTNewNpc";
 export type { PKTNewNpcSummon } from "./definitions/PKTNewNpcSummon";
 export type { PKTNewPC } from "./definitions/PKTNewPC";
 export type { PKTNewProjectile } from "./definitions/PKTNewProjectile";
+export type { PKTNewTrap } from "./definitions/PKTNewTrap";
 export type { PKTParalyzationStateNotify } from "./definitions/PKTParalyzationStateNotify";
 export type { PKTPartyInfo } from "./definitions/PKTPartyInfo";
 export type { PKTPartyLeaveResult } from "./definitions/PKTPartyLeaveResult";

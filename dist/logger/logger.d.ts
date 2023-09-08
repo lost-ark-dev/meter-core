@@ -1,6 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-78cbc405.js';
+import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-73973aef.js';
 import { a as GameState } from '../data-1744362e.js';
 import 'oodle';
 
@@ -533,6 +533,18 @@ type ZoneMemberLoadStatusNotify = {
     zoneLevel: number;
 };
 
+type TrapDataLog = {
+    position: Vector3F;
+    objectId: bigint;
+    ownerId: bigint;
+    skillId: number;
+    skillEffect: number;
+};
+
+type NewTrap = {
+    trapData: TrapDataLog;
+};
+
 declare enum ApiStatType {
     CRIT = 0,
     SPEC = 1,
@@ -614,6 +626,7 @@ interface LogStreamEvent {
     InitItem: (pkt: LogEvent<InitItem>) => void;
     RaidBegin: (pkt: LogEvent<RaidBegin>) => void;
     ZoneMemberLoadStatusNotify: (pkt: LogEvent<ZoneMemberLoadStatusNotify>) => void;
+    NewTrap: (pkt: LogEvent<NewTrap>) => void;
     logData: (data: Buffer) => void;
     fileEnd: (output: string) => void;
     APP_StatApi: (pkt: LogEvent<APP_StatApi>) => void;

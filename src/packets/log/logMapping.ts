@@ -142,6 +142,7 @@ export const logMapping = new Map<
     logId.ZoneMemberLoadStatusNotify,
     [names.ZoneMemberLoadStatusNotify, reads.ZoneMemberLoadStatusNotify, writes.ZoneMemberLoadStatusNotify],
   ],
+  [logId.NewTrap, [names.NewTrap, reads.NewTrap, writes.NewTrap]],
 
   [logId.APP_StatApi, [names.APP_StatApi, reads.APP_StatApi, writes.APP_StatApi]],
 ]);

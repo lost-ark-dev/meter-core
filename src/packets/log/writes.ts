@@ -49,5 +49,6 @@ export { write as EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolC
 export { write as InitItem } from "./definitions/InitItem";
 export { write as RaidBegin } from "./definitions/RaidBegin";
 export { write as ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
+export { write as NewTrap } from "./definitions/NewTrap";
 
 export { write as APP_StatApi } from "./app/APP_StatApi";

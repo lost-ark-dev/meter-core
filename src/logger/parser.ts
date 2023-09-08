@@ -254,6 +254,21 @@ export class Parser extends TypedEmitter<ParserEvent> {
         };
         this.#entityTracker.entities.set(projectile.entityId, projectile);
       })
+      .on("NewTrap", (pkt) => {
+        const parsed = pkt.parsed;
+        if (!parsed) return;
+        // We process traps as projectiles, as they are only used to track owner
+        const projectile: Projectile = {
+          entityId: parsed.trapData.objectId,
+          entityType: EntityType.Projectile,
+          name: parsed.trapData.objectId.toString(16),
+          ownerId: parsed.trapData.ownerId,
+          skillEffectId: parsed.trapData.skillEffect,
+          skillId: parsed.trapData.skillId,
+          stats: new Map(),
+        };
+        this.#entityTracker.entities.set(projectile.entityId, projectile);
+      })
       .on("ParalyzationStateNotify", (pkt) => {})
       .on("PartyInfo", (pkt) => {
         this.#partyTracker.partyInfo(pkt, this.#entityTracker.entities, this.#entityTracker.localPlayer);

@@ -49,5 +49,6 @@ export type { EquipLifeToolChangeNotify } from "./definitions/EquipLifeToolChang
 export type { InitItem } from "./definitions/InitItem";
 export type { RaidBegin } from "./definitions/RaidBegin";
 export type { ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
+export type { NewTrap } from "./definitions/NewTrap";
 
 export type { APP_StatApi } from "./app/APP_StatApi";

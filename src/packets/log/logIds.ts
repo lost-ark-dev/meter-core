@@ -50,6 +50,7 @@ export const enum logId {
   InitItem = 50,
   ZoneMemberLoadStatusNotify = 51,
   RaidBegin = 52,
+  NewTrap = 53,
 
   APP_StatApi = 60000,
 }

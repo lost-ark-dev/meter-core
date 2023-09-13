@@ -8,8 +8,8 @@ export type PKTStatusEffectDurationNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTStatusEffectDurationNotify;
-  data.effectInstanceId = reader.u32();
   reader.skip(1);
+  data.effectInstanceId = reader.u32();
   data.expirationTick = reader.u64();
   data.targetId = reader.u64();
   return data;

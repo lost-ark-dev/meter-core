@@ -2,15 +2,15 @@
 import { Read } from "../../stream";
 export type PKTStatusEffectRemoveNotify = {
   statusEffectIds: number[];
-  reason: number;
   objectId: bigint;
+  reason: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTStatusEffectRemoveNotify;
   data.statusEffectIds = reader.array(reader.u16(), () => reader.u32(), 80);
-  data.reason = reader.u8();
   data.objectId = reader.u64();
+  data.reason = reader.u8();
   return data;
 }
 export const name = "PKTStatusEffectRemoveNotify";

@@ -6,7 +6,6 @@ export type PKTZoneObjectUnpublishNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTZoneObjectUnpublishNotify;
-  reader.skip(1);
   data.objectId = reader.u64();
   reader.skip(2);
   return data;

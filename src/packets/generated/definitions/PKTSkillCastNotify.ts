@@ -16,4 +16,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTSkillCastNotify";
-export const opcode = 37769;
+export const opcode = 20749;

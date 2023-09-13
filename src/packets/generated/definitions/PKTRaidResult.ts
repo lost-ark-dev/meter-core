@@ -36,4 +36,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTRaidResult";
-export const opcode = 55609;
+export const opcode = 41396;

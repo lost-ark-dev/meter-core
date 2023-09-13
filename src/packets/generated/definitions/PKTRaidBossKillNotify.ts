@@ -10,4 +10,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTRaidBossKillNotify";
-export const opcode = 44916;
+export const opcode = 24886;

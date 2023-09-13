@@ -21,4 +21,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTSkillDamageAbnormalMoveNotify";
-export const opcode = 53959;
+export const opcode = 57892;

@@ -35,4 +35,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTInitEnv";
-export const opcode = 37399;
+export const opcode = 26265;

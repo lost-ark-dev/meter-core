@@ -16,4 +16,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTTriggerBossBattleStatus";
-export const opcode = 54239;
+export const opcode = 54632;

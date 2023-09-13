@@ -62,4 +62,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTInitLocal";
-export const opcode = 25712;
+export const opcode = 53096;

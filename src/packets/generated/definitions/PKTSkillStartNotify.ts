@@ -35,4 +35,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTSkillStartNotify";
-export const opcode = 37316;
+export const opcode = 1555;

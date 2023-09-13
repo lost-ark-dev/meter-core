@@ -1271,6 +1271,7 @@ export enum triggersignaltype {
   instance_timer_event_9 = 102,
   instance_timer_event_10 = 103,
   user_status_effect_removed = 104,
+  zone_level_extreme = 105,
 }
 export enum zonebufftarget {
   none = 0,

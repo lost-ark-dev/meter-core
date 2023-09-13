@@ -11,4 +11,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTRemoveObject";
-export const opcode = 39604;
+export const opcode = 44981;

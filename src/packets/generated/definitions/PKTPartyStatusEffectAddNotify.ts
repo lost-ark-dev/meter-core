@@ -19,4 +19,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTPartyStatusEffectAddNotify";
-export const opcode = 35921;
+export const opcode = 52073;

@@ -13,4 +13,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTInitAbility";
-export const opcode = 13575;
+export const opcode = 27591;

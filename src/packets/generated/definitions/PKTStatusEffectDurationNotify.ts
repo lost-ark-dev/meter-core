@@ -15,4 +15,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTStatusEffectDurationNotify";
-export const opcode = 13981;
+export const opcode = 55691;

@@ -28,4 +28,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTDeathNotify";
-export const opcode = 9339;
+export const opcode = 34131;

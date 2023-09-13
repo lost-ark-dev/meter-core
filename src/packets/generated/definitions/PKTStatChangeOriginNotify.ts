@@ -37,4 +37,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTStatChangeOriginNotify";
-export const opcode = 28288;
+export const opcode = 20207;

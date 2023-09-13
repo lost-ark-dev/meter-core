@@ -134,4 +134,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTInitPC";
-export const opcode = 8868;
+export const opcode = 37909;

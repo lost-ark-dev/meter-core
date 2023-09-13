@@ -21,4 +21,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTPartyInfo";
-export const opcode = 51450;
+export const opcode = 52972;

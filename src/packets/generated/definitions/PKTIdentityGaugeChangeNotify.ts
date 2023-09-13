@@ -18,4 +18,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTIdentityGaugeChangeNotify";
-export const opcode = 54393;
+export const opcode = 15154;

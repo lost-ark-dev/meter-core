@@ -17,4 +17,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTSkillStageNotify";
-export const opcode = 43447;
+export const opcode = 26492;

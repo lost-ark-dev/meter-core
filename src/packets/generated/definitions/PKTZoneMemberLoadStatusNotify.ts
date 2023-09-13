@@ -22,4 +22,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTZoneMemberLoadStatusNotify";
-export const opcode = 35904;
+export const opcode = 4729;

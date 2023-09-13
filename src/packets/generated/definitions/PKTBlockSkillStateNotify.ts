@@ -18,4 +18,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTBlockSkillStateNotify";
-export const opcode = 29739;
+export const opcode = 1774;

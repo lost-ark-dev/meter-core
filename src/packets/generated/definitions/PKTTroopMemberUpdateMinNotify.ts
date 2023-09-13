@@ -22,4 +22,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTTroopMemberUpdateMinNotify";
-export const opcode = 40769;
+export const opcode = 5506;

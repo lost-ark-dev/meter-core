@@ -24,4 +24,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTParalyzationStateNotify";
-export const opcode = 31657;
+export const opcode = 25450;

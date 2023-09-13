@@ -19,4 +19,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTStatusEffectSyncDataNotify";
-export const opcode = 19864;
+export const opcode = 20155;

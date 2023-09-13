@@ -16,4 +16,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTCounterAttackNotify";
-export const opcode = 41744;
+export const opcode = 21946;

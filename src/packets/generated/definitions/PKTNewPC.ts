@@ -24,4 +24,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTNewPC";
-export const opcode = 41094;
+export const opcode = 6955;

@@ -44,15 +44,10 @@ meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databas
 function logEvent(name: string, pkt: LogEvent<any>) {
   console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
 }
-
+/*
 console.log(
   JSON.stringify(
-    reads.PKTSkillDamageNotify(
-      Buffer.from(
-        "0ac65f8d0b00000000dc910000c1b2050001000100241c990a806e877401010102ea63d58674010186b68a0b00000000",
-        "hex"
-      )
-    ),
+    reads.PKTSkillDamageNotify(Buffer.from("", "hex")),
     (_, v) => {
       if (typeof v === "bigint") return v.toString() + "n";
       else if (typeof v === "object" && v.type === "Buffer") {
@@ -61,7 +56,7 @@ console.log(
     },
     2
   )
-);
+);*/
 
 const testLive = true;
 if (testLive) {
@@ -71,7 +66,7 @@ if (testLive) {
     isLive: true,
     resetAfterPhaseTransition: true,
   });
-  //logger.on("*", logEvent);
+  logger.on("*", logEvent);
 } else {
   const test = new Map();
   const logger = new ReplayLogger();

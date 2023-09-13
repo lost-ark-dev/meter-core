@@ -15,4 +15,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTNewTrap";
-export const opcode = 7848;
+export const opcode = 15787;

@@ -2,11 +2,11 @@
 import { Read } from "../../stream";
 import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 export type PKTStatChangeOriginNotify = {
-  statPairList: { value: bigint; statType: number }[];
-  unk2_0?: number;
-  unk3: { value: bigint; statType: number }[];
-  unk4: number;
+  statPairList: { statType: number; value: bigint }[];
+  unk1: number;
+  unk3_0?: number;
   objectId: bigint;
+  unk5: { statType: number; value: bigint }[];
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -14,27 +14,27 @@ export function read(buf: Buffer) {
   data.statPairList = reader.array(
     reader.u16(),
     () => {
-      const $ = {} as { value: bigint; statType: number };
-      $.value = ReadNBytesInt64.read(reader);
+      const $ = {} as { statType: number; value: bigint };
       $.statType = reader.u8();
+      $.value = ReadNBytesInt64.read(reader);
       return $;
     },
     152
   );
-  if (reader.bool()) data.unk2_0 = reader.u32();
-  data.unk3 = reader.array(
+  data.unk1 = reader.u8();
+  if (reader.bool()) data.unk3_0 = reader.u32();
+  data.objectId = reader.u64();
+  data.unk5 = reader.array(
     reader.u16(),
     () => {
-      const a = {} as { value: bigint; statType: number };
-      a.value = ReadNBytesInt64.read(reader);
+      const a = {} as { statType: number; value: bigint };
       a.statType = reader.u8();
+      a.value = ReadNBytesInt64.read(reader);
       return a;
     },
     152
   );
-  data.unk4 = reader.u8();
-  data.objectId = reader.u64();
   return data;
 }
 export const name = "PKTStatChangeOriginNotify";
-export const opcode = 20207;
+export const opcode = 50071;

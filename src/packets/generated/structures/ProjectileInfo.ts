@@ -15,11 +15,11 @@ export type ProjectileInfo = {
   tripodIndex: TripodIndex.TripodIndex;
   tripodLevel: TripodLevel.TripodLevel;
   unk13_0?: number;
-  projectileId?: bigint;
+  unk15_0?: bigint;
   skillId: number;
   skillEffect: number;
   unk18: number;
-  unk19: bigint;
+  projectileId: bigint;
   unk20: bigint;
   targetObjectId: bigint;
   chainSkillEffect: number;
@@ -39,11 +39,11 @@ export function read(reader: Read) {
   data.tripodIndex = TripodIndex.read(reader);
   data.tripodLevel = TripodLevel.read(reader);
   if (reader.bool()) data.unk13_0 = reader.u32();
-  if (reader.bool()) data.projectileId = reader.u64();
+  if (reader.bool()) data.unk15_0 = reader.u64();
   data.skillId = reader.u32();
   data.skillEffect = reader.u32();
   data.unk18 = reader.u32();
-  data.unk19 = reader.u64();
+  data.projectileId = reader.u64();
   data.unk20 = reader.u64();
   data.targetObjectId = reader.u64();
   data.chainSkillEffect = reader.u32();

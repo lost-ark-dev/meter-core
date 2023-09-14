@@ -3,7 +3,7 @@ import { M as MeterData, G as GameTrackerOptions, a as GameState } from '../data
 import { Logger } from './logger.js';
 import '../decompressor.js';
 import 'oodle';
-import '../pkt-stream-2b87165b.js';
+import '../pkt-stream-f8c05314.js';
 
 declare class Parser extends TypedEmitter<ParserEvent> {
     #private;

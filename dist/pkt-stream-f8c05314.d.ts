@@ -530,11 +530,11 @@ type ProjectileInfo = {
     tripodIndex: TripodIndex;
     tripodLevel: TripodLevel;
     unk13_0?: number;
-    projectileId?: bigint;
+    unk15_0?: bigint;
     skillId: number;
     skillEffect: number;
     unk18: number;
-    unk19: bigint;
+    projectileId: bigint;
     unk20: bigint;
     targetObjectId: bigint;
     chainSkillEffect: number;

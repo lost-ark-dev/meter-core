@@ -5,8 +5,8 @@ export type PKTSkillDamageNotify = {
   sourceId: bigint;
   skillDamageEvents: SkillDamageEvent.SkillDamageEvent[];
   skillLevel: number;
-  skillEffectId: number;
   skillId: number;
+  skillEffectId: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -14,9 +14,9 @@ export function read(buf: Buffer) {
   data.sourceId = reader.u64();
   data.skillDamageEvents = reader.array(reader.u16(), () => SkillDamageEvent.read(reader), 50);
   data.skillLevel = reader.u8();
-  data.skillEffectId = reader.u32();
   data.skillId = reader.u32();
+  data.skillEffectId = reader.u32();
   return data;
 }
 export const name = "PKTSkillDamageNotify";
-export const opcode = 29454;
+export const opcode = 32794;

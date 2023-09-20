@@ -13,4 +13,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTActiveAbilityNotify";
-export const opcode = 55472;
+export const opcode = 39462;

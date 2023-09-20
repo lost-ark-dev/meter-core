@@ -17,4 +17,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTEquipChangeNotify";
-export const opcode = 52859;
+export const opcode = 24878;

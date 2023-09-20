@@ -13,4 +13,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTInitItem";
-export const opcode = 45390;
+export const opcode = 31262;

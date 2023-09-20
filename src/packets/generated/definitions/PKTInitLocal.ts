@@ -3,63 +3,63 @@ import { Read } from "../../stream";
 import * as StatusEffectData from "../structures/StatusEffectData";
 import * as AbilityData from "../structures/AbilityData";
 import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
-import * as Struct_734 from "../structures/Struct_734";
+import * as Struct_731 from "../structures/Struct_731";
 export type PKTInitLocal = {
-  statusEffectDatas: StatusEffectData.StatusEffectData[];
-  unk2_0?: number;
-  struct_132: Buffer;
-  abilityDataList: AbilityData.AbilityData[];
+  struct_135: Buffer;
+  unk1: number;
   addonFeatureIdList: Buffer;
-  addonSkillFeatureList: { skillId: number; addonSkillFeatureIdList: number[] }[];
-  unk7: number;
-  unk8: bigint;
-  statPair: { statType: number; value: bigint }[];
-  struct_330: Buffer;
-  unk11: number;
+  unk3: bigint;
+  unk5_0?: number;
+  statusEffectDatas: StatusEffectData.StatusEffectData[];
+  abilityDataList: AbilityData.AbilityData[];
+  statPair: { value: bigint; statType: number }[];
+  struct_416: Struct_731.Struct_731[];
+  unk10: number;
+  struct_337: Buffer;
   unk12: number;
-  struct_217: Buffer;
-  unk14: bigint;
-  unk15: number;
-  struct_414: Struct_734.Struct_734[];
+  addonSkillFeatureList: { addonSkillFeatureIdList: number[]; skillId: number }[];
+  struct_222: Buffer;
+  unk15: bigint;
+  unk16: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTInitLocal;
-  data.statusEffectDatas = reader.array(reader.u16(), () => StatusEffectData.read(reader), 80);
-  if (reader.bool()) data.unk2_0 = reader.u32();
-  data.struct_132 = reader.bytes(reader.u16(), 351, 48);
-  data.abilityDataList = reader.array(reader.u16(), () => AbilityData.read(reader), 100);
+  data.struct_135 = reader.bytes(reader.u16(), 351, 48);
+  data.unk1 = reader.u8();
   data.addonFeatureIdList = reader.bytes(reader.u16(), 200, 4);
-  data.addonSkillFeatureList = reader.array(
-    reader.u16(),
-    () => {
-      const u = {} as { skillId: number; addonSkillFeatureIdList: number[] };
-      u.skillId = reader.u32();
-      u.addonSkillFeatureIdList = reader.array(reader.u16(), () => reader.u32(), 5);
-      return u;
-    },
-    200
-  );
-  data.unk7 = reader.u32();
-  data.unk8 = reader.u64();
+  data.unk3 = reader.u64();
+  if (reader.bool()) data.unk5_0 = reader.u32();
+  data.statusEffectDatas = reader.array(reader.u16(), () => StatusEffectData.read(reader), 80);
+  data.abilityDataList = reader.array(reader.u16(), () => AbilityData.read(reader), 100);
   data.statPair = reader.array(
     reader.u16(),
     () => {
-      const x = {} as { statType: number; value: bigint };
-      x.statType = reader.u8();
-      x.value = ReadNBytesInt64.read(reader);
-      return x;
+      const u = {} as { value: bigint; statType: number };
+      u.value = ReadNBytesInt64.read(reader);
+      u.statType = reader.u8();
+      return u;
     },
     152
   );
-  data.struct_330 = reader.bytes(reader.u16(), 104, 30);
-  data.unk11 = reader.u8();
-  data.unk12 = reader.u8();
-  data.struct_217 = reader.bytes(reader.u16(), 3, 17);
-  data.unk14 = reader.u64();
-  data.unk15 = reader.u8();
-  data.struct_414 = reader.array(reader.u16(), () => Struct_734.read(reader), 300);
+  data.struct_416 = reader.array(reader.u16(), () => Struct_731.read(reader), 300);
+  data.unk10 = reader.u8();
+  data.struct_337 = reader.bytes(reader.u16(), 104, 30);
+  data.unk12 = reader.u32();
+  data.addonSkillFeatureList = reader.array(
+    reader.u16(),
+    () => {
+      const w = {} as { addonSkillFeatureIdList: number[]; skillId: number };
+      w.addonSkillFeatureIdList = reader.array(reader.u16(), () => reader.u32(), 5);
+      w.skillId = reader.u32();
+      return w;
+    },
+    200
+  );
+  data.struct_222 = reader.bytes(reader.u16(), 3, 17);
+  data.unk15 = reader.u64();
+  data.unk16 = reader.u8();
   return data;
 }
 export const name = "PKTInitLocal";
-export const opcode = 53768;
+export const opcode = 30875;

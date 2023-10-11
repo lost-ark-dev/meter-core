@@ -43,9 +43,9 @@ type PKTBlockSkillStateNotify = {
 };
 
 type PKTCounterAttackNotify = {
-    targetId: bigint;
-    type: number;
     sourceId: bigint;
+    type: number;
+    targetId: bigint;
 };
 
 type PKTDeathNotify = {

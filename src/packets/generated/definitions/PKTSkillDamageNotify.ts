@@ -2,21 +2,21 @@
 import { Read } from "../../stream";
 import * as SkillDamageEvent from "../structures/SkillDamageEvent";
 export type PKTSkillDamageNotify = {
-  sourceId: bigint;
-  skillDamageEvents: SkillDamageEvent.SkillDamageEvent[];
+  skillEffectId: number;
   skillLevel: number;
   skillId: number;
-  skillEffectId: number;
+  skillDamageEvents: SkillDamageEvent.SkillDamageEvent[];
+  sourceId: bigint;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTSkillDamageNotify;
-  data.sourceId = reader.u64();
-  data.skillDamageEvents = reader.array(reader.u16(), () => SkillDamageEvent.read(reader), 50);
+  data.skillEffectId = reader.u32();
   data.skillLevel = reader.u8();
   data.skillId = reader.u32();
-  data.skillEffectId = reader.u32();
+  data.skillDamageEvents = reader.array(reader.u16(), () => SkillDamageEvent.read(reader), 50);
+  data.sourceId = reader.u64();
   return data;
 }
 export const name = "PKTSkillDamageNotify";
-export const opcode = 32794;
+export const opcode = 17244;

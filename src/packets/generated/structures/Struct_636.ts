@@ -1,30 +1,25 @@
 // Auto Generated, do not edit.
 import type { Read } from "../../stream";
+import * as Struct_140 from "../structures/Struct_140";
 export type Struct_636 = {
   unk0: number;
-  struct_23: { struct_228: string; unk1_0_1: number; unk1_0_2: number }[];
+  struct_141: Buffer;
   unk2: number;
-  struct_484: Buffer;
-  struct_229: Buffer;
+  unk3: number;
+  struct_140: Struct_140.Struct_140;
   unk5: number;
+  unk6: number;
+  unk7: number;
 };
 export function read(reader: Read) {
   const data = {} as Struct_636;
   data.unk0 = reader.u8();
-  data.struct_23 = reader.array(
-    reader.u16(),
-    () => {
-      const q = {} as { struct_228: string; unk1_0_1: number; unk1_0_2: number };
-      q.struct_228 = reader.string(2);
-      q.unk1_0_1 = reader.u16();
-      q.unk1_0_2 = reader.u8();
-      return q;
-    },
-    20
-  );
+  data.struct_141 = reader.bytes(reader.u16(), 3, 9);
   data.unk2 = reader.u8();
-  data.struct_484 = reader.bytes(reader.u16(), 3, 7);
-  data.struct_229 = reader.bytes(reader.u16(), 5, 7);
+  data.unk3 = reader.u8();
+  data.struct_140 = Struct_140.read(reader);
   data.unk5 = reader.u8();
+  data.unk6 = reader.u32();
+  data.unk7 = reader.u32();
   return data;
 }

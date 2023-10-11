@@ -2,16 +2,16 @@
 import type { Read } from "../../stream";
 export type ZoneStatusEffectData = {
   id: number;
-  target: number;
   stackCount: number;
+  target: number;
   instanceId: number;
 };
 export function read(reader: Read) {
   const data = {} as ZoneStatusEffectData;
-  data.id = reader.u32();
-  data.target = reader.u8();
   reader.skip(4);
+  data.id = reader.u32();
   data.stackCount = reader.u8();
+  data.target = reader.u8();
   data.instanceId = reader.u32();
   return data;
 }

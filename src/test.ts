@@ -42,25 +42,17 @@ meterData.processSkillBuffData(JSON.parse(readFileSync("meter-data/databases/Ski
 meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databases/SkillEffect.json", "utf-8")));
 
 function logEvent(name: string, pkt: LogEvent<any>) {
-  console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
+  //console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
 }
 /*
 console.log(
-  JSON.stringify(
-    reads.PKTSkillDamageNotify(Buffer.from("", "hex")),
-    (_, v) => {
-      if (typeof v === "bigint") return v.toString() + "n";
-      else if (typeof v === "object" && v.type === "Buffer") {
-        return v.data.map((x: number) => x.toString(16).padStart(2, "0")).join("");
-      } else return v;
-    },
-    2
+	@@ -58,15 +58,15 @@ console.log(
   )
-);*/
-
+);
+*/
 const testLive = true;
 if (testLive) {
-  const logger = new LiveLogger(stream, decompressor, path.resolve("../logs/test.raw"));
+  const logger = new LiveLogger(stream, decompressor, path.resolve("test.raw"));
 
   const parser = new Parser(logger, meterData, "test_client", {
     isLive: true,
@@ -70,16 +62,11 @@ if (testLive) {
 } else {
   const test = new Map();
   const logger = new ReplayLogger();
-
-  let count = 0;
-  const m = new Map<number, string | undefined>();
-  const parser = new Parser(logger, meterData, "test_client", {
+	@@ -77,9 +77,7 @@ if (testLive) {
     isLive: true,
     resetAfterPhaseTransition: true,
   });
-  logger.on("*", (name, pkt) => {
-    logEvent(name, pkt);
-  });
+  //logger.on("APP_StatApi", (pkt) => logEvent("APP_StatApi", pkt));
   logger.readLogByChunk(path.resolve("../logs/test.raw"));
   logger.on("fileEnd", () => {
     console.log(count);

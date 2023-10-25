@@ -5,9 +5,9 @@ export type PKTPartyInfo = {
   memberDatas: PartyMemberData.PartyMemberData[];
   lootGrade: number;
   partyInstanceId: number;
+  partyType: number;
   partyLootType: number;
   raidInstanceId: number;
-  partyType: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -15,10 +15,10 @@ export function read(buf: Buffer) {
   data.memberDatas = reader.array(reader.u16(), () => PartyMemberData.read(reader), 40);
   data.lootGrade = reader.u32();
   data.partyInstanceId = reader.u32();
+  data.partyType = reader.u8();
   data.partyLootType = reader.u8();
   data.raidInstanceId = reader.u32();
-  data.partyType = reader.u8();
   return data;
 }
 export const name = "PKTPartyInfo";
-export const opcode = 51909;
+export const opcode = 53401;

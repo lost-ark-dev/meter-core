@@ -2,30 +2,30 @@
 import type { Read } from "../../stream";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
 export type StatusEffectData = {
-  occurTime: LostArkDateTime.LostArkDateTime;
-  statusEffectId: number;
-  struct_436: Buffer;
-  sourceId: bigint;
-  value?: Buffer;
   stackCount: number;
-  effectInstanceId: number;
-  endTick: bigint;
-  unk10_0?: bigint;
+  unk2_0?: bigint;
+  sourceId: bigint;
+  statusEffectId: number;
+  occurTime: LostArkDateTime.LostArkDateTime;
   skillLevel: number;
+  value?: Buffer;
+  struct_438: Buffer;
+  endTick: bigint;
+  effectInstanceId: number;
   totalTime: number;
 };
 export function read(reader: Read) {
   const data = {} as StatusEffectData;
-  data.occurTime = LostArkDateTime.read(reader);
-  data.statusEffectId = reader.u32();
-  data.struct_436 = reader.bytes(reader.u16(), 8, 7);
-  data.sourceId = reader.u64();
-  if (reader.bool()) data.value = reader.bytes(16);
   data.stackCount = reader.u8();
-  data.effectInstanceId = reader.u32();
-  data.endTick = reader.u64();
-  if (reader.bool()) data.unk10_0 = reader.u64();
+  if (reader.bool()) data.unk2_0 = reader.u64();
+  data.sourceId = reader.u64();
+  data.statusEffectId = reader.u32();
+  data.occurTime = LostArkDateTime.read(reader);
   data.skillLevel = reader.u8();
+  if (reader.bool()) data.value = reader.bytes(16);
+  data.struct_438 = reader.bytes(reader.u16(), 8, 7);
+  data.endTick = reader.u64();
+  data.effectInstanceId = reader.u32();
   data.totalTime = reader.f32();
   return data;
 }

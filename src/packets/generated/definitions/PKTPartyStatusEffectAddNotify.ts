@@ -2,21 +2,21 @@
 import { Read } from "../../stream";
 import * as StatusEffectData from "../structures/StatusEffectData";
 export type PKTPartyStatusEffectAddNotify = {
+  unk0: number;
+  unk1: bigint;
   statusEffectDatas: StatusEffectData.StatusEffectData[];
-  playerIdOnRefresh: bigint;
-  unk2: number;
   characterId: bigint;
-  unk4: bigint;
+  playerIdOnRefresh: bigint;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTPartyStatusEffectAddNotify;
+  data.unk0 = reader.u8();
+  data.unk1 = reader.u64();
   data.statusEffectDatas = reader.array(reader.u16(), () => StatusEffectData.read(reader), 80);
-  data.playerIdOnRefresh = reader.u64();
-  data.unk2 = reader.u8();
   data.characterId = reader.u64();
-  data.unk4 = reader.u64();
+  data.playerIdOnRefresh = reader.u64();
   return data;
 }
 export const name = "PKTPartyStatusEffectAddNotify";
-export const opcode = 20762;
+export const opcode = 22577;

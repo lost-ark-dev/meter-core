@@ -12,7 +12,7 @@ import * as reads from "./packets/generated/reads";
 import { logId } from "./packets/log/logIds";
 import { logMapping } from "./packets/log/logMapping";
 import * as Vector3F from "./packets/common/Vector3F";
-import { Read, Write } from "./packets/stream";
+import { Read } from "./packets/stream";
 
 import { inspect } from "util";
 inspect.defaultOptions.depth = null; //Use to console log full objects for debug
@@ -119,24 +119,11 @@ for (const server of [6010, 6020, 6030, 6040]) {
   // stream.on("PKTNpcFuryInfoNotify", (pkt) => {
   //   console.log(pkt.parsed);
   // });
-  const cloud = createWriteStream(path.resolve("../logs/cloud.raw"));
 
   stream.on("*", (data, opcode, compression, xor) => {
     try {
       const decomp = decompressor.decrypt(data, opcode, compression, xor);
       console.log(`${new Date().toISOString()} ${server} <- ${opcodes[opcode] ?? opcode} | ${decomp.toString("hex")}`);
-
-      if (server === 6040) {
-        //write cloud log
-        try {
-          const b = Buffer.alloc(decomp.length + 4 + 6);
-          b.writeUintLE(+new Date(), 0, 6); //timestamp
-          b.writeUint16LE(decomp.length + 2, 6); //pkt length
-          b.writeUint16LE(opcode, 8); //pkt opcode
-          decomp.copy(b, 10); //pkt payload
-          cloud.write(b);
-        } catch (e) {}
-      }
     } catch (e) {
       console.error(e);
     }

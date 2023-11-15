@@ -8,12 +8,12 @@ export type PKTPartyStatusEffectResultNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTPartyStatusEffectResultNotify;
-  reader.skip(8);
+  reader.skip(5);
   data.partyInstanceId = reader.u32();
-  reader.skip(20);
   data.raidInstanceId = reader.u32();
   data.characterId = reader.u64();
+  reader.skip(22);
   return data;
 }
 export const name = "PKTPartyStatusEffectResultNotify";
-export const opcode = 10284;
+export const opcode = 16074;

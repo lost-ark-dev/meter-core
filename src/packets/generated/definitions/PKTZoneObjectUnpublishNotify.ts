@@ -11,4 +11,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTZoneObjectUnpublishNotify";
-export const opcode = 3749;
+export const opcode = 38619;

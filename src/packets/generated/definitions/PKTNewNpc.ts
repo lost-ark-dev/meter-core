@@ -5,9 +5,9 @@ export type PKTNewNpc = {
   unk1_0?: string;
   unk1_1?: string;
   npcStruct: NpcData.NpcData;
-  unk3_0?: number;
+  unk3_0?: bigint;
   unk4: number;
-  unk6_0?: bigint;
+  unk6_0?: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -17,10 +17,10 @@ export function read(buf: Buffer) {
     data.unk1_1 = reader.string(20);
   }
   data.npcStruct = NpcData.read(reader);
-  if (reader.bool()) data.unk3_0 = reader.u8();
+  if (reader.bool()) data.unk3_0 = reader.u64();
   data.unk4 = reader.u8();
-  if (reader.bool()) data.unk6_0 = reader.u64();
+  if (reader.bool()) data.unk6_0 = reader.u8();
   return data;
 }
 export const name = "PKTNewNpc";
-export const opcode = 23279;
+export const opcode = 10200;

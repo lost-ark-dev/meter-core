@@ -1,7 +1,7 @@
 // Auto Generated, do not edit.
 import type { Read } from "../../stream";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
-import * as Struct_543 from "../structures/Struct_543";
+import * as Struct_552 from "../structures/Struct_552";
 export type ItemData = {
   serialNumber?: bigint;
   id?: number;
@@ -16,7 +16,7 @@ export type ItemData = {
   unk1_11?: number;
   unk1_12?: number;
   unk1_13?: number;
-  struct_543?: Struct_543.Struct_543;
+  struct_552?: Struct_552.Struct_552;
   unk1_15?: number;
 };
 export function read(reader: Read) {
@@ -36,7 +36,7 @@ export function read(reader: Read) {
     data.unk1_11 = reader.u8();
     data.unk1_12 = reader.u8();
     data.unk1_13 = reader.u32();
-    data.struct_543 = Struct_543.read(reader);
+    data.struct_552 = Struct_552.read(reader);
     data.unk1_15 = reader.u32();
   }
   return data;

@@ -251,7 +251,8 @@ declare enum combateffectactiontype {
     modify_penetration_addend_when_critical = 20,
     modify_reactive_critical_multiplier = 21,
     modify_damage_when_critical = 22,
-    modify_paralyzation_point = 23
+    modify_paralyzation_point = 23,
+    exec_when_counter = 24
 }
 declare enum combateffectactortype {
     none = 0,
@@ -300,7 +301,8 @@ declare enum combateffectconditiontype {
     abnormal_move_not_immune = 37,
     apply_target_marking = 38,
     damage_attr = 39,
-    identity_element_value_less = 40
+    identity_element_value_less = 40,
+    command_skill_type = 41
 }
 declare enum hitoption {
     back_attack = 0,
@@ -501,7 +503,9 @@ declare enum skillfeaturetype {
     change_accumulate_dam_rate = 106,
     change_projectile_bank_data_addend = 107,
     change_identity_category = 108,
-    change_skill_slot_visible_effect = 109
+    change_skill_slot_visible_effect = 109,
+    change_attack_mask = 110,
+    change_aim_target_max_range = 111
 }
 declare enum stattype {
     none = 0,
@@ -631,7 +635,8 @@ declare enum stattype {
     skill_damage_sub_rate_1 = 147,
     skill_damage_sub_rate_2 = 148,
     resource_recovery_rate = 149,
-    weapon_dam = 151
+    weapon_dam = 151,
+    weapon_dam_x = 152
 }
 declare enum statuseffecttargettooltiptype {
     none = 0,

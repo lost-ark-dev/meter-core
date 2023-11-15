@@ -100,6 +100,7 @@ export enum combateffectactiontype {
   modify_reactive_critical_multiplier = 21,
   modify_damage_when_critical = 22,
   modify_paralyzation_point = 23,
+  exec_when_counter = 24,
 }
 export enum combateffectactortype {
   none = 0,
@@ -149,6 +150,7 @@ export enum combateffectconditiontype {
   apply_target_marking = 38,
   damage_attr = 39,
   identity_element_value_less = 40,
+  command_skill_type = 41,
 }
 export enum damageattr {
   none = 0,
@@ -300,6 +302,7 @@ export enum itemcategory {
   equip_weapon_umbrella = 10129,
   equip_weapon_sword_female = 10130,
   equip_weapon_scythe = 10131,
+  equip_weapon_heavy_gauntlet_male = 10132,
   equip_armor_helmet = 10201,
   equip_armor_top = 10202,
   equip_armor_pants = 10203,
@@ -729,6 +732,7 @@ export enum playerclass {
   lance_master = 305,
   fighter_male = 311,
   battle_master_male = 312,
+  infighter_male = 313,
   delain = 401,
   blade = 402,
   demonic = 403,
@@ -857,6 +861,8 @@ export enum skillfeaturetype {
   change_projectile_bank_data_addend = 107,
   change_identity_category = 108,
   change_skill_slot_visible_effect = 109,
+  change_attack_mask = 110,
+  change_aim_target_max_range = 111,
 }
 export enum stattype {
   none = 0,
@@ -987,6 +993,7 @@ export enum stattype {
   skill_damage_sub_rate_2 = 148,
   resource_recovery_rate = 149,
   weapon_dam = 151,
+  weapon_dam_x = 152,
 }
 export enum statuseffecttargettooltiptype {
   none = 0,
@@ -1164,6 +1171,11 @@ export enum statuseffecttype {
   bechased_pc = 139,
   confront = 140,
   party_drain = 141,
+  change_npc_idle = 142,
+  look_target = 143,
+  counter_attack_fx_visible = 144,
+  add_part_attack_level = 145,
+  unconditional_directional_attack = 146,
 }
 export enum triggersignaltype {
   none = 0,

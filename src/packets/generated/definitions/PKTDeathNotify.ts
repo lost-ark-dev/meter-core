@@ -1,31 +1,31 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTDeathNotify = {
-  unk0: number;
-  unk1: number;
-  unk2: bigint;
-  unk3: number;
-  unk5_0?: number;
-  unk6: number;
+  unk0: bigint;
   targetId: bigint;
-  unk9_0?: number;
+  unk2: number;
+  unk3: number;
   sourceId: bigint;
-  unk12_0?: number;
+  unk6_0?: number;
+  unk8_0?: number;
+  unk10_0?: number;
+  unk11: number;
+  unk12: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTDeathNotify;
-  data.unk0 = reader.u32();
-  data.unk1 = reader.u32();
-  data.unk2 = reader.u64();
-  data.unk3 = reader.u16();
-  if (reader.bool()) data.unk5_0 = reader.u8();
-  data.unk6 = reader.u8();
+  data.unk0 = reader.u64();
   data.targetId = reader.u64();
-  if (reader.bool()) data.unk9_0 = reader.u8();
+  data.unk2 = reader.u32();
+  data.unk3 = reader.u8();
   data.sourceId = reader.u64();
-  if (reader.bool()) data.unk12_0 = reader.u8();
+  if (reader.bool()) data.unk6_0 = reader.u8();
+  if (reader.bool()) data.unk8_0 = reader.u8();
+  if (reader.bool()) data.unk10_0 = reader.u8();
+  data.unk11 = reader.u16();
+  data.unk12 = reader.u32();
   return data;
 }
 export const name = "PKTDeathNotify";
-export const opcode = 31699;
+export const opcode = 11116;

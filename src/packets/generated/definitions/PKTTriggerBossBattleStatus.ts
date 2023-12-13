@@ -8,12 +8,12 @@ export type PKTTriggerBossBattleStatus = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTTriggerBossBattleStatus;
-  data.triggerId = reader.u32();
   reader.skip(1);
+  data.triggerId = reader.u32();
   data.unk2_m = reader.bool();
-  reader.skip(2);
+  reader.skip(1);
   data.step = reader.u32();
   return data;
 }
 export const name = "PKTTriggerBossBattleStatus";
-export const opcode = 45208;
+export const opcode = 42027;

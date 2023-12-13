@@ -2,19 +2,19 @@
 import { Read } from "../../stream";
 import * as NpcData from "../structures/NpcData";
 export type PKTNewNpcSummon = {
-  publishReason: number;
   ownerId: bigint;
+  publishReason: number;
   npcData: NpcData.NpcData;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTNewNpcSummon;
-  data.publishReason = reader.u8();
-  reader.skip(13);
+  reader.skip(19);
   data.ownerId = reader.u64();
-  reader.skip(22);
+  reader.skip(16);
+  data.publishReason = reader.u8();
   data.npcData = NpcData.read(reader);
   return data;
 }
 export const name = "PKTNewNpcSummon";
-export const opcode = 48301;
+export const opcode = 31092;

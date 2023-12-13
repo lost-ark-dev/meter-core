@@ -2,8 +2,8 @@ import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from './decompressor.js';
 
 type AbilityData = {
-    level: number;
     points: number;
+    level: number;
     id: number;
 };
 
@@ -12,51 +12,51 @@ type PKTAbilityChangeNotify = {
 };
 
 type ActiveAbility = {
-    featureType: number;
     level: number;
+    featureType: number;
 };
 
 type PKTActiveAbilityNotify = {
-    objectId: bigint;
     activeAbilityList: ActiveAbility[];
+    objectId: bigint;
 };
 
 type PKTAddonSkillFeatureChangeNotify = {
-    addonSkillFeatureList: {
-        skillId: number;
-        addonSkillFeatureIdList: number[];
-    }[];
-    objectId: bigint;
     addonFeatureIdList: Buffer;
+    objectId: bigint;
+    addonSkillFeatureList: {
+        addonSkillFeatureIdList: number[];
+        skillId: number;
+    }[];
 };
 
 type PKTAuthTokenResult = {
-    packetResultCode: number;
     unk1_m: Buffer;
+    unk1: number;
 };
 
 type PKTBlockSkillStateNotify = {
-    paralyzationPoint: number;
-    objectId: bigint;
     type: number;
     paralyzationMaxPoint: number;
+    paralyzationPoint: number;
+    objectId: bigint;
 };
 
 type PKTCounterAttackNotify = {
-    targetId: bigint;
     sourceId: bigint;
+    targetId: bigint;
     type: number;
 };
 
 type PKTDeathNotify = {
-    unk0: bigint;
-    targetId: bigint;
-    unk2: number;
-    unk3: number;
-    sourceId: bigint;
-    unk6_0?: number;
+    unk0: number;
+    unk2_0?: number;
+    unk4_0?: number;
+    unk5: bigint;
+    unk6: number;
     unk8_0?: number;
-    unk10_0?: number;
+    sourceId: bigint;
+    targetId: bigint;
     unk11: number;
     unk12: number;
 };
@@ -65,255 +65,255 @@ type LostArkDateTime = Date;
 
 type EquipItemData = {
     expireTime: LostArkDateTime;
-    unk2_0?: number;
-    itemTint: Buffer;
-    level: number;
-    id: number;
     slot: number;
+    itemTint: Buffer;
+    id: number;
+    level: number;
+    unk6_0?: number;
 };
 
 type PKTEquipChangeNotify = {
     unk0: number;
+    unk1: number;
     equipItemDataList: EquipItemData[];
     objectId: bigint;
-    unk3: number;
 };
 
 type PKTEquipLifeToolChangeNotify = {
-    equipLifeToolDataList: EquipItemData[];
     objectId: bigint;
+    equipLifeToolDataList: EquipItemData[];
 };
 
 type PKTIdentityStanceChangeNotify = {
-    objectId: bigint;
     stance: number;
+    objectId: bigint;
 };
 
 type PKTInitAbility = {
+    struct_137: Buffer;
     abilityDataList: AbilityData[];
-    struct_131: Buffer;
 };
 
 type PKTInitEnv = {
-    playerId: bigint;
-    unk1: bigint;
-    struct_27: {
-        struct_565: string;
-        struct_581: string;
+    struct_583: string;
+    unk1: number;
+    unk2: number;
+    struct_30: {
+        struct_567: string;
+        struct_583: string;
         versionString: string;
     }[];
+    playerId: bigint;
     lostArkDateTime: LostArkDateTime;
-    struct_581: string;
-    unk5: number;
-    unk6: number;
+    unk6: bigint;
     unk7: number;
 };
 
-type PeriodUpdateStatData = {
-    unk0: bigint;
-    unk1: bigint;
-    unk2: number;
-    unk3: number;
-    unk4: number;
-    unk5: bigint;
-    unk6: number;
+type StatusEffectData = {
+    unk1_0?: bigint;
+    endTick: bigint;
+    stackCount: number;
+    struct_437: Buffer;
+    sourceId: bigint;
+    value?: Buffer;
+    totalTime: number;
+    occurTime: LostArkDateTime;
+    effectInstanceId: number;
+    skillLevel: number;
+    statusEffectId: number;
 };
 
-type StatusEffectData = {
-    stackCount: number;
-    unk2_0?: bigint;
-    sourceId: bigint;
-    statusEffectId: number;
-    occurTime: LostArkDateTime;
-    skillLevel: number;
-    value?: Buffer;
-    struct_438: Buffer;
-    endTick: bigint;
-    effectInstanceId: number;
-    totalTime: number;
+type PeriodUpdateStatData = {
+    unk0: number;
+    unk1: bigint;
+    unk2: bigint;
+    unk3: number;
+    unk4: bigint;
+    unk5: number;
+    unk6: number;
 };
 
 type PKTInitPC = {
     unk0: number;
-    gearLevel: number;
+    unk1: number;
     unk2: number;
+    unk3: bigint;
     characterId: bigint;
-    unk4: number;
-    unk5: number;
+    unk5: bigint;
     unk6: number;
-    level: number;
-    struct_336: Buffer;
-    struct_330: string;
-    unk10: number;
-    unk11: number;
-    unk12: number;
-    unk13: Buffer;
+    unk7: number;
+    unk8: number;
+    unk9: number;
+    unk10: Buffer;
+    unk12_0?: number;
+    unk13: number;
     unk14: number;
     unk15: number;
-    unk16: bigint;
-    struct_222: Buffer;
+    unk16: number;
+    statusEffectDatas: StatusEffectData[];
     unk18: number;
     unk19: number;
     unk20: number;
     unk21: number;
-    unk22: number;
-    unk23: Buffer;
-    unk24: number;
+    level: number;
+    classId: number;
+    struct_225: Buffer;
     unk25: number;
-    unk26: number;
-    statPair: {
-        statType: number;
-        value: bigint;
-    }[];
+    unk26: bigint;
+    unk27: number;
     unk28: number;
-    unk29: bigint;
-    unk30: number;
-    unk31: bigint;
-    playerId: bigint;
-    periodUpdateStatDataList: PeriodUpdateStatData[];
-    unk34: bigint;
-    unk35: number;
-    unk36: Buffer;
+    unk29: number;
     name: string;
+    unk31: number;
+    unk32: number;
+    unk33: number;
+    unk34: Buffer;
+    unk35: number;
+    gearLevel: number;
+    unk37: number;
     unk38: number;
     unk39: number;
     unk40: number;
-    unk41: number;
-    struct_102: Buffer;
-    classId: number;
+    playerId: bigint;
+    unk42: bigint;
+    periodUpdateStatDataList: PeriodUpdateStatData[];
     unk44: number;
     unk45: number;
-    statusEffectDatas: StatusEffectData[];
-    unk47: number;
+    struct_104: Buffer;
+    struct_336: Buffer;
     unk48: bigint;
     unk49: number;
-    unk51_0?: number;
-    unk52: number;
+    unk50: number;
+    unk51: number;
+    statPair: {
+        value: bigint;
+        statType: number;
+    }[];
     unk53: number;
-    unk54: number;
-    unk55: number;
+    struct_361: string;
+    unk55: Buffer;
     unk56: number;
     unk57: number;
 };
 
-type Struct_139 = {
+type Struct_145 = {
     unk1_0?: Buffer;
 };
 
-type Struct_645 = {
-    unk0: number;
-    struct_139: Struct_139;
-    unk2: number;
-    unk3: number;
-    unk4: number;
-    unk5: number;
-    struct_140: Buffer;
-    unk7: number;
-};
-
-type Struct_652 = {
-    unk0: number;
-    struct_141: Buffer;
-    unk2: number;
-    struct_291: Buffer;
-    unk4: number;
-    unk5: number;
-    unk6: number;
-    unk7: number;
-    unk8: bigint;
-    struct_254: Buffer;
-    unk10: number;
-    struct_386: Buffer;
-    unk12: number;
-    struct_230: Struct_645[];
-};
-
-type Struct_736 = {
+type Struct_647 = {
     unk0: number;
     unk1: number;
-    unk2: Buffer;
-    struct_96: Buffer;
+    unk2: number;
+    unk3: number;
+    struct_146: Buffer;
+    unk5: number;
+    struct_145: Struct_145;
+    unk7: number;
+};
+
+type Struct_654 = {
+    struct_257: Buffer;
+    unk1: number;
+    unk2: number;
+    unk3: number;
+    struct_295: Buffer;
+    struct_387: Buffer;
+    unk6: number;
+    unk7: number;
+    unk8: number;
+    struct_147: Buffer;
+    unk10: number;
+    unk11: bigint;
+    struct_233: Struct_647[];
+    unk13: number;
+};
+
+type Struct_738 = {
+    unk0: number;
+    unk1: Buffer;
+    unk2: number;
+    struct_98: Buffer;
     unk4: number;
     unk5: number;
     unk6: number;
     unk7: number;
 };
 
-type Struct_773 = {
+type Struct_776 = {
     unk0: number;
-    struct_736?: Struct_736;
-    struct_519: Buffer;
+    struct_738?: Struct_738;
+    struct_521: Buffer;
 };
 
-type Struct_651 = {
-    struct_227?: Buffer;
-    struct_432: Buffer;
-    struct_267: Buffer;
-    struct_773?: Struct_773;
-    unk6: number;
-    struct_265: Buffer;
-    unk8: number;
-    unk1_0?: number;
-    unk1_1?: number;
-    struct_188?: Buffer;
+type Struct_653 = {
+    struct_229?: Buffer;
+    unk2: number;
+    struct_268: Buffer;
+    unk4: number;
     itemTint: Buffer;
-    unk11: number;
-    unk12: number;
-    struct_485: Buffer;
-    unk15_0?: Buffer;
-    unk16: number;
-    unk17: number;
+    unk7_0?: Buffer;
+    unk8: number;
+    struct_192?: Buffer;
+    unk1_1?: number;
+    unk1_2?: number;
+    unk10: number;
+    struct_431: Buffer;
+    struct_488: Buffer;
+    struct_270: Buffer;
+    unk14: number;
+    unk15: number;
+    struct_776?: Struct_776;
     unk18: number;
 };
 
 type BossKillData = {
-    isDead: boolean;
     npcId: number;
+    isDead: boolean;
 };
 
-type Struct_596 = {
-    struct_0: {
+type Struct_598 = {
+    unk0: number;
+    bossKillDataList: BossKillData[];
+    struct_1: {
         unk1_0_0: number;
-        struct_513: Buffer;
+        struct_514: Buffer;
     }[];
-    unk1: number;
+    unk3: number;
+    unk4: number;
+};
+
+type Struct_646 = {
+    struct_232: Buffer;
+    struct_488: Buffer;
     unk2: number;
     unk3: number;
-    bossKillDataList: BossKillData[];
-};
-
-type Struct_644 = {
-    struct_485: Buffer;
-    unk1: number;
-    struct_20: {
-        unk1_0_0: number;
-        struct_229: string;
-        unk1_0_2: number;
-    }[];
-    struct_499: Buffer;
     unk4: number;
-    unk5: number;
+    struct_23: {
+        unk1_0_0: number;
+        unk1_0_1: number;
+        struct_230: string;
+    }[];
 };
 
-type Struct_552 = {
-    struct_652?: Struct_652;
-    struct_1?: {
-        struct_513: Buffer;
+type Struct_554 = {
+    struct_654?: Struct_654;
+    struct_2?: {
+        unk1_0_0: number;
         unk1_0_1: number;
         unk1_0_2: number;
-        unk1_0_3: number;
+        struct_514: Buffer;
     }[];
-    struct_128?: Buffer;
-    unk2_2?: number;
+    unk2_1?: number;
+    struct_133?: Buffer;
     unk3_0?: Buffer;
-    unk4_0?: Buffer;
-    unk4_1?: number;
+    unk4_0?: number;
+    unk4_1?: Buffer;
     unk4_2?: Buffer;
-    struct_651?: Struct_651;
-    struct_596?: Struct_596;
+    struct_653?: Struct_653;
+    struct_598?: Struct_598;
     unk7_0?: Buffer;
-    struct_644?: Struct_644;
-    struct_773?: Struct_773;
+    struct_646?: Struct_646;
+    struct_776?: Struct_776;
 };
 
 type ItemData = {
@@ -330,7 +330,7 @@ type ItemData = {
     unk1_11?: number;
     unk1_12?: number;
     unk1_13?: number;
-    struct_552?: Struct_552;
+    struct_554?: Struct_554;
     unk1_15?: number;
 };
 
@@ -339,54 +339,54 @@ type PKTInitItem = {
     itemDataList: ItemData[];
 };
 
-type Struct_741 = {
-    unk1_0?: number;
+type Struct_743 = {
+    unk0: number;
+    unk1: number;
     unk3_0?: Buffer;
-    unk4: number;
-    unk5: number;
+    unk5_0?: number;
     unk6: number;
 };
 
 type PKTInitLocal = {
-    struct_336: Buffer;
-    addonFeatureIdList: Buffer;
+    unk0: bigint;
+    unk1: number;
     unk2: number;
-    statusEffectDatas: StatusEffectData[];
-    statPair: {
-        statType: number;
-        value: bigint;
-    }[];
-    abilityDataList: AbilityData[];
+    unk4_0?: number;
+    struct_416: Struct_743[];
     addonSkillFeatureList: {
-        skillId: number;
         addonSkillFeatureIdList: number[];
+        skillId: number;
     }[];
-    unk8_0?: number;
+    struct_137: Buffer;
+    statPair: {
+        value: bigint;
+        statType: number;
+    }[];
     unk9: number;
-    unk10: bigint;
-    struct_222: Buffer;
-    unk12: number;
-    struct_131: Buffer;
-    unk14: bigint;
-    unk15: number;
-    struct_417: Struct_741[];
+    struct_225: Buffer;
+    unk11: number;
+    unk12: bigint;
+    statusEffectDatas: StatusEffectData[];
+    addonFeatureIdList: Buffer;
+    abilityDataList: AbilityData[];
+    struct_336: Buffer;
 };
 
 type PKTMigrationExecute = {
     serverAddr: string;
-    unk1: number;
     account_CharacterId1: bigint;
     account_CharacterId2: bigint;
+    unk3: number;
 };
 
-type Struct_720 = {
+type Struct_722 = {
     unk0: number;
-    unk1: number;
-    equipItemDataList: EquipItemData[];
+    lostArkString: string;
+    lookData: Buffer;
     unk3: bigint;
     unk4: number;
-    lookData: Buffer;
-    lostArkString: string;
+    unk5: number;
+    equipItemDataList: EquipItemData[];
     unk7: number;
 };
 
@@ -399,136 +399,136 @@ type Vector3F = {
 };
 
 type NpcData = {
-    unk1_0?: number;
-    transitIndex?: number;
-    directionYaw: Angle;
-    level: number;
-    unk7_0?: number;
-    unk9_0?: number;
-    unk11_0?: bigint;
-    unk13_0?: number;
-    balanceLevel?: number;
-    objectId: bigint;
-    unk17: number;
-    unk18: number;
-    unk20_0?: number;
-    struct_331?: Buffer;
-    periodUpdateStatDataList: PeriodUpdateStatData[];
-    spawnIndex: number;
-    unk26_0?: number;
-    unk27: number;
-    unk29_0?: number;
-    struct_720?: Struct_720;
-    unk32: number;
-    position: Vector3F;
-    unk35_0?: number;
-    unk36: number;
-    unk38_0?: number;
-    unk39: number;
-    unk41_0?: number;
-    unk43_0?: number;
-    typeId: number;
     statPair: {
-        statType: number;
         value: bigint;
+        statType: number;
     }[];
-    unk47_0?: number;
+    struct_269?: Buffer;
+    unk4_0?: number;
+    spawnIndex: number;
+    unk7_0?: bigint;
+    unk9_0?: number;
+    unk11_0?: number;
+    objectId: bigint;
+    struct_332?: Buffer;
+    unk15: number;
+    directionYaw: Angle;
+    unk17: number;
+    unk19_0?: number;
+    unk21_0?: number;
+    typeId: number;
+    position: Vector3F;
+    unk25_0?: number;
+    unk27_0?: number;
+    unk28: number;
     statusEffectDatas: StatusEffectData[];
-    struct_266?: Buffer;
+    unk31_0?: number;
+    unk32: number;
+    unk33: number;
+    unk34: number;
+    unk36_0?: number;
+    transitIndex?: number;
+    periodUpdateStatDataList: PeriodUpdateStatData[];
+    struct_722?: Struct_722;
+    level: number;
+    unk44_0?: number;
+    unk46_0?: number;
+    balanceLevel?: number;
+    unk50_0?: number;
 };
 
 type PKTNewNpc = {
+    unk0: number;
+    unk2_0?: number;
+    unk4_0?: bigint;
+    npcStruct: NpcData;
     unk1_0?: string;
     unk1_1?: string;
-    npcStruct: NpcData;
-    unk3_0?: bigint;
-    unk4: number;
-    unk6_0?: number;
 };
 
 type PKTNewNpcSummon = {
-    publishReason: number;
     ownerId: bigint;
+    publishReason: number;
     npcData: NpcData;
 };
 
 type PCStruct = {
-    firstHonorTitleId: number;
-    unk1: number;
-    unk45_m: number;
-    identityData: Buffer;
-    unk4: number;
-    petId: number;
-    lookData: Buffer;
-    unk7: number;
-    unk5_m: number;
-    unk28_m: number;
+    unk29_m: number;
     addonFeatureIdList: Buffer;
-    avatarHide: number;
-    unk12: number;
-    unk4_m: number;
-    statusEffectDatas: StatusEffectData[];
-    unk15_m: number;
-    avgItemLevel: number;
-    addonSkillFeatureList: {
-        skillId: number;
-        addonSkillFeatureIdList: number[];
-    }[];
-    position: Vector3F;
-    guildName: string;
-    unk23_m: number;
-    worldId: number;
-    equipItemDataList: EquipItemData[];
-    statPair: {
-        statType: number;
-        value: bigint;
-    }[];
-    secondHonorTitleId: number;
-    periodUpdateStatDataList: PeriodUpdateStatData[];
-    classId: number;
-    name: string;
-    heading: Angle;
-    unk7_m: number;
-    unk17_m: number;
+    unk5_m: number;
     guildId: bigint;
-    grabbedData?: Buffer;
-    unk32_m: number;
+    unk4_m: number;
+    name: string;
+    avatarHide: number;
     maxItemLevel: number;
     unk1_m: number;
-    unk2_m: number;
+    petId: number;
+    lookData: Buffer;
+    statusEffectDatas: StatusEffectData[];
+    unk12: number;
+    worldId: number;
+    statPair: {
+        value: bigint;
+        statType: number;
+    }[];
+    unk15: number;
     equipLifeToolDataList: EquipItemData[];
-    rvRLevel: number;
-    unk25_m: number;
-    unk0_m: Buffer;
-    level: number;
-    characterId: bigint;
-    unk29_m: number;
+    unk15_m: number;
+    avgItemLevel: number;
+    unk19: number;
+    unk23_m: number;
+    unk21: number;
+    periodUpdateStatDataList: PeriodUpdateStatData[];
     playerId: bigint;
+    equipItemDataList: EquipItemData[];
+    unk0_m: Buffer;
+    unk7_m: number;
+    identityData: Buffer;
+    unk25_m: number;
+    firstHonorTitleId: number;
+    secondHonorTitleId: number;
+    unk17_m: number;
+    heading: Angle;
+    guildName: string;
+    addonSkillFeatureList: {
+        addonSkillFeatureIdList: number[];
+        skillId: number;
+    }[];
+    position: Vector3F;
+    unk32_m: number;
+    level: number;
+    unk45_m: number;
+    grabbedData?: Buffer;
+    classId: number;
+    rvRLevel: number;
+    unk2_m: number;
+    unk28_m: number;
+    characterId: bigint;
 };
 
 type TrackMoveInfo = {
     unk0: number;
-    unk2_0?: Buffer;
-    unk3: number;
-    unk4: Buffer;
+    unk1: number;
+    unk2: Buffer;
+    unk4_0?: Buffer;
 };
 
 type PKTNewPC = {
-    unk5_0_m?: Buffer;
-    unk4_0_m?: Buffer;
-    unk0_m: number;
-    itemTint?: Buffer;
-    unk1_1?: number;
-    unk1_2?: bigint;
-    unk2_m: number;
-    pcStruct: PCStruct;
-    struct_58?: {
-        unk1_0_0: number;
-        unk1_0_1: bigint;
+    struct_60?: {
+        unk1_0_0: bigint;
         itemTint: Buffer;
+        unk1_0_2: number;
     }[];
-    trackMoveInfo?: TrackMoveInfo;
+    pcStruct: PCStruct;
+    unk0_m: number;
     unk3_0_m?: number;
+    unk2_m: number;
+    trackMoveInfo?: TrackMoveInfo;
+    unk4_0_m?: Buffer;
+    unk1_0?: number;
+    itemTint?: Buffer;
+    unk1_2?: bigint;
+    unk5_0_m?: Buffer;
 };
 
 type TripodIndex = {
@@ -544,26 +544,26 @@ type TripodLevel = {
 };
 
 type ProjectileInfo = {
-    unk1_0?: number;
-    skillEffect: number;
-    unk3: bigint;
-    unk4: number;
-    struct_331?: Buffer;
-    unk7: number;
+    chainSkillEffect: number;
+    ownerId: bigint;
+    unk2: number;
+    unk3: number;
+    tripodIndex: TripodIndex;
+    projectileId: bigint;
+    unk6: number;
+    unk7: bigint;
     unk8: number;
     unk9: number;
-    projectileId: bigint;
-    unk12_0?: bigint;
-    skillId: number;
-    unk14: number;
-    ownerId: bigint;
-    tripodIndex: TripodIndex;
-    tripodLevel: TripodLevel;
-    unk18: bigint;
-    unk19: number;
-    targetObjectId: bigint;
+    unk11_0?: bigint;
+    struct_332?: Buffer;
+    skillEffect: number;
     skillLevel: number;
-    chainSkillEffect: number;
+    tripodLevel: TripodLevel;
+    unk18_0?: number;
+    targetObjectId: bigint;
+    unk20: number;
+    unk21: bigint;
+    skillId: number;
     unk23: number;
 };
 
@@ -575,75 +575,75 @@ type TrapData = {
     unk0: number;
     unk1: number;
     unk2: number;
-    struct_331?: Buffer;
-    skillId: number;
-    unk6: number;
-    unk7: number;
+    skillEffect: number;
+    ownerId: bigint;
+    position: Vector3F;
+    struct_332?: Buffer;
     unk8: number;
     unk9: number;
-    skillEffect: number;
-    position: Vector3F;
+    unk10: number;
     objectId: bigint;
-    ownerId: bigint;
+    skillId: number;
+    unk13: number;
 };
 
 type PKTNewTrap = {
-    unk0: number;
     trapData: TrapData;
+    unk1: number;
     unk2: number;
 };
 
 type PKTParalyzationStateNotify = {
-    paralyzationPoint: number;
-    objectId: bigint;
-    hitCheckTime: number;
+    enable: boolean;
     paralyzationMaxPoint: number;
+    paralyzationPoint: number;
     decreasePoint: number;
     noHitCheckTime: number;
-    enable: boolean;
+    objectId: bigint;
+    hitCheckTime: number;
 };
 
 type PartyMemberData = {
-    unk0: number;
-    unk1: number;
-    unk2: number;
-    characterId: bigint;
-    worldId: number;
-    unk5: number;
-    partyMemberNumber: number;
-    name: string;
     zoneInstId: bigint;
-    gearLevel: number;
-    characterLevel: number;
-    position: Vector3F;
-    transitIndex: number;
-    zoneId: number;
-    unk14: number;
-    curHp: bigint;
-    maxHp: bigint;
-    auths: number;
-    unk18: number;
     classId: number;
+    unk2: number;
+    name: string;
+    unk4: number;
+    transitIndex: number;
+    auths: number;
+    unk7: number;
+    partyMemberNumber: number;
+    unk9: number;
+    characterLevel: number;
+    unk11: number;
+    position: Vector3F;
+    worldId: number;
+    zoneId: number;
+    curHp: bigint;
+    gearLevel: number;
+    characterId: bigint;
+    unk18: number;
+    maxHp: bigint;
 };
 
 type PKTPartyInfo = {
     memberDatas: PartyMemberData[];
-    raidInstanceId: number;
-    partyType: number;
     lootGrade: number;
-    partyLootType: number;
+    partyType: number;
     partyInstanceId: number;
+    raidInstanceId: number;
+    partyLootType: number;
 };
 
 type PKTPartyLeaveResult = {
-    partyInstanceId: number;
     name: string;
     partyLeaveType: number;
+    partyInstanceId: number;
 };
 
 type PKTPartyPassiveStatusEffectAddNotify = {
-    unk0_m: number;
     passiveStatusEffectList: number[];
+    unk0_m: number;
     objectId: bigint;
 };
 
@@ -653,24 +653,24 @@ type PKTPartyPassiveStatusEffectRemoveNotify = {
 };
 
 type PKTPartyStatusEffectAddNotify = {
-    unk0: number;
-    unk1: bigint;
-    statusEffectDatas: StatusEffectData[];
     characterId: bigint;
+    unk1: bigint;
     playerIdOnRefresh: bigint;
+    unk3: number;
+    statusEffectDatas: StatusEffectData[];
 };
 
 type PKTPartyStatusEffectRemoveNotify = {
-    unk0: bigint;
-    reason: number;
-    statusEffectIds: number[];
     characterId: bigint;
+    statusEffectIds: number[];
+    reason: number;
+    unk3: bigint;
 };
 
 type PKTPartyStatusEffectResultNotify = {
-    partyInstanceId: number;
     raidInstanceId: number;
     characterId: bigint;
+    partyInstanceId: number;
 };
 
 type PKTPassiveStatusEffectAddNotify = {
@@ -682,20 +682,20 @@ type PKTPassiveStatusEffectRemoveNotify = {
 };
 
 type PKTRaidBegin = {
-    totalTime: bigint;
     unk11_m: boolean;
     unk0_m: boolean;
-    initBraveHeartCount: number;
-    unk4_m: bigint;
-    braveHeartCount: number;
     raidResult: number;
-    unk1_m: boolean;
-    raidId: number;
     bossKillDataList: BossKillData[];
+    startTick: bigint;
+    totalTime: bigint;
+    unk1_m: boolean;
+    unk4_m: bigint;
     unk5_m: bigint;
     endTick: bigint;
-    startTick: bigint;
     unk6_m: bigint;
+    raidId: number;
+    braveHeartCount: number;
+    initBraveHeartCount: number;
 };
 
 type PKTRaidBossKillNotify = {
@@ -703,19 +703,19 @@ type PKTRaidBossKillNotify = {
 };
 
 type PKTRaidResult = {
-    struct_48: {
+    unk0: bigint;
+    unk1: number;
+    struct_51: {
         unk1_0_0: bigint;
-        struct_518: Buffer;
-        unk1_0_2: number;
+        unk1_0_1: number;
+        struct_520: Buffer;
         unk1_0_3: bigint;
     }[];
-    unk1: bigint;
-    unk2: number;
-    unk3: number;
+    unk3: bigint;
     unk4: bigint;
     unk5: bigint;
     unk6: number;
-    unk7: bigint;
+    unk7: number;
 };
 
 type UnpublishObject = {
@@ -728,20 +728,9 @@ type PKTRemoveObject = {
 };
 
 type PKTSkillCastNotify = {
-    caster: bigint;
-    skillLevel: number;
     skillId: number;
-};
-
-type SkillDamageEvent = {
-    damageAttr?: number;
-    curHp: bigint;
-    unk3_m: number;
-    modifier: number;
-    damageType: number;
-    targetId: bigint;
-    damage: bigint;
-    maxHp: bigint;
+    skillLevel: number;
+    caster: bigint;
 };
 
 type SkillMoveOptionData = {
@@ -754,39 +743,50 @@ type SkillMoveOptionData = {
     flag40?: Buffer;
 };
 
+type SkillDamageEvent = {
+    modifier: number;
+    unk3_m: number;
+    damageAttr?: number;
+    maxHp: bigint;
+    damage: bigint;
+    targetId: bigint;
+    damageType: number;
+    curHp: bigint;
+};
+
 type SkillDamageAbnormalMoveEvent = {
-    position: Vector3F;
     unk2_m: bigint;
+    unk1_m: number;
+    position: Vector3F;
+    unk8_m: number;
+    skillMoveOptionData: SkillMoveOptionData;
+    skillDamageEvent: SkillDamageEvent;
     unk4_m: number;
     destination: Vector3F;
-    skillDamageEvent: SkillDamageEvent;
-    unk1_m: number;
     unk3_m: number;
-    skillMoveOptionData: SkillMoveOptionData;
-    unk8_m: number;
 };
 
 type PKTSkillDamageAbnormalMoveNotify = {
     sourceId: bigint;
-    skillId: number;
-    unk2_m: number;
-    skillEffectId: number;
     skillDamageAbnormalMoveEvents: SkillDamageAbnormalMoveEvent[];
+    unk2_m: number;
+    skillId: number;
+    skillEffectId: number;
     unk1_m: number;
 };
 
 type PKTSkillDamageNotify = {
-    skillId: number;
-    sourceId: bigint;
     skillLevel: number;
-    skillEffectId: number;
     skillDamageEvents: SkillDamageEvent[];
+    sourceId: bigint;
+    skillEffectId: number;
+    skillId: number;
 };
 
 type PKTSkillStageNotify = {
     stage: number;
-    sourceId: bigint;
     skillId: number;
+    sourceId: bigint;
 };
 
 type SkillOptionData = {
@@ -800,59 +800,59 @@ type SkillOptionData = {
 };
 
 type PKTSkillStartNotify = {
-    unk1_m?: number;
     skillLevel: number;
+    unk1_m?: number;
+    curPosition: Vector3F;
+    pitchRotation?: Angle;
     aimTargetPosition: Vector3F;
-    skillOptionData: SkillOptionData;
+    newDirectionYaw: Angle;
+    aiStateId?: number;
     sourceId: bigint;
     skillId: number;
-    curPosition: Vector3F;
-    newDirectionYaw: Angle;
-    newPosition: Vector3F;
-    pitchRotation?: Angle;
+    skillOptionData: SkillOptionData;
     curDirectionYaw: Angle;
-    aiStateId?: number;
+    newPosition: Vector3F;
 };
 
 type PKTStatChangeOriginNotify = {
-    objectId: bigint;
-    unk1: number;
-    unk3_0?: number;
-    unk4: {
-        statType: number;
-        value: bigint;
-    }[];
+    unk0: number;
     statPairChangedList: {
-        statType: number;
         value: bigint;
+        statType: number;
     }[];
+    objectId: bigint;
+    unk3: {
+        value: bigint;
+        statType: number;
+    }[];
+    unk5_0?: number;
 };
 
 type PKTStatusEffectAddNotify = {
-    objectId: bigint;
-    unk1: bigint;
-    statusEffectData: StatusEffectData;
-    unk4_0?: bigint;
     new: boolean;
+    unk2_0?: bigint;
+    statusEffectData: StatusEffectData;
+    unk4: bigint;
+    objectId: bigint;
 };
 
 type PKTStatusEffectRemoveNotify = {
-    reason: number;
     objectId: bigint;
+    reason: number;
     statusEffectIds: number[];
 };
 
 type PKTStatusEffectDurationNotify = {
-    effectInstanceId: number;
     targetId: bigint;
+    effectInstanceId: number;
     expirationTick: bigint;
 };
 
 type PKTStatusEffectSyncDataNotify = {
+    value: number;
     objectId: bigint;
     characterId: bigint;
     effectInstanceId: number;
-    value: number;
 };
 
 type PKTTriggerBossBattleStatus = {
@@ -863,42 +863,42 @@ type PKTTriggerBossBattleStatus = {
 
 type PKTTriggerFinishNotify = {
     involvedPCs: bigint[];
-    triggerId: number;
-    packetResultCode: number;
     unk0_m: number;
+    packetResultCode: number;
+    triggerId: number;
 };
 
 type PKTTriggerStartNotify = {
-    involvedPCs: bigint[];
-    triggerId: number;
-    triggerSignalType: number;
     sourceId: bigint;
+    triggerSignalType: number;
+    triggerId: number;
+    involvedPCs: bigint[];
 };
 
 type PKTTroopMemberUpdateMinNotify = {
-    statusEffectDatas: StatusEffectData[];
-    maxHp: bigint;
-    curHp: bigint;
-    characterId: bigint;
     position: bigint;
+    statusEffectDatas: StatusEffectData[];
+    curHp: bigint;
+    maxHp: bigint;
     unk0_m: number;
+    characterId: bigint;
 };
 
 type PKTIdentityGaugeChangeNotify = {
-    playerId: bigint;
     identityGauge1: number;
     identityGauge2: number;
     identityGauge3: number;
+    playerId: bigint;
 };
 
 type PKTZoneMemberLoadStatusNotify = {
+    completeMembers: bigint[];
+    zoneLevel: number;
+    totalMembers: bigint[];
+    zoneId: number;
+    firstPCEnterTick: bigint;
     zoneInstId: bigint;
     loadComplete: boolean;
-    zoneId: number;
-    completeMembers: bigint[];
-    firstPCEnterTick: bigint;
-    totalMembers: bigint[];
-    zoneLevel: number;
 };
 
 type PKTZoneObjectUnpublishNotify = {
@@ -907,9 +907,9 @@ type PKTZoneObjectUnpublishNotify = {
 
 type ZoneStatusEffectData = {
     stackCount: number;
+    target: number;
     id: number;
     instanceId: number;
-    target: number;
 };
 
 type PKTZoneStatusEffectAddNotify = {

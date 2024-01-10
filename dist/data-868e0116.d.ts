@@ -252,7 +252,8 @@ declare enum combateffectactiontype {
     modify_reactive_critical_multiplier = 21,
     modify_damage_when_critical = 22,
     modify_paralyzation_point = 23,
-    exec_when_counter = 24
+    exec_when_counter = 24,
+    exec_when_be_killed = 25
 }
 declare enum combateffectactortype {
     none = 0,

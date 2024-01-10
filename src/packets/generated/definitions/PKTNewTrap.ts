@@ -2,17 +2,17 @@
 import { Read } from "../../stream";
 import * as TrapData from "../structures/TrapData";
 export type PKTNewTrap = {
-  trapData: TrapData.TrapData;
+  unk0: number;
   unk1: number;
-  unk2: number;
+  trapData: TrapData.TrapData;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTNewTrap;
-  data.trapData = TrapData.read(reader);
+  data.unk0 = reader.u8();
   data.unk1 = reader.u8();
-  data.unk2 = reader.u8();
+  data.trapData = TrapData.read(reader);
   return data;
 }
 export const name = "PKTNewTrap";
-export const opcode = 8910;
+export const opcode = 59244;

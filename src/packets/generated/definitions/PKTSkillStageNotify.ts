@@ -8,14 +8,14 @@ export type PKTSkillStageNotify = {
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTSkillStageNotify;
-  reader.skip(16);
+  reader.skip(14);
   data.stage = reader.u8();
-  reader.skip(9);
+  reader.skip(1);
   data.skillId = reader.u32();
-  reader.skip(11);
+  reader.skip(17);
   data.sourceId = reader.u64();
-  reader.skip(4);
+  reader.skip(9);
   return data;
 }
 export const name = "PKTSkillStageNotify";
-export const opcode = 22815;
+export const opcode = 17268;

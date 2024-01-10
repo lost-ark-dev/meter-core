@@ -1,25 +1,25 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTZoneMemberLoadStatusNotify = {
-  completeMembers: bigint[];
-  zoneLevel: number;
-  totalMembers: bigint[];
-  zoneId: number;
-  firstPCEnterTick: bigint;
-  zoneInstId: bigint;
   loadComplete: boolean;
+  completeMembers: bigint[];
+  firstPCEnterTick: bigint;
+  totalMembers: bigint[];
+  zoneInstId: bigint;
+  zoneId: number;
+  zoneLevel: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTZoneMemberLoadStatusNotify;
-  data.completeMembers = reader.array(reader.u16(), () => reader.u64(), 40);
-  data.zoneLevel = reader.u8();
-  data.totalMembers = reader.array(reader.u16(), () => reader.u64(), 40);
-  data.zoneId = reader.u32();
-  data.firstPCEnterTick = reader.u64();
-  data.zoneInstId = reader.u64();
   data.loadComplete = reader.bool();
+  data.completeMembers = reader.array(reader.u16(), () => reader.u64(), 40);
+  data.firstPCEnterTick = reader.u64();
+  data.totalMembers = reader.array(reader.u16(), () => reader.u64(), 40);
+  data.zoneInstId = reader.u64();
+  data.zoneId = reader.u32();
+  data.zoneLevel = reader.u8();
   return data;
 }
 export const name = "PKTZoneMemberLoadStatusNotify";
-export const opcode = 24098;
+export const opcode = 23367;

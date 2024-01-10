@@ -2,17 +2,17 @@
 import { Read } from "../../stream";
 export type PKTStatusEffectDurationNotify = {
   targetId: bigint;
-  effectInstanceId: number;
   expirationTick: bigint;
+  effectInstanceId: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTStatusEffectDurationNotify;
+  reader.skip(3);
   data.targetId = reader.u64();
-  data.effectInstanceId = reader.u32();
   data.expirationTick = reader.u64();
-  reader.skip(2);
+  data.effectInstanceId = reader.u32();
   return data;
 }
 export const name = "PKTStatusEffectDurationNotify";
-export const opcode = 16838;
+export const opcode = 53072;

@@ -368,7 +368,7 @@ type SkillDamageNotify = {
     sourceId: bigint;
     skillId: number;
     skillDamageEvents: SkillDamageEventLog[];
-    skillEffectId: number;
+    skillEffectId?: number;
 };
 
 type SkillStageNotify = {

@@ -6,7 +6,7 @@ export type SkillDamageNotify = {
   sourceId: bigint;
   skillId: number;
   skillDamageEvents: SkillDamageEvent.SkillDamageEventLog[];
-  skillEffectId: number;
+  skillEffectId?: number;
 };
 export function read(reader: Read, version: number) {
   const data = {} as SkillDamageNotify;
@@ -24,7 +24,7 @@ export function write(writer: Write, data: SkillDamageNotify | PKTSkillDamageNot
   writer.array(data.skillDamageEvents, { maxLen: 50, lenType: "u16" }, (obj: SkillDamageEvent.SkillDamageEventLog) => {
     SkillDamageEvent.write(writer, obj);
   });
-  writer.u32(data.skillEffectId);
+  writer.u32(data.skillEffectId ?? 0);
 }
 
 export const name = "SkillDamageNotify";

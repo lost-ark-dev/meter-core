@@ -398,7 +398,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
             targetEntity,
             {
               skillId: parsedDmg.skillId,
-              skillEffectId: parsedDmg.skillEffectId,
+              skillEffectId: parsedDmg.skillEffectId ?? 0,
               damage: Number(event.damage),
               modifier: event.modifier,
               targetCurHp: Number(event.curHp),

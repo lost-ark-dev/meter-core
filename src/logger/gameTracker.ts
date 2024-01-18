@@ -423,6 +423,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
        * -> ValueG = 0/1/2 -> 0=examples, 1=self ?, 2=party ? -> only 6 are 0 or 1, other are 2 => ignore
        * -> ValueH = Incoming Phys. Damage (always positive)
        * -> ValueI = Incoming Mag. Damage (always positive)
+       * -> ValueJ = Incoming Phys. Damage on crit (always positive)
+       * -> ValueK = Incoming Mag. Damage on crit (always positive)
        *
        * statuseffecttype=="skill_damage_amplify"
        * -> ValueA = SkillId -> if != 0, only apply to the given skillId
@@ -778,6 +780,19 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
                 rdpsData.multDmg.sumRate += rate;
                 rdpsData.multDmg.totalRate *= 1 + rate;
               }
+              //Incoming Phys. Damage when crit
+              if (isCrit) {
+                const val3 = debuff.statuseffectvalues[9] ?? 0;
+                if (val3 !== 0) {
+                  const rate = (val3 / 10000) * stackCount;
+                  rdpsData.multDmg.values.push({
+                    casterEntity,
+                    rate,
+                  });
+                  rdpsData.multDmg.sumRate += rate;
+                  rdpsData.multDmg.totalRate *= 1 + rate;
+                }
+              }
             } else if (damageData.damageType === damagetype.magic) {
               //Mag. Defense
               const val = debuff.statuseffectvalues[3] ?? 0;
@@ -800,6 +815,19 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
                 });
                 rdpsData.multDmg.sumRate += rate;
                 rdpsData.multDmg.totalRate *= 1 + rate;
+              }
+              //Incoming Mag. Damage when crit
+              if (isCrit) {
+                const val3 = debuff.statuseffectvalues[10] ?? 0;
+                if (val3 !== 0) {
+                  const rate = (val3 / 10000) * stackCount;
+                  rdpsData.multDmg.values.push({
+                    casterEntity,
+                    rate,
+                  });
+                  rdpsData.multDmg.sumRate += rate;
+                  rdpsData.multDmg.totalRate *= 1 + rate;
+                }
               }
             }
           }

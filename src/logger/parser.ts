@@ -1,7 +1,7 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData, SkillFeatureOption } from "../data";
-import { damageattr, itemstoragetype, stattype, triggersignaltype } from "../packets/generated/enums";
-import type { GameState, GameTrackerOptions } from "./data";
+import { damageattr, itemstoragetype, raidresult, stattype, triggersignaltype } from "../packets/generated/enums";
+import { KillState, type GameState, type GameTrackerOptions } from "./data";
 import { EntityTracker, EntityType, type Entity, type Projectile, type PlayerItemData, Player } from "./entityTracker";
 import { GameTracker } from "./gameTracker";
 import { type Logger, LiveLogger } from "./logger";
@@ -331,15 +331,19 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("ZoneMemberLoadStatusNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
+
+        this.#gameTracker.setZoneLevel(parsed.zoneLevel);
         if (this.#data.statQueryFilter.zone.has(parsed.zoneId) && parsed.zoneLevel <= 1)
           //only normal & hard
           this.#statApi.zoneSyncStatus |= ZoneSyncStatus.ZONE_VALID;
         else this.#statApi.zoneSyncStatus |= ZoneSyncStatus.ZONE_INVALID;
       })
       .on("RaidBossKillNotify", (pkt) => {
+        this.#gameTracker.setKillState(KillState.CLEAR);
         this.#gameTracker.onPhaseTransition(1, pkt.time);
       })
       .on("RaidResult", (pkt) => {
+        if (pkt.parsed?.raidResult === raidresult.clear) this.#gameTracker.setKillState(KillState.CLEAR);
         this.#gameTracker.onPhaseTransition(0, pkt.time);
       })
       .on("RemoveObject", (pkt) => {
@@ -537,8 +541,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
           case triggersignaltype.dungeon_phase4_clear:
           case triggersignaltype.dungeon_phase5_clear:
           case triggersignaltype.dungeon_phase6_clear:
-            this.#wasKill = true;
-            this.#wasWipe = false;
+            this.#gameTracker.setKillState(KillState.CLEAR);
             break;
           case triggersignaltype.dungeon_phase1_fail:
           case triggersignaltype.dungeon_phase2_fail:
@@ -546,8 +549,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
           case triggersignaltype.dungeon_phase4_fail:
           case triggersignaltype.dungeon_phase5_fail:
           case triggersignaltype.dungeon_phase6_fail:
-            this.#wasKill = false;
-            this.#wasWipe = true;
+            this.#gameTracker.setKillState(KillState.FAIL);
             break;
           case triggersignaltype.assembled:
           case triggersignaltype.volume_enter:

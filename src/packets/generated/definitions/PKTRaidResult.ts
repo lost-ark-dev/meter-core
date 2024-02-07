@@ -4,7 +4,7 @@ import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 export type PKTRaidResult = {
   unk0: number;
   struct_53: { unk1_0_0: number; struct_528: Buffer; unk1_0_2: bigint; unk1_0_3: bigint }[];
-  unk2: number;
+  raidResult: number;
   unk3: number;
   unk4: bigint;
   unk5: bigint;
@@ -27,7 +27,7 @@ export function read(buf: Buffer) {
     },
     3
   );
-  data.unk2 = reader.u8();
+  data.raidResult = reader.u8();
   data.unk3 = reader.u8();
   data.unk4 = reader.u64();
   data.unk5 = reader.u64();

@@ -1,4 +1,5 @@
 import type { Skill } from "../data";
+import { zonelevel } from "../packets/generated/enums";
 export const PARSED_LOG_VERSION = 19;
 
 export enum StatusEffectTarget {
@@ -62,6 +63,8 @@ export interface GameState {
   currentBoss: EntityState | undefined;
   entities: Map<string, EntityState>;
   damageStatistics: DamageStatistics;
+  killState: KillState;
+  zoneLevel: keyof typeof zonelevel;
 }
 export interface GameStateNew {
   startedOn: number;
@@ -82,6 +85,19 @@ export interface DamageInfo {
   rdpsDamageGiven: number;
   damageDealtDebuffedBySupport: number;
   damageDealtBuffedBySupport: number;
+}
+
+export const enum RaidDifficulty {
+  UNKNOWN,
+  NORMAL,
+  HARD,
+  HELL,
+  TRIAL,
+}
+
+export const enum KillState {
+  FAIL,
+  CLEAR,
 }
 
 //TODO: minimize entityState default by marking fields as optional & checking for default in vue

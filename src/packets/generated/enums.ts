@@ -764,6 +764,15 @@ export enum playerclass {
   weather_artist = 603,
   alchemist = 604,
 }
+export enum raidresult {
+  not_yet = 0,
+  clear = 1,
+  fail_spent_all_brave_heart = 2,
+  fail_time_over = 3,
+  fail_check_ticket = 4,
+  fail_vote = 5,
+  fail_condition = 6,
+}
 export enum skillfeaturetype {
   none = 0,
   enable_notify = 1,
@@ -1309,4 +1318,12 @@ export enum zonebufftarget {
   monster = 2,
   npc = 3,
   all = 4,
+}
+export enum zonelevel {
+  normal = 0,
+  hard = 1,
+  hellchaos = 2,
+  challenge = 3,
+  special = 4,
+  extreme = 5,
 }

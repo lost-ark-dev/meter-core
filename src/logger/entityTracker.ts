@@ -85,6 +85,8 @@ export class EntityTracker {
     if (this.localPlayer.entityId !== 0n) this.#partyTracker.changeEntityId(this.localPlayer.entityId, parsed.playerId);
 
     this.entities.clear(); //TODO: here we clear entities, this might be uncompatible with keeping previous encounter visible
+
+    //Restore localplayer
     const player: Player = {
       entityId: parsed.playerId,
       entityType: EntityType.Player,
@@ -95,7 +97,7 @@ export class EntityTracker {
       stance: this.localPlayer.stance,
       stats: this.localPlayer.stats,
       skills: this.localPlayer.skills,
-      items: {},
+      items: this.localPlayer.items,
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
@@ -110,6 +112,7 @@ export class EntityTracker {
     if (!parsed) return;
 
     this.entities.clear(); //TODO: here we clear entities, this might be uncompatible with keeping previous encounter visible
+
     const player: Player = {
       entityId: parsed.playerId,
       entityType: EntityType.Player,
@@ -120,7 +123,7 @@ export class EntityTracker {
       stance: 0,
       stats: this.#data.getStatPairMap(parsed.statPair),
       skills: new Map(),
-      items: {},
+      items: parsed.characterId === this.localPlayer.characterId ? this.localPlayer.items : {},
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);

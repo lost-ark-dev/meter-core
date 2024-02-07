@@ -11,9 +11,10 @@ import {
   playerclass,
   skillfeaturetype,
   stattype,
+  zonelevel,
 } from "../packets/generated/enums";
 import type { InitEnv } from "../packets/log/types";
-import type { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions } from "./data";
+import { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions, KillState } from "./data";
 import { StatusEffectTarget } from "./data";
 import type { Entity, Esther, Npc, Player, Projectile } from "./entityTracker";
 import { EntityTracker, EntityType } from "./entityTracker";
@@ -73,6 +74,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       fightStartedOn: 0,
       localPlayer: this.#entityTracker.localPlayer.name, //this will be updated on dipatch
       currentBoss: undefined,
+      killState: KillState.FAIL,
+      zoneLevel: zonelevel[zonelevel.normal] as keyof typeof zonelevel,
       entities: new Map(),
       damageStatistics: {
         totalDamageDealt: 0,
@@ -162,6 +165,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       localPlayer: this.#entityTracker.localPlayer.name, //We never reset localplayer outside of initenv or initpc
       currentBoss: this.getBossIfStillExist(),
       entities: new Map(),
+      killState: KillState.FAIL,
+      zoneLevel: this.#game.zoneLevel,
       damageStatistics: {
         totalDamageDealt: 0,
         topDamageDealt: 0,
@@ -1643,6 +1648,13 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   }
 
   //#endregion
+
+  setKillState(state: KillState) {
+    this.#game.killState = state;
+  }
+  setZoneLevel(zoneLevel: zonelevel) {
+    this.#game.zoneLevel = zonelevel[zoneLevel] as keyof typeof zonelevel;
+  }
 }
 
 export type DamageData = {

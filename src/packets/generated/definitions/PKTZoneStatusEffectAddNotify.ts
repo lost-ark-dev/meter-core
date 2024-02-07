@@ -11,4 +11,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTZoneStatusEffectAddNotify";
-export const opcode = 1314;
+export const opcode = 7747;

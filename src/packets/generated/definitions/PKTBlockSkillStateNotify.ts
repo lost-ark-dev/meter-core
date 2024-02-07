@@ -11,10 +11,11 @@ export function read(buf: Buffer) {
   const data = {} as PKTBlockSkillStateNotify;
   data.paralyzationPoint = reader.u32();
   data.type = reader.u8();
-  data.paralyzationMaxPoint = reader.u32();
-  data.objectId = reader.u64();
   reader.skip(1);
+  data.paralyzationMaxPoint = reader.u32();
+  reader.skip(2);
+  data.objectId = reader.u64();
   return data;
 }
 export const name = "PKTBlockSkillStateNotify";
-export const opcode = 40912;
+export const opcode = 43110;

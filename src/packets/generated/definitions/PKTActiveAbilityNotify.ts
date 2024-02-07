@@ -2,15 +2,15 @@
 import { Read } from "../../stream";
 import * as ActiveAbility from "../structures/ActiveAbility";
 export type PKTActiveAbilityNotify = {
-  objectId: bigint;
   activeAbilityList: ActiveAbility.ActiveAbility[];
+  objectId: bigint;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTActiveAbilityNotify;
-  data.objectId = reader.u64();
   data.activeAbilityList = reader.array(reader.u16(), () => ActiveAbility.read(reader), 60);
+  data.objectId = reader.u64();
   return data;
 }
 export const name = "PKTActiveAbilityNotify";
-export const opcode = 5325;
+export const opcode = 23742;

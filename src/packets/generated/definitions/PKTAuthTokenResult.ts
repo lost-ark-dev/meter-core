@@ -1,15 +1,15 @@
 // Auto Generated, do not edit.
 import { Read } from "../../stream";
 export type PKTAuthTokenResult = {
+  packetResultCode: number;
   unk1_m: Buffer;
-  unk1: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTAuthTokenResult;
+  data.packetResultCode = reader.u32();
   data.unk1_m = reader.bytes(reader.u32(), 688);
-  data.unk1 = reader.u32();
   return data;
 }
 export const name = "PKTAuthTokenResult";
-export const opcode = 28747;
+export const opcode = 24597;

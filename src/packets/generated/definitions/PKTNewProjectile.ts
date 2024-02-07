@@ -11,4 +11,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTNewProjectile";
-export const opcode = 55254;
+export const opcode = 25491;

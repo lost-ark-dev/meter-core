@@ -14,4 +14,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTStatusEffectRemoveNotify";
-export const opcode = 23255;
+export const opcode = 22672;

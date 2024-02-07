@@ -3,36 +3,36 @@ import { Read } from "../../stream";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
 export type PKTInitEnv = {
   lostArkDateTime: LostArkDateTime.LostArkDateTime;
-  unk1: bigint;
+  unk1: number;
   unk2: number;
-  unk3: number;
-  struct_591: string;
   playerId: bigint;
-  unk6: number;
-  struct_32: { struct_574: string; versionString: string; struct_591: string }[];
+  unk4: number;
+  unk5: bigint;
+  struct_29: { versionString: string; struct_573: string; struct_590: string }[];
+  struct_590: string;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTInitEnv;
   data.lostArkDateTime = LostArkDateTime.read(reader);
-  data.unk1 = reader.u64();
+  data.unk1 = reader.u32();
   data.unk2 = reader.u8();
-  data.unk3 = reader.u32();
-  data.struct_591 = reader.string(128);
   data.playerId = reader.u64();
-  data.unk6 = reader.u32();
-  data.struct_32 = reader.array(
+  data.unk4 = reader.u32();
+  data.unk5 = reader.u64();
+  data.struct_29 = reader.array(
     reader.u16(),
     () => {
-      const i = {} as { struct_574: string; versionString: string; struct_591: string };
-      i.struct_574 = reader.string(32);
+      const i = {} as { versionString: string; struct_573: string; struct_590: string };
       i.versionString = reader.string(64);
-      i.struct_591 = reader.string(128);
+      i.struct_573 = reader.string(32);
+      i.struct_590 = reader.string(128);
       return i;
     },
     64
   );
+  data.struct_590 = reader.string(128);
   return data;
 }
 export const name = "PKTInitEnv";
-export const opcode = 25291;
+export const opcode = 43544;

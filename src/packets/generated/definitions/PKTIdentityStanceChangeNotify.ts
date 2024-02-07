@@ -13,4 +13,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTIdentityStanceChangeNotify";
-export const opcode = 24961;
+export const opcode = 74;

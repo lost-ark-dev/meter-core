@@ -192,9 +192,12 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     for (const [, effect] of registry) {
       if (!this.#isLive && !this.IsReplayStatusEffectValidElseRemove(effect, pktTime)) continue;
       if (statusEffectIds.includes(effect.statusEffectId)) {
-        // Dagger and Expose Weakness are for the whole raid
-        if (this.ValidForWholeRaid(effect)) return true;
         const partyIdOfSource = this.#partyTracker.getPartyIdFromEntityId(effect.sourceId);
+        // Dagger and Expose Weakness are for the whole raid
+        if (this.ValidForWholeRaid(effect))  {
+          // still only count if the source is in a party we know too, because then we are in the same raid
+          return (partyIdOfSource !== undefined);
+        }
         if (partyIdOfSource === partyId) return true;
       }
     }
@@ -225,7 +228,15 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     }
     return statusEffect;
   }
-  public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType, pktTime: Date): Array<StatusEffect> {
+  /**
+   * Gets the status effects that are on targetId. Optionally filted to only return those from a specific source.
+   * @param targetId Id of the object the target is on
+   * @param et If the statuseffect is a local target or a party target
+   * @param pktTime time of the pkt that triggers this check, it is used to expire statuseffects during replay mode
+   * @param seSourceEntityId the source entityId that the status effect needs to come from, if all sources should be allowed set to undefined
+   * @returns The status effects on targetId that meet the given criteria
+   */
+  public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType, pktTime: Date, seSourceEntityId: bigint | undefined): Array<StatusEffect> {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
     if (!this.#isLive) {
@@ -233,7 +244,13 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
         this.IsReplayStatusEffectValidElseRemove(effect, pktTime);
       }
     }
-    return [...registry.values()];
+    const allSes = [...registry.values()];
+    if (seSourceEntityId !== undefined) {
+      return allSes.filter((se, _idx, _a) => {
+        return (se.sourceId === seSourceEntityId);
+      });
+    }
+    return allSes;
   }
 
   public GetStatusEffectsFromParty(
@@ -251,7 +268,11 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     }
     return [...registry.values()].filter((value) => {
       // Dagger and Expose Weakness are for the whole raid
-      if (this.ValidForWholeRaid(value)) return true;
+      if (this.ValidForWholeRaid(value)) {
+        // check the source is in a party we know too, because if he is he is in the same raid.
+        const partyIdofSource = this.#partyTracker.getPartyIdFromEntityId(value.sourceId);
+        return (partyIdofSource !== undefined);
+      }
       return partyId === this.#partyTracker.getPartyIdFromEntityId(value.sourceId);
     });
   }
@@ -514,7 +535,8 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     const sourceEffects = this.GetStatusEffects(
       shouldUsePartyBuffForSource ? (sourceEntity as Player).characterId : sourceEntity.entityId,
       shouldUsePartyBuffForSource ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
-      pktTime
+      pktTime,
+      undefined
     );
     for (const se of sourceEffects) statusEffectsOnSource.push([se.statusEffectId, se.sourceId, se.stackCount]);
 
@@ -535,7 +557,8 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
           : this.GetStatusEffects(
               shouldUsePartyBuffForTarget ? (targetEntity as Player).characterId : targetEntity.entityId,
               shouldUsePartyBuffForTarget ? StatusEffectTargetType.Party : StatusEffectTargetType.Local,
-              pktTime
+              pktTime,
+              sourceEntity.entityId
             );
       for (const se of targetEffects) {
         //Filter out debuffs that are on target but that should only apply to caster

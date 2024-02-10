@@ -1193,11 +1193,11 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
             ((tripod.params[0] ?? 0) === 0 || damageData.skillEffectId === (tripod.params[0] ?? 0))
           ) {
             //TODO: understand how tripod.paramtype[2] works
-            // when absolute tripod.paramtype[2] === 0
-            // when relative tripod.paramtype[2] === 1 -> except for buff 200307
+            // when absolute tripod.params[2] === 0
+            // when relative tripod.params[2] === 1 -> except for buff 200307
 
             if (buff.id === (tripod.params[1] ?? 0)) {
-              if ((tripod.paramtype[2] ?? 0) === paramtype.absolute) {
+              if ((tripod.params[2] ?? 0) === paramtype.absolute) {
                 buff.statuseffectvalues = tripod.params.slice(3);
               } else {
                 //relative

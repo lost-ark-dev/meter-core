@@ -722,8 +722,8 @@ type PKTRaidResult = {
 };
 
 type UnpublishObject = {
-    unpublishReason: number;
     objectId: bigint;
+    unpublishReason: number;
 };
 
 type PKTRemoveObject = {

@@ -150,7 +150,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!parsed) return;
 
         //Get localplayer playerSet
-        if (parsed.storageType === itemstoragetype.equip) {
+        if ([itemstoragetype.equip, itemstoragetype.account_equip].includes(parsed.storageType)) {
           this.#entityTracker.localPlayer.itemSet = this.#entityTracker.getPlayerSetOptions(parsed.itemDataList);
           const equipList: PlayerItemData[] = [];
           parsed.itemDataList.forEach((item) => {

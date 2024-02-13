@@ -1,6 +1,13 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { MeterData, SkillFeatureOption } from "../data";
-import { damageattr, itemstoragetype, raidresult, stattype, triggersignaltype } from "../packets/generated/enums";
+import {
+  damageattr,
+  itemstoragetype,
+  raidresult,
+  stattype,
+  triggersignaltype,
+  zonelevel,
+} from "../packets/generated/enums";
 import { KillState, type GameState, type GameTrackerOptions } from "./data";
 import { EntityTracker, EntityType, type Entity, type Projectile, type PlayerItemData, Player } from "./entityTracker";
 import { GameTracker } from "./gameTracker";
@@ -333,7 +340,10 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!parsed) return;
 
         this.#gameTracker.setZoneLevel(parsed.zoneLevel);
-        if (this.#data.statQueryFilter.zone.has(parsed.zoneId) && parsed.zoneLevel <= 1)
+        if (
+          this.#data.statQueryFilter.zone.has(parsed.zoneId) &&
+          [zonelevel.normal, zonelevel.hard, zonelevel.extreme].includes(parsed.zoneLevel)
+        )
           //only normal & hard
           this.#statApi.zoneSyncStatus |= ZoneSyncStatus.ZONE_VALID;
         else this.#statApi.zoneSyncStatus |= ZoneSyncStatus.ZONE_INVALID;

@@ -51,6 +51,7 @@ export const enum logId {
   ZoneMemberLoadStatusNotify = 51,
   RaidBegin = 52,
   NewTrap = 53,
+  SkillCancelNotify = 54,
 
   APP_StatApi = 60000,
 }

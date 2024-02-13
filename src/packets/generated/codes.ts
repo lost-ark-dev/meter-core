@@ -34,6 +34,7 @@ export { opcode as PKTRaidBegin } from "./definitions/PKTRaidBegin";
 export { opcode as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { opcode as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { opcode as PKTRemoveObject } from "./definitions/PKTRemoveObject";
+export { opcode as PKTSkillCancelNotify } from "./definitions/PKTSkillCancelNotify";
 export { opcode as PKTSkillCastNotify } from "./definitions/PKTSkillCastNotify";
 export { opcode as PKTSkillDamageAbnormalMoveNotify } from "./definitions/PKTSkillDamageAbnormalMoveNotify";
 export { opcode as PKTSkillDamageNotify } from "./definitions/PKTSkillDamageNotify";

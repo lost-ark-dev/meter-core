@@ -34,6 +34,7 @@ export { name as PKTRaidBegin } from "./definitions/PKTRaidBegin";
 export { name as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { name as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { name as PKTRemoveObject } from "./definitions/PKTRemoveObject";
+export { name as PKTSkillCancelNotify } from "./definitions/PKTSkillCancelNotify";
 export { name as PKTSkillCastNotify } from "./definitions/PKTSkillCastNotify";
 export { name as PKTSkillDamageAbnormalMoveNotify } from "./definitions/PKTSkillDamageAbnormalMoveNotify";
 export { name as PKTSkillDamageNotify } from "./definitions/PKTSkillDamageNotify";

@@ -34,6 +34,7 @@ export { read as PKTRaidBegin } from "./definitions/PKTRaidBegin";
 export { read as PKTRaidBossKillNotify } from "./definitions/PKTRaidBossKillNotify";
 export { read as PKTRaidResult } from "./definitions/PKTRaidResult";
 export { read as PKTRemoveObject } from "./definitions/PKTRemoveObject";
+export { read as PKTSkillCancelNotify } from "./definitions/PKTSkillCancelNotify";
 export { read as PKTSkillCastNotify } from "./definitions/PKTSkillCastNotify";
 export { read as PKTSkillDamageAbnormalMoveNotify } from "./definitions/PKTSkillDamageAbnormalMoveNotify";
 export { read as PKTSkillDamageNotify } from "./definitions/PKTSkillDamageNotify";

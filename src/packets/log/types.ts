@@ -50,5 +50,6 @@ export type { InitItem } from "./definitions/InitItem";
 export type { RaidBegin } from "./definitions/RaidBegin";
 export type { ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
 export type { NewTrap } from "./definitions/NewTrap";
+export type { SkillCancelNotify } from "./definitions/SkillCancelNotify";
 
 export type { APP_StatApi } from "./app/APP_StatApi";

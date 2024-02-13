@@ -50,5 +50,6 @@ export { name as InitItem } from "./definitions/InitItem";
 export { name as RaidBegin } from "./definitions/RaidBegin";
 export { name as ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
 export { name as NewTrap } from "./definitions/NewTrap";
+export { name as SkillCancelNotify } from "./definitions/SkillCancelNotify";
 
 export { name as APP_StatApi } from "./app/APP_StatApi";

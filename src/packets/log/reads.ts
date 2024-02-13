@@ -50,5 +50,6 @@ export { read as InitItem } from "./definitions/InitItem";
 export { read as RaidBegin } from "./definitions/RaidBegin";
 export { read as ZoneMemberLoadStatusNotify } from "./definitions/ZoneMemberLoadStatusNotify";
 export { read as NewTrap } from "./definitions/NewTrap";
+export { read as SkillCancelNotify } from "./definitions/SkillCancelNotify";
 
 export { read as APP_StatApi } from "./app/APP_StatApi";

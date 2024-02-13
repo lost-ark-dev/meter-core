@@ -53,6 +53,7 @@ export interface LogStreamEvent {
   RaidBegin: (pkt: LogEvent<types.RaidBegin>) => void;
   ZoneMemberLoadStatusNotify: (pkt: LogEvent<types.ZoneMemberLoadStatusNotify>) => void;
   NewTrap: (pkt: LogEvent<types.NewTrap>) => void;
+  SkillCancelNotify: (pkt: LogEvent<types.SkillCancelNotify>) => void;
 
   logData: (data: Buffer) => void;
   fileEnd: (output: string) => void;

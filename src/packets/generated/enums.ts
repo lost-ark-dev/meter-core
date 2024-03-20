@@ -538,6 +538,14 @@ export enum equipcategory {
   assistance_life = 12,
   assistance_combat = 13,
 }
+export enum elixirparttype {
+  common = 0,
+  head = 1,
+  upperbody = 2,
+  lowerbody = 3,
+  hand = 4,
+  shoulder = 5,
+}
 export enum hitflag {
   normal = 0,
   critical = 1,

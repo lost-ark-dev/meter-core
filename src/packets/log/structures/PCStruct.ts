@@ -46,7 +46,7 @@ export function read(reader: Read, version: number) {
     () => {
       const C = {} as any;
       C.addonSkillFeatureIdList = reader.array(reader.u16(), () => reader.u32(), 5);
-      C.SkillId = reader.u32();
+      C.skillId = reader.u32();
       return C;
     },
     200

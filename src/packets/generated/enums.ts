@@ -913,6 +913,7 @@ export enum itemcategory {
   general_town_jumping_ticket_ergasia = 62108,
   general_town_jumping_ticket_plecce = 62109,
   general_town_jumping_ticket_voldaik = 62110,
+  general_town_jumping_ticket_kurzan_a = 62120,
   material_etc = 70100,
   material_life = 70200,
   material_life_archeology = 70201,
@@ -1026,6 +1027,7 @@ export enum itemcategory {
   avatar_weapon_umbrella = 90230,
   avatar_weapon_sword_female = 90231,
   avatar_weapon_scythe = 90232,
+  avatar_weapon_heavy_gauntlet_male = 90233,
   avatar_effect_footstep = 90301,
   avatar_polymorph_skin = 90400,
   astra_equip_will = 100101,
@@ -1415,6 +1417,7 @@ export enum statuseffectexpiredreasontype {
   identity = 20,
   target_change = 21,
   update_primary_mark = 22,
+  battle_end = 23,
 }
 export enum statuseffecttype {
   none = 0,

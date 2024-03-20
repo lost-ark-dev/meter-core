@@ -3,8 +3,8 @@ import { Read } from "../../stream";
 export type PKTBlockSkillStateNotify = {
   paralyzationPoint: number;
   type: number;
-  paralyzationMaxPoint: number;
   objectId: bigint;
+  paralyzationMaxPoint: number;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
@@ -12,10 +12,9 @@ export function read(buf: Buffer) {
   data.paralyzationPoint = reader.u32();
   data.type = reader.u8();
   reader.skip(1);
-  data.paralyzationMaxPoint = reader.u32();
-  reader.skip(2);
   data.objectId = reader.u64();
+  data.paralyzationMaxPoint = reader.u32();
   return data;
 }
 export const name = "PKTBlockSkillStateNotify";
-export const opcode = 43110;
+export const opcode = 26677;

@@ -14,4 +14,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTPartyLeaveResult";
-export const opcode = 43463;
+export const opcode = 44646;

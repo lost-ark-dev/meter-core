@@ -8,9 +8,9 @@ export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTIdentityStanceChangeNotify;
   data.objectId = reader.u64();
-  data.stance = reader.u8();
   reader.skip(1);
+  data.stance = reader.u8();
   return data;
 }
 export const name = "PKTIdentityStanceChangeNotify";
-export const opcode = 74;
+export const opcode = 58886;

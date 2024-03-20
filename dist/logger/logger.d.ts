@@ -1,6 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-91fb761f.js';
+import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-854da85e.js';
 import { a as GameState } from '../data-765165e9.js';
 import 'oodle';
 
@@ -112,6 +112,14 @@ type CounterAttackNotify = {
 type DeathNotify = {
     sourceId: bigint;
     targetId: bigint;
+    effectId: number;
+    directionYaw: number;
+    deathType: number;
+    durabilityDecrement: number;
+    abnormalStatusType: number;
+    damageAttr: number;
+    unk0_m: bigint;
+    unk2_m: number;
 };
 
 type InitAbility = {
@@ -325,7 +333,9 @@ type PassiveStatusEffectRemoveNotify = {
     passiveStatusEffectList: number[];
 };
 
-type RaidBossKillNotify = {};
+type RaidBossKillNotify = {
+    typeId: number;
+};
 
 type RaidResult = {
     raidResult: number;
@@ -547,6 +557,14 @@ type NewTrap = {
     trapData: TrapDataLog;
 };
 
+type SkillCancelNotify = {
+    skillId: number;
+    caster: bigint;
+    newDirectionYaw: Angle;
+    cancelReason: number;
+    newPosition: Vector3F;
+};
+
 declare enum ApiStatType {
     CRIT = 0,
     SPEC = 1,
@@ -559,6 +577,19 @@ type CharacterExportInfo = {
     name: string;
     stats: {
         id: ApiStatType;
+        value: number;
+    }[];
+    elixirs: {
+        slot: number;
+        entries: {
+            level: number;
+            id: number;
+        }[];
+    }[];
+    gems: {
+        id: number;
+        skillId: number;
+        type: number;
         value: number;
     }[];
 };
@@ -629,6 +660,7 @@ interface LogStreamEvent {
     RaidBegin: (pkt: LogEvent<RaidBegin>) => void;
     ZoneMemberLoadStatusNotify: (pkt: LogEvent<ZoneMemberLoadStatusNotify>) => void;
     NewTrap: (pkt: LogEvent<NewTrap>) => void;
+    SkillCancelNotify: (pkt: LogEvent<SkillCancelNotify>) => void;
     logData: (data: Buffer) => void;
     fileEnd: (output: string) => void;
     APP_StatApi: (pkt: LogEvent<APP_StatApi>) => void;

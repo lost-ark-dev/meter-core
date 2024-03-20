@@ -42,7 +42,10 @@ meterData.processSkillBuffData(JSON.parse(readFileSync("meter-data/databases/Ski
 meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databases/SkillEffect.json", "utf-8")));
 
 function logEvent(name: string, pkt: LogEvent<any>) {
-  console.log(`${name} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`);
+  //console.log(name, pkt.time, pkt.parsed);
+  console.log(
+    `${name} - ${+pkt.time} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`
+  );
 }
 /*
 console.log(
@@ -129,5 +132,4 @@ for (const server of [6010, 6020, 6030, 6040]) {
     }
   });
 }
-
 console.log("Logging");

@@ -46,10 +46,10 @@ abstract class PktCapture extends TypedEmitter<PktCaptureEvents> implements IPkt
       if (session.dst) this.emit("connect", session.dst);
     });
   }
-  dispatchPacket(packet: Buffer): void {
+  dispatchPacket(packet: Buffer, noEth = false): void {
     const ethernet = Ethernet(packet);
-    if (ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
-      const ipv4 = IPV4(packet, ethernet.offset);
+    if (noEth || ethernet.info.type === PROTOCOL.ETHERNET.IPV4) {
+      const ipv4 = IPV4(packet, noEth ? 0 : ethernet.offset);
       if (ipv4.info.protocol === PROTOCOL.IP.TCP) {
         const tcp = TCP(packet, ipv4.offset);
         this.tcpTracker.track_packet(packet, ipv4, tcp);
@@ -81,7 +81,7 @@ class PcapCapture extends PktCapture {
         const type = this.#buffer.readUInt32LE();
         //IP header loopback
         if (type !== 2) return;
-        this.dispatchPacket(this.#buffer.subarray(4));
+        this.dispatchPacket(this.#buffer.subarray(4), true);
       }
     });
   }

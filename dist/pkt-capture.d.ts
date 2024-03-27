@@ -123,7 +123,7 @@ declare abstract class PktCapture extends TypedEmitter<PktCaptureEvents> impleme
     device: string;
     port: number;
     constructor(device: string, listen_options: ListenOptions);
-    dispatchPacket(packet: Buffer): void;
+    dispatchPacket(packet: Buffer, noEth?: boolean): void;
 }
 interface PktCaptureAllEvents {
     packet: (buf: Buffer, deviceName: string) => void;

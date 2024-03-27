@@ -61,7 +61,7 @@ console.log(
   )
 );*/
 
-const testLive = true;
+const testLive = false;
 if (testLive) {
   const logger = new LiveLogger(stream, decompressor, path.resolve("../logs/test.raw"));
 

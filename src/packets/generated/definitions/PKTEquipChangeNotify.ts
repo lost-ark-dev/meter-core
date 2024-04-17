@@ -2,19 +2,19 @@
 import { Read } from "../../stream";
 import * as EquipItemData from "../structures/EquipItemData";
 export type PKTEquipChangeNotify = {
-  objectId: bigint;
+  unk0: number;
   equipItemDataList: EquipItemData.EquipItemData[];
   unk2: number;
-  unk3: number;
+  objectId: bigint;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTEquipChangeNotify;
-  data.objectId = reader.u64();
+  data.unk0 = reader.u32();
   data.equipItemDataList = reader.array(reader.u16(), () => EquipItemData.read(reader), 33);
   data.unk2 = reader.u32();
-  data.unk3 = reader.u32();
+  data.objectId = reader.u64();
   return data;
 }
 export const name = "PKTEquipChangeNotify";
-export const opcode = 53204;
+export const opcode = 37232;

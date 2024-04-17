@@ -10,4 +10,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTPassiveStatusEffectAddNotify";
-export const opcode = 9409;
+export const opcode = 50673;

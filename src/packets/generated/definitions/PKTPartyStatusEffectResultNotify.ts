@@ -2,20 +2,19 @@
 import { Read } from "../../stream";
 export type PKTPartyStatusEffectResultNotify = {
   raidInstanceId: number;
-  characterId: bigint;
   partyInstanceId: number;
+  characterId: bigint;
 };
 export function read(buf: Buffer) {
   const reader = new Read(buf);
   const data = {} as PKTPartyStatusEffectResultNotify;
-  reader.skip(13);
-  data.raidInstanceId = reader.u32();
-  reader.skip(8);
-  data.characterId = reader.u64();
   reader.skip(1);
+  data.raidInstanceId = reader.u32();
+  reader.skip(21);
   data.partyInstanceId = reader.u32();
-  reader.skip(5);
+  data.characterId = reader.u64();
+  reader.skip(4);
   return data;
 }
 export const name = "PKTPartyStatusEffectResultNotify";
-export const opcode = 4215;
+export const opcode = 58067;

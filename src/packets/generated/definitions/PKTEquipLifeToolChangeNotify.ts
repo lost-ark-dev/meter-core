@@ -13,4 +13,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTEquipLifeToolChangeNotify";
-export const opcode = 51254;
+export const opcode = 36609;

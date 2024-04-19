@@ -301,7 +301,7 @@ export class EntityTracker {
           skills: new Map(),
           items: {},
         };
-      } else {
+      } else if (entity.entityType === EntityType.Unknown) {
         newEntity = {
           entityId: entity.entityId,
           entityType: EntityType.Player,
@@ -314,7 +314,8 @@ export class EntityTracker {
           skills: new Map(),
           items: {},
         };
-      }
+      } else return entity;
+
       this.entities.set(entity.entityId, newEntity);
       return newEntity;
     }

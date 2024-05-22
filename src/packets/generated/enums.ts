@@ -448,6 +448,8 @@ export enum contentstatustype {
   special_commander = 14,
   abyss_raid_gate = 15,
   end_gold_info = 16,
+  kazeroth = 17,
+  epic_raid_gate = 18,
 }
 export enum combateffectactiontype {
   none = 0,
@@ -620,6 +622,8 @@ export enum hitoption {
   frontal_attack = 1,
   flank_attack = 2,
   reduce_damage = 3,
+  replace_font = 4,
+  replace_normalattack = 5,
 }
 export enum identitycategory {
   none = 0,
@@ -826,6 +830,7 @@ export enum itemcategory {
   useup_add_trophy = 31905,
   useup_add_town_mood = 31906,
   useup_add_town_dress = 31907,
+  useup_add_town_guestbook_bg = 31908,
   useup_card = 32000,
   useup_card_exp = 32001,
   useup_toy = 32100,
@@ -896,6 +901,7 @@ export enum itemcategory {
   useup_battle_token_item_dungeon_function = 36032,
   useup_battle_token_item_raid_function = 36033,
   useup_battle_token_item_common_heal = 36041,
+  useup_add_mvp_background = 37000,
   quest_element = 40100,
   quest_pickup = 40200,
   quest_use = 40300,
@@ -1479,6 +1485,7 @@ export enum statuseffectexpiredreasontype {
   target_change = 21,
   update_primary_mark = 22,
   battle_end = 23,
+  immune_count = 24,
 }
 export enum statuseffecttype {
   none = 0,
@@ -1630,6 +1637,8 @@ export enum statuseffecttype {
   change_target_ui = 147,
   contents_gauge_reduce = 148,
   primary_enemy_mark = 149,
+  part_damage_amplify = 150,
+  notice_part_hp = 151,
 }
 export enum triggersignaltype {
   none = 0,

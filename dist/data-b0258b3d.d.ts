@@ -151,7 +151,9 @@ declare enum hitoption {
     back_attack = 0,
     frontal_attack = 1,
     flank_attack = 2,
-    reduce_damage = 3
+    reduce_damage = 3,
+    replace_font = 4,
+    replace_normalattack = 5
 }
 declare enum identitycategory {
     none = 0,

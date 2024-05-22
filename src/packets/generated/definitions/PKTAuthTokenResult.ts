@@ -12,4 +12,4 @@ export function read(buf: Buffer) {
   return data;
 }
 export const name = "PKTAuthTokenResult";
-export const opcode = 9743;
+export const opcode = 57066;

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { TrapData } from "../../generated/structures/TrapData";
 import * as Vector3F from "../../common/Vector3F";
 export type TrapDataLog = {
   position: Vector3F.Vector3F;
@@ -17,7 +16,7 @@ export function read(reader: Read, version: number) {
   data.skillEffect = reader.u32();
   return data;
 }
-export function write(writer: Write, data: TrapDataLog | TrapData) {
+export function write(writer: Write, data: TrapDataLog) {
   Vector3F.write(writer, data.position);
   writer.u64(data.objectId);
   writer.u64(data.ownerId);

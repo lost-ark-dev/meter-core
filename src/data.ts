@@ -7,10 +7,13 @@ import {
   combateffectactiontype,
   combateffectactortype,
   combateffectconditiontype,
+  contentstatustype,
+  elixirparttype,
   hitoption,
   identitycategory,
   npcgrade,
   paramtype,
+  raidtype,
   skillfeaturetype,
   stattype,
   statuseffecttargettooltiptype,
@@ -33,8 +36,8 @@ export type Skill = {
   identitycategory?: keyof typeof identitycategory;
   groups?: number[];
   summonids?: number[];
-  summonsourceskill?: number;
-  sourceskill?: number;
+  summonsourceskill?: number[];
+  sourceskill?: number[];
 };
 
 export type SkillBuff = {
@@ -46,14 +49,14 @@ export type SkillBuff = {
   duration: number;
   category: "buff" | "debuff";
   type: string; // statuseffecttype
-  statuseffectvalues?: number[];
+  statuseffectvalues?: number[] | undefined;
   buffcategory: keyof typeof buffshowprioritycategory;
   target: keyof typeof statuseffecttargettooltiptype;
   uniquegroup: number;
   overlapFlag: number;
   passiveoption: PassiveOption[];
-  sourceskill?: number;
-  setname?: string; // set nicename when buffcategory === "set"
+  sourceskill?: number[] | undefined;
+  setname?: string | undefined; // set nicename when buffcategory === "set"
 };
 
 export type SkillFeature = Map<number, SkillFeatureLevelData>;
@@ -75,7 +78,26 @@ export type PassiveOption = {
   keyindex: number;
   value: number;
 };
-
+export type ElixirOption = {
+  name: string;
+  class: number; //class id
+  part: elixirparttype;
+  stats: {
+    type: keyof typeof addontype;
+    keystat: keyof typeof stattype;
+    values: [number /*index*/, number /*value*/][];
+  }[];
+  setid?: number;
+};
+export type ElixirSet = {
+  name: string;
+  stats: {
+    type: keyof typeof addontype;
+    keystat: keyof typeof stattype;
+    keyindex: number;
+    value: number;
+  }[];
+};
 export type CombatEffect = {
   id: number;
   effects: CombatEffectDetail[];
@@ -101,7 +123,7 @@ export type SkillEffect = {
   id: number;
   comment: string;
   stagger: number;
-  sourceskill: number;
+  sourceskill?: number[];
   directionalmask: number;
   itemname?: string;
   itemdesc?: string;
@@ -133,8 +155,8 @@ export type CombatEffectConditionData = {
 };
 
 export type StatQueryFilter = {
-  zone: Set<number>;
-  raid: Set<number>;
+  zone: Map<number, { contentstatustype?: keyof typeof contentstatustype; name?: string }>;
+  raid: Map<number, { type: keyof typeof raidtype; name: string }>;
 };
 
 export class MeterData {
@@ -149,6 +171,7 @@ export class MeterData {
   skillEffect: Map<number, SkillEffect>;
   skillFeature: Map<number, SkillFeature>;
   combatEffect: Map<number, CombatEffect>;
+  elixir: { option: Map<number, ElixirOption>; set: Map<number, Map<number, ElixirSet>> };
   esther: Esther[];
   itemSet: ItemSet;
   statQueryFilter: StatQueryFilter;
@@ -163,9 +186,10 @@ export class MeterData {
     this.skillEffect = new Map();
     this.skillFeature = new Map();
     this.combatEffect = new Map();
+    this.elixir = { option: new Map(), set: new Map() };
     this.esther = [];
     this.itemSet = { items: new Map(), seteffects: new Map() };
-    this.statQueryFilter = { zone: new Set(), raid: new Set() };
+    this.statQueryFilter = { zone: new Map(), raid: new Map() };
   }
 
   processEnumData(data: { [key: string]: { [key: string]: string } }) {
@@ -224,6 +248,22 @@ export class MeterData {
       this.combatEffect.set(combatEffect.id, combatEffect);
     }
   }
+  processElixir(data: {
+    option: { [key: string]: ElixirOption };
+    set: { [key: string]: { [key: string]: ElixirSet } };
+  }) {
+    // { option: Map<number, ElixirOption>; set: Map<number, Map<number, ElixirSet>> }
+    for (const [id, option] of Object.entries(data.option)) {
+      this.elixir.option.set(Number(id), option);
+    }
+    for (const [id, set] of Object.entries(data.set)) {
+      const entry = new Map<number, ElixirSet>();
+      for (const [lvl, val] of Object.entries(set)) {
+        entry.set(Number(lvl), val);
+      }
+      this.elixir.set.set(Number(id), entry);
+    }
+  }
   processEsther(data: Esther[]) {
     this.esther = Object.values(data);
   }
@@ -256,9 +296,16 @@ export class MeterData {
     }
   }
 
-  procesStatQueryFilter(data: { zone: number[]; raid: number[] }) {
-    this.statQueryFilter.zone = new Set(data.zone);
-    this.statQueryFilter.raid = new Set(data.raid);
+  procesStatQueryFilter(data: {
+    zone: { [key: string]: { contentstatustype?: keyof typeof contentstatustype; name?: string } };
+    raid: { [key: string]: { type: keyof typeof raidtype; name: string } };
+  }) {
+    for (const [id, zone] of Object.entries(data.zone)) {
+      this.statQueryFilter.zone.set(Number(id), zone);
+    }
+    for (const [id, raid] of Object.entries(data.raid)) {
+      this.statQueryFilter.raid.set(Number(id), raid);
+    }
   }
 
   getNpcName(id: number) {
@@ -326,9 +373,9 @@ export class MeterData {
     };
     if (buffcategory === "classskill" || buffcategory === "identity") {
       let buffSourceSkill;
-      if (buff.sourceskill) {
+      if (buff.sourceskill?.[0]) {
         // Source skill from db
-        buffSourceSkill = this.skill.get(buff.sourceskill);
+        buffSourceSkill = this.skill.get(buff.sourceskill[0]);
         if (buffSourceSkill) statusEffect.source.skill = buffSourceSkill;
       } else {
         // Try to guess
@@ -344,9 +391,9 @@ export class MeterData {
       if (buffSourceSkill) statusEffect.source.skill = buffSourceSkill;
     } else if (buffcategory === "ability" && buff.uniquegroup !== 0) {
       let buffSourceSkill;
-      if (buff.sourceskill) {
+      if (buff.sourceskill?.[0]) {
         // Source skill from db
-        buffSourceSkill = this.skill.get(buff.sourceskill);
+        buffSourceSkill = this.skill.get(buff.sourceskill[0]);
         if (buffSourceSkill) statusEffect.source.skill = buffSourceSkill;
       } else {
         // Try to guess
@@ -717,6 +764,7 @@ export class MeterData {
     this.processSkillBuffEffectData(JSON.parse(readFileSync(join(basePath, "SkillEffect.json"), "utf-8")));
     this.processSkillFeature(JSON.parse(readFileSync(join(basePath, "SkillFeature.json"), "utf-8")));
     this.processCombatEffectData(JSON.parse(readFileSync(join(basePath, "CombatEffect.json"), "utf-8")));
+    this.processElixir(JSON.parse(readFileSync(join(basePath, "Elixir.json"), "utf-8")));
     this.processEsther(JSON.parse(readFileSync(join(basePath, "Esther.json"), "utf-8")));
     this.processItemSet(JSON.parse(readFileSync(join(basePath, "ItemSet.json"), "utf-8")));
     this.procesStatQueryFilter(JSON.parse(readFileSync(join(basePath, "StatQueryFilter.json"), "utf-8")));

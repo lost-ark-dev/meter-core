@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTSkillCancelNotify } from "../../generated/types";
 import * as Angle from "../../common/Angle";
 import * as Vector3F from "../../common/Vector3F";
 
@@ -19,7 +18,7 @@ export function read(reader: Read, version: number) {
   data.newPosition = Vector3F.read(reader);
   return data;
 }
-export function write(writer: Write, data: SkillCancelNotify | PKTSkillCancelNotify) {
+export function write(writer: Write, data: SkillCancelNotify) {
   writer.u32(data.skillId);
   writer.u64(data.caster);
   Angle.write(writer, data.newDirectionYaw);

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTStatusEffectDurationNotify } from "../../generated/types";
 export type StatusEffectDurationNotify = {
   effectInstanceId: number;
   targetId: bigint;
@@ -12,7 +11,7 @@ export function read(reader: Read, version: number) {
   data.expirationTick = reader.u64();
   return data;
 }
-export function write(writer: Write, data: StatusEffectDurationNotify | PKTStatusEffectDurationNotify) {
+export function write(writer: Write, data: StatusEffectDurationNotify) {
   writer.u32(data.effectInstanceId);
   writer.u64(data.targetId);
   writer.u64(data.expirationTick);

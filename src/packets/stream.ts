@@ -49,6 +49,18 @@ export class Read {
     return value;
   }
 
+  u48() {
+    const value = this.b.readUIntLE(this.o, 6);
+    this.o += 6;
+    return value;
+  }
+
+  i48() {
+    const value = this.b.readIntLE(this.o, 6);
+    this.o += 6;
+    return value;
+  }
+
   f32() {
     const value = this.b.readFloatLE(this.o);
     this.o += 4;
@@ -67,9 +79,9 @@ export class Read {
     return value;
   }
 
-  string(maxLength: number) {
+  string(maxLength?: number) {
     let length = this.u16();
-    if (length <= maxLength) {
+    if (!maxLength || length <= maxLength) {
       length = length * 2;
       const value = this.b.toString("utf16le", this.o, this.o + length);
       this.o += length;
@@ -140,6 +152,14 @@ export class Write {
     this.o = this.b.writeInt32LE(value, this.o);
   }
 
+  u48(value = 0) {
+    this.o = this.b.writeUIntLE(value, this.o, 6);
+  }
+
+  i48(value = 0) {
+    this.o = this.b.writeIntLE(value, this.o, 6);
+  }
+
   f32(value = 0) {
     this.o = this.b.writeFloatLE(value, this.o);
   }
@@ -152,9 +172,9 @@ export class Write {
     this.o = this.b.writeBigInt64LE(BigInt(value), this.o);
   }
 
-  string(value = "", maxLength = 0) {
+  string(value = "", maxLength?: number) {
     this.u16(value.length);
-    if (value.length <= maxLength) this.o += this.b.write(value, this.o, "utf16le");
+    if (!maxLength || value.length <= maxLength) this.o += this.b.write(value, this.o, "utf16le");
   }
 
   /**
@@ -173,20 +193,22 @@ export class Write {
       multiplier?: number;
     } = {}
   ) {
-    if (opts.maxLen) {
+    if (opts.maxLen !== undefined) {
+      //Variable length
       const chunkSize = opts.multiplier ?? 1;
       if (value.length % chunkSize)
         throw new Error(
           `Error writing bytes, chunkSize should be a multiple of intut value size, got ${value.length}%${chunkSize}`
         );
       const count = value.length / chunkSize;
-      if (count > opts.maxLen)
+      if (opts.maxLen && count > opts.maxLen)
         throw new Error(`Error writing bytes, input value size exceeded maxLen, got ${count} > ${opts.maxLen}`);
       if (!opts.lenType)
         throw new Error(`Error writing bytes, invalid lenType when writing chunks, got ${opts.lenType}`);
 
       this[opts.lenType](count);
     } else if (opts.length && value.length !== opts.length) {
+      //Fixed length
       throw new Error(
         `Error writing bytes, input value size doesn't match opts.length, ${value.length} !== ${opts.lenType}`
       );
@@ -206,12 +228,8 @@ export class Write {
    * @param opts.maxLen Max size of array, size is set to 0 if overflow
    * @param opts.lenTypeUsed to specify header size possible values: ["u8", "u16", "u32"]
    */
-  array(
-    value: any[] = [],
-    opts: { maxLen: number; lenType: "u8" | "u16" | "u32" },
-    callbackfn: (...args: any[]) => any
-  ) {
-    if (value === undefined || value.length > opts.maxLen) {
+  array<T>(value: T[] = [], opts: { maxLen?: number; lenType: "u8" | "u16" | "u32" }, callbackfn: (args: T) => void) {
+    if (value === undefined || (opts.maxLen && value.length > opts.maxLen)) {
       this[opts.lenType](0);
       return;
     }

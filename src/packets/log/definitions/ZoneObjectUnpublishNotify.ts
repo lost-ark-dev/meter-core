@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTZoneObjectUnpublishNotify } from "../../generated/types";
 export type ZoneObjectUnpublishNotify = {
   objectId: bigint;
 };
@@ -8,7 +7,7 @@ export function read(reader: Read, version: number) {
   data.objectId = reader.u64();
   return data;
 }
-export function write(writer: Write, data: ZoneObjectUnpublishNotify | PKTZoneObjectUnpublishNotify) {
+export function write(writer: Write, data: ZoneObjectUnpublishNotify) {
   writer.u64(data.objectId);
 }
 

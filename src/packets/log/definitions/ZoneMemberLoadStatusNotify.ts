@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTZoneMemberLoadStatusNotify } from "../../generated/types";
 import * as AbilityData from "../structures/AbilityData";
 export type ZoneMemberLoadStatusNotify = {
   zoneInstId: bigint;
@@ -15,20 +14,20 @@ export function read(reader: Read, version: number) {
   data.zoneInstId = reader.u64();
   data.zoneId = reader.u32();
   data.loadComplete = reader.bool();
-  data.completeMembers = reader.array(reader.u16(), () => reader.u64(), 40);
-  data.totalMembers = reader.array(reader.u16(), () => reader.u64(), 40);
+  data.completeMembers = reader.array(reader.u16(), () => reader.u64());
+  data.totalMembers = reader.array(reader.u16(), () => reader.u64());
   data.firstPCEnterTick = reader.u64();
   data.zoneLevel = reader.u8();
   return data;
 }
-export function write(writer: Write, data: ZoneMemberLoadStatusNotify | PKTZoneMemberLoadStatusNotify) {
+export function write(writer: Write, data: ZoneMemberLoadStatusNotify) {
   writer.u64(data.zoneInstId);
   writer.u32(data.zoneId);
   writer.bool(data.loadComplete);
-  writer.array(data.completeMembers, { maxLen: 40, lenType: "u16" }, (obj: bigint) => {
+  writer.array(data.completeMembers, { lenType: "u16" }, (obj: bigint) => {
     writer.u64(obj);
   });
-  writer.array(data.totalMembers, { maxLen: 40, lenType: "u16" }, (obj: bigint) => {
+  writer.array(data.totalMembers, { lenType: "u16" }, (obj: bigint) => {
     writer.u64(obj);
   });
   writer.u64(data.firstPCEnterTick);

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTStatusEffectAddNotify } from "../../generated/types";
 import * as StatusEffectData from "../structures/StatusEffectData";
 export type StatusEffectAddNotify = {
   statusEffectData: StatusEffectData.StatusEffectDataLog;
@@ -13,7 +12,7 @@ export function read(reader: Read, version: number) {
   data.new = reader.bool();
   return data;
 }
-export function write(writer: Write, data: StatusEffectAddNotify | PKTStatusEffectAddNotify) {
+export function write(writer: Write, data: StatusEffectAddNotify) {
   StatusEffectData.write(writer, data.statusEffectData);
   writer.u64(data.objectId);
   writer.bool(data.new);

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTBlockSkillStateNotify } from "../../generated/types";
 export type BlockSkillStateNotify = {
   paralyzationMaxPoint: number;
   type: number;
@@ -14,7 +13,7 @@ export function read(reader: Read, version: number) {
   data.paralyzationPoint = reader.u32();
   return data;
 }
-export function write(writer: Write, data: BlockSkillStateNotify | PKTBlockSkillStateNotify) {
+export function write(writer: Write, data: BlockSkillStateNotify) {
   writer.u32(data.paralyzationMaxPoint);
   writer.u8(data.type);
   writer.u64(data.objectId);

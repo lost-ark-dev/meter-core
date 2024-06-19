@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { ZoneStatusEffectData } from "../../generated/structures/ZoneStatusEffectData";
 export type ZoneStatusEffectDataLog = {
   stackCount: number;
   target: number;
@@ -12,7 +11,7 @@ export function read(reader: Read, version: number) {
   data.id = reader.u32();
   return data;
 }
-export function write(writer: Write, data: ZoneStatusEffectDataLog | ZoneStatusEffectData) {
+export function write(writer: Write, data: ZoneStatusEffectDataLog) {
   writer.u8(data.stackCount);
   writer.u8(data.target);
   writer.u32(data.id);

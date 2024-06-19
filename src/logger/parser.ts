@@ -33,6 +33,8 @@ export class Parser extends TypedEmitter<ParserEvent> {
   #gameTracker: GameTracker;
   #statApi: StatApi;
 
+  #broadcastTimeout: ReturnType<typeof setInterval> | undefined;
+
   //TODO: refactor
   #wasWipe: boolean;
   #wasKill: boolean;
@@ -66,10 +68,16 @@ export class Parser extends TypedEmitter<ParserEvent> {
     this.#wasKill = false;
 
     if (this.#gameTracker.options.isLive) {
-      setInterval(this.broadcastStateChange.bind(this), 100);
+      this.#broadcastTimeout = setInterval(
+        this.broadcastStateChange.bind(this),
+        this.#gameTracker.options.broadcastInterval
+      );
     }
 
     this.#logger
+      .on("syncDmg", (syncDmg) => {
+        this.#gameTracker.onSyncDmg(syncDmg);
+      })
       .on("APP_StatApi", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
@@ -100,11 +108,11 @@ export class Parser extends TypedEmitter<ParserEvent> {
         if (!player || player.entityType !== EntityType.Player) return;
         (player as Player).itemSet = this.#entityTracker.getPlayerSetOptions(parsed.equipItemDataList);
 
-        const equipList: PlayerItemData[] = [];
+        (player as Player).items.equipList.clear(); //Reset item list as we get a full one now
         parsed.equipItemDataList.forEach((item) => {
-          if (item.id !== undefined && item.slot !== undefined) equipList.push({ id: item.id, slot: item.slot });
+          if (item.id !== undefined && item.slot !== undefined)
+            (player as Player).items.equipList.set(item.slot, item.id);
         });
-        (player as Player).items.equipList = equipList;
       })
       .on("EquipLifeToolChangeNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -112,11 +120,11 @@ export class Parser extends TypedEmitter<ParserEvent> {
         const player = this.#entityTracker.entities.get(parsed.objectId);
         if (!player || player.entityType !== EntityType.Player) return;
 
-        const lifeToolList: PlayerItemData[] = [];
+        (player as Player).items.lifeToolList.clear(); //Reset item list as we get a full one now
         parsed.equipLifeToolDataList.forEach((item) => {
-          if (item.id !== undefined && item.slot !== undefined) lifeToolList.push({ id: item.id, slot: item.slot });
+          if (item.id !== undefined && item.slot !== undefined)
+            (player as Player).items.lifeToolList.set(item.slot, item.id);
         });
-        (player as Player).items.lifeToolList = lifeToolList;
       })
       .on("IdentityStanceChangeNotify", (pkt) => {
         const parsed = pkt.parsed;
@@ -131,6 +139,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("InitEnv", (pkt) => {
         this.#entityTracker.processInitEnv(pkt);
         this.#gameTracker.onInitEnv(pkt, pkt.time);
+        this.#statApi.cache.clear(); //Clear statApi on init env -> gonna hit the cache most likely
       })
       .on("InitLocal", (pkt) => {})
       .on("InitPC", (pkt) => {
@@ -158,18 +167,20 @@ export class Parser extends TypedEmitter<ParserEvent> {
 
         //Get localplayer playerSet
         if ([itemstoragetype.equip, itemstoragetype.account_equip].includes(parsed.storageType)) {
-          this.#entityTracker.localPlayer.itemSet = this.#entityTracker.getPlayerSetOptions(parsed.itemDataList);
-          const equipList: PlayerItemData[] = [];
+          if (itemstoragetype.equip === parsed.storageType) {
+            //Get localplayer playerSet
+            this.#entityTracker.localPlayer.itemSet = this.#entityTracker.getPlayerSetOptions(parsed.itemDataList);
+          }
+
           parsed.itemDataList.forEach((item) => {
-            if (item.id !== undefined && item.slot !== undefined) equipList.push({ id: item.id, slot: item.slot });
+            if (item.id !== undefined && item.slot !== undefined)
+              this.#entityTracker.localPlayer.items.equipList.set(item.slot, item.id);
           });
-          this.#entityTracker.localPlayer.items.equipList = equipList;
         } else if (parsed.storageType === itemstoragetype.life_tool) {
-          const lifeToolList: PlayerItemData[] = [];
           parsed.itemDataList.forEach((item) => {
-            if (item.id !== undefined && item.slot !== undefined) lifeToolList.push({ id: item.id, slot: item.slot });
+            if (item.id !== undefined && item.slot !== undefined)
+              this.#entityTracker.localPlayer.items.lifeToolList.set(item.slot, item.id);
           });
-          this.#entityTracker.localPlayer.items.lifeToolList = lifeToolList;
         }
       })
       .on("MigrationExecute", (pkt) => {
@@ -315,10 +326,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
             parsed.reason,
             pkt.time
           );
-
-          if (se && se.statusEffectId === 9701) {
-            this.#statApi.syncData();
-          }
         }
       })
       .on("PartyStatusEffectResultNotify", (pkt) => {
@@ -338,7 +345,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
       .on("ZoneMemberLoadStatusNotify", (pkt) => {
         const parsed = pkt.parsed;
         if (!parsed) return;
-
         this.#gameTracker.setZoneLevel(parsed.zoneLevel);
         if (
           this.#data.statQueryFilter.zone.has(parsed.zoneId) &&
@@ -521,9 +527,6 @@ export class Parser extends TypedEmitter<ParserEvent> {
             parsed.reason,
             pkt.time
           );
-          if (se && se.statusEffectId === 9701) {
-            this.#statApi.syncData();
-          }
         }
       })
       .on("StatusEffectSyncDataNotify", (pkt) => {
@@ -564,7 +567,7 @@ export class Parser extends TypedEmitter<ParserEvent> {
           case triggersignaltype.assembled:
           case triggersignaltype.volume_enter:
           case triggersignaltype.volume_leave:
-            this.#statApi.syncData();
+            break;
         }
       })
       .on("TroopMemberUpdateMinNotify", (pkt) => {})
@@ -629,6 +632,17 @@ export class Parser extends TypedEmitter<ParserEvent> {
     this.#gameTracker.cancelReset();
   }
   updateOptions(options: Partial<GameTrackerOptions>) {
+    if (
+      this.#broadcastTimeout &&
+      options.broadcastInterval &&
+      options.broadcastInterval !== this.#gameTracker.options.broadcastInterval
+    ) {
+      clearInterval(this.#broadcastTimeout);
+      this.#broadcastTimeout = setInterval(
+        this.broadcastStateChange.bind(this),
+        this.#gameTracker.options.broadcastInterval
+      );
+    }
     this.#gameTracker.updateOptions(options);
   }
 

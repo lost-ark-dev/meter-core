@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { SkillDamageEvent } from "../../generated/structures/SkillDamageEvent";
 import * as ReadNBytesInt64 from "../../common/ReadNBytesInt64";
 
 export type SkillDamageEventLog = {
@@ -24,7 +23,7 @@ export function read(reader: Read, version: number) {
   data.damage = ReadNBytesInt64.read(reader, version);
   return data;
 }
-export function write(writer: Write, data: SkillDamageEventLog | SkillDamageEvent) {
+export function write(writer: Write, data: SkillDamageEventLog) {
   writer.u8(data.modifier);
   writer.u64(data.targetId);
   writer.u8(data.damageType);

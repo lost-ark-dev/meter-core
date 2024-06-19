@@ -14,8 +14,8 @@ import {
   zonelevel,
 } from "../packets/generated/enums";
 import type { InitEnv } from "../packets/log/types";
-import { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions, KillState } from "./data";
-import { StatusEffectTarget } from "./data";
+import type { Breakdown, EntitySkills, EntityState, GameState, GameTrackerOptions } from "./data";
+import { KillState, StatusEffectTarget } from "./data";
 import type { Entity, Esther, Npc, Player, Projectile } from "./entityTracker";
 import { EntityTracker, EntityType } from "./entityTracker";
 import type { LogEvent } from "./logEvent";
@@ -24,12 +24,14 @@ import type { StatusTracker } from "./statustracker";
 import { CombatEffect } from "../data";
 import { PlayerStatCacheStatus, StatApi } from "./statapi";
 import { ApiStatType } from "../packets/common/api";
+import { CS_SyncDmg } from "../packets/cloud/types";
 
 const defaultOptions: GameTrackerOptions = {
   isLive: true,
   dontResetOnZoneChange: false,
   resetAfterPhaseTransition: false,
   splitOnPhaseTransition: false,
+  broadcastInterval: 100,
 };
 export class GameTracker extends TypedEmitter<ParserEvent> {
   #game: GameState;
@@ -42,6 +44,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   options: GameTrackerOptions;
 
   resetTimer: NodeJS.Timeout | null;
+  #syncMode = false;
 
   phaseTransitionResetRequest: boolean;
   phaseTransitionResetRequestTime: number;
@@ -131,7 +134,9 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       this.#game.fightStartedOn !== 0 && // no combat packets
       (this.#game.damageStatistics.totalDamageDealt !== 0 || this.#game.damageStatistics.totalDamageTaken !== 0) // no player damage dealt OR taken
     ) {
-      const curState = structuredClone(this.#game);
+      const curState = this.#game;
+      const localPlayerName = this.#entityTracker.localPlayer.name;
+      this.resetState(+time);
 
       curState.entities.forEach((entity) => {
         if (!entity.isPlayer) return;
@@ -139,13 +144,12 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
           this.#statApi.isCurrentZoneValid() &&
           this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
       });
-      curState.localPlayer = this.#entityTracker.localPlayer.name;
+      curState.localPlayer = localPlayerName;
 
       this.applyBreakdowns(curState.entities);
 
       this.encounters.push(curState);
     }
-    this.resetState(+time);
   }
   getBossIfStillExist(): EntityState | undefined {
     if (this.#game.currentBoss?.id) {
@@ -154,7 +158,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     }
     return undefined;
   }
-  resetState(curTime: number) {
+  resetState(curTime: number, dispatch = true) {
+    this.#syncMode = false;
     this.cancelReset();
     this.resetBreakdowns();
 
@@ -186,7 +191,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         totalEffectiveShieldingDone: 0,
       },
     };
-    this.emit("reset-state", this.#game);
+    if (dispatch) this.emit("reset-state", this.#game);
   }
   cancelReset() {
     if (this.resetTimer) clearTimeout(this.resetTimer);
@@ -428,8 +433,6 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
        * -> ValueG = 0/1/2 -> 0=examples, 1=self ?, 2=party ? -> only 6 are 0 or 1, other are 2 => ignore
        * -> ValueH = Incoming Phys. Damage (always positive)
        * -> ValueI = Incoming Mag. Damage (always positive)
-       * -> ValueJ = Incoming Phys. Damage on crit (always positive)
-       * -> ValueK = Incoming Mag. Damage on crit (always positive)
        *
        * statuseffecttype=="skill_damage_amplify"
        * -> ValueA = SkillId -> if != 0, only apply to the given skillId
@@ -932,7 +935,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
                     //we might not get the combatEffect, because in the db, there are refs to unused effects (such as addonSkillFeature that come from AstraOption)
                     if (ce) {
                       // ! We have to be careful here not to edit combat_effect original value
-                      const newCe: CombatEffect = structuredClone(ce);
+                      const newCe: CombatEffect = cloneCombatEffect(ce);
                       combatEffects.set(ce.id, newCe);
                       newCe.effects.forEach((effect) => {
                         effect.actions.forEach((action) => {
@@ -1127,7 +1130,7 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
     if (!oBuff || entity.entityType !== EntityType.Player) return oBuff;
 
     // ! same as with combatEffect, be careful not to edit originals
-    const buff = structuredClone(oBuff);
+    const buff = cloneBuff(oBuff);
     (entity as Player).skills.get(damageData.skillId)?.tripods.forEach((tripodData) => {
       tripodData.options.forEach((tripod) => {
         const featureType = skillfeaturetype[tripod.type];
@@ -1365,8 +1368,8 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       if (effect && effect.itemname) {
         return { name: effect.itemname, icon: effect.icon ?? "" };
       } else if (effect) {
-        if (effect.sourceskill) {
-          const skill = this.#data.skill.get(effect.sourceskill);
+        if (effect.sourceskill?.[0]) {
+          const skill = this.#data.skill.get(effect.sourceskill[0]);
           if (skill) return { name: skill.name, icon: skill.icon };
         } else {
           const skill = this.#data.skill.get(Math.floor(skillEffectId / 10));
@@ -1383,15 +1386,15 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
         if (!skill) return { name: this.#data.getSkillName(skillId), icon: "" };
       }
 
-      if (skill.summonsourceskill) {
-        skill = this.#data.skill.get(skill.summonsourceskill);
+      if (skill.summonsourceskill?.[0]) {
+        skill = this.#data.skill.get(skill.summonsourceskill[0]);
         if (skill) {
           return { name: skill.name + " (Summon)", icon: skill.icon };
         } else {
           return { name: this.#data.getSkillName(skillId), icon: "" };
         }
-      } else if (skill.sourceskill) {
-        skill = this.#data.skill.get(skill.sourceskill);
+      } else if (skill.sourceskill?.[0]) {
+        skill = this.#data.skill.get(skill.sourceskill[0]);
         if (skill) {
           return { name: skill.name, icon: skill.icon };
         } else {
@@ -1548,8 +1551,9 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
       // Skip all entities that are not players (if live)
       if (!entity.isPlayer && !entity.isEsther) return;
       entity.statApiValid =
-        this.#statApi.isCurrentZoneValid() &&
-        this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID;
+        this.#syncMode ||
+        (this.#statApi.isCurrentZoneValid() &&
+          this.#statApi.cache.get(entity.name)?.status === PlayerStatCacheStatus.VALID);
       clone.entities.set(id, { ...entity });
     });
 
@@ -1655,6 +1659,70 @@ export class GameTracker extends TypedEmitter<ParserEvent> {
   setZoneLevel(zoneLevel: zonelevel) {
     this.#game.zoneLevel = zonelevel[zoneLevel] as keyof typeof zonelevel;
   }
+  /**
+   * Replace the current game state with syncDmg info
+   */
+  onSyncDmg(syncDmg: CS_SyncDmg) {
+    this.resetState(+new Date(), false);
+    this.#syncMode = true;
+    this.#game.lastCombatPacket = +new Date();
+    this.#game.fightStartedOn = this.#game.lastCombatPacket - syncDmg.duration;
+
+    syncDmg.table.forEach((p) => {
+      const entState: EntityState = {
+        ...this.createEntity(),
+        classId: p.typeId < 1000 ? p.typeId : 0,
+        npcId: p.typeId >= 1000 ? p.typeId : 0,
+        isPlayer: p.typeId < 1000,
+        isEsther: p.typeId >= 1000,
+        damageInfo: {
+          damageDealt: p.dealt,
+          rdpsDamageGiven: p.given,
+          rdpsDamageReceived: p.receivedDps + p.receivedSupp,
+          rdpsDamageReceivedSupp: p.receivedSupp,
+          damageDealtBuffedBySupport: 0,
+          damageDealtDebuffedBySupport: 0,
+        },
+        isDead: p.deadDuration > 0,
+        deaths: p.deadDuration > 0 ? 1 : 0,
+        deathTime: p.deadDuration > 0 ? this.#game.lastCombatPacket - p.deadDuration : 0,
+        hits: {
+          total: 1,
+          crit: p.crit / 100,
+          backAttack: p.ba / 100,
+          totalBackAttack: p.ba > 0 ? 1 : 0,
+          frontAttack: p.fa / 100,
+          totalFrontAttack: p.fa > 0 ? 1 : 0,
+
+          counter: 0,
+          hitsDebuffedBySupport: 0,
+          hitsBuffedBySupport: 0,
+          casts: 0,
+          hitsBuffedBy: new Map(),
+          hitsDebuffedBy: new Map(),
+        },
+        id: p.name,
+        name: p.name,
+        lastUpdate: this.#game.lastCombatPacket,
+      };
+      //Add a fake skill
+      entState.skills.set(0, {
+        ...this.createEntitySkill(),
+        icon: "",
+        name: "Uncategorized",
+        id: 0,
+        maxDamage: entState.damageInfo.damageDealt,
+        damageInfo: entState.damageInfo,
+        hits: entState.hits,
+      });
+
+      if (entState.isEsther) {
+        const esther = this.#data.getNpcEsther(entState.npcId);
+        if (esther) entState.icon = esther.icon;
+      }
+      this.#game.entities.set(p.name, entState);
+    });
+  }
 }
 
 export type DamageData = {
@@ -1667,3 +1735,43 @@ export type DamageData = {
   damageAttr: damageattr; //note: damageAttr=8 when damage=0
   damageType: damagetype; //note: damageAttr=2 when damage=0
 };
+export function cloneBuff(buff: SkillBuff): SkillBuff {
+  const ret: SkillBuff = {
+    id: buff.id,
+    name: buff.name,
+    desc: buff.desc,
+    icon: buff.icon,
+    iconshowtype: buff.iconshowtype, // statuseffecticonshowtype
+    duration: buff.duration,
+    category: buff.category,
+    type: buff.type, // statuseffecttype
+    statuseffectvalues: buff.statuseffectvalues?.map((v) => v),
+    buffcategory: buff.buffcategory,
+    target: buff.target,
+    uniquegroup: buff.uniquegroup,
+    overlapFlag: buff.overlapFlag,
+    passiveoption: buff.passiveoption.map((v) => ({
+      keyindex: v.keyindex,
+      keystat: v.keystat,
+      type: v.type,
+      value: v.value,
+    })),
+    setname: buff.setname, // set nicename when buffcategory === "set"
+    sourceskill: buff.sourceskill?.map((v) => v),
+  };
+  //if (buff.statuseffectvalues) ret.statuseffectvalues = buff.statuseffectvalues.map((v) => v);
+  //ret.passiveoption = buff.passiveoption.map((v) => ({ ...v }));
+  //We don't clone sourceskill -> never modified
+  //if (buff.sourceskill) ret.sourceskill = buff.sourceskill.map((v) => v);
+  return ret;
+}
+export function cloneCombatEffect(e: CombatEffect): CombatEffect {
+  return {
+    id: e.id,
+    effects: e.effects.map((d) => ({
+      ...d,
+      conditions: d.conditions.map((c) => ({ ...c })),
+      actions: d.actions.map((a) => ({ ...a, args: a.args.map((v) => v) })),
+    })),
+  };
+}

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTDeathNotify } from "../../generated/types";
 export type DeathNotify = {
   sourceId: bigint;
   targetId: bigint;
@@ -37,7 +36,7 @@ export function read(reader: Read, version: number) {
   }
   return data;
 }
-export function write(writer: Write, data: DeathNotify | PKTDeathNotify) {
+export function write(writer: Write, data: DeathNotify) {
   writer.u64(data.sourceId);
   writer.u64(data.targetId);
   writer.u32(data.effectId);

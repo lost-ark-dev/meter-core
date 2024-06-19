@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { StatusEffectData } from "../../generated/structures/StatusEffectData";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
 export type StatusEffectDataLog = {
   skillLevel: number;
@@ -29,7 +28,7 @@ export function read(reader: Read, version: number) {
   }
   return data;
 }
-export function write(writer: Write, data: StatusEffectDataLog | StatusEffectData) {
+export function write(writer: Write, data: StatusEffectDataLog) {
   writer.u8(data.skillLevel);
   LostArkDateTime.write(writer, data.occurTime);
   writer.u32(data.statusEffectId);

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTStatusEffectSyncDataNotify } from "../../generated/types";
 export type StatusEffectSyncDataNotify = {
   objectId: bigint;
   effectInstanceId: number;
@@ -14,7 +13,7 @@ export function read(reader: Read, version: number) {
   data.value = reader.u32();
   return data;
 }
-export function write(writer: Write, data: StatusEffectSyncDataNotify | PKTStatusEffectSyncDataNotify) {
+export function write(writer: Write, data: StatusEffectSyncDataNotify) {
   writer.u64(data.objectId);
   writer.u32(data.effectInstanceId);
   writer.u64(data.characterId);

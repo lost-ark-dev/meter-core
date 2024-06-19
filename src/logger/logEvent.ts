@@ -68,7 +68,7 @@ export class LogEvent<T> {
         //Skip header size
         writer.skip(HEADER_FULL_SIZE);
         //Write log
-        this.#write(writer, this.parsed);
+        this.#write(writer, this.parsed); //TODO: for cloud only, instead of parsing->writing, we could just write from cloud, but this might corrupt some logs in case of errors
         //Write header
         const buf = writer.value;
         buf.writeUint16LE(buf.length, HEADER_LEN_OFFSET);

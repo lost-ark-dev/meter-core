@@ -18,8 +18,8 @@ export class PCIdMapper {
   public getEntityId(characterId: bigint): bigint | undefined {
     return this.characterToEntityId.get(characterId);
   }
-  public clear(): void {
-    this.entityToCharacterId.clear();
-    this.characterToEntityId.clear();
+  public clear(charIds: bigint[]): void {
+    this.entityToCharacterId = new Map([...this.entityToCharacterId].filter(([ent, char]) => charIds.includes(char)));
+    this.characterToEntityId = new Map([...this.characterToEntityId].filter(([char, ent]) => charIds.includes(char)));
   }
 }

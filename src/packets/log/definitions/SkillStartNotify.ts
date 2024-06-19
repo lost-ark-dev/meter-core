@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTSkillStartNotify } from "../../generated/types";
 import * as Angle from "../../common/Angle";
 import * as Vector3F from "../../common/Vector3F";
 import * as SkillOptionData from "../../common/SkillOptionData";
@@ -34,7 +33,7 @@ export function read(reader: Read, version: number) {
   data.skillOptionData = SkillOptionData.read(reader, version);
   return data;
 }
-export function write(writer: Write, data: SkillStartNotify | PKTSkillStartNotify) {
+export function write(writer: Write, data: SkillStartNotify) {
   writer.u64(data.sourceId);
   Angle.write(writer, data.curDirectionYaw);
   Angle.write(writer, data.newDirectionYaw);

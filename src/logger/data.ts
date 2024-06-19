@@ -86,7 +86,6 @@ export interface DamageInfo {
   damageDealtDebuffedBySupport: number;
   damageDealtBuffedBySupport: number;
 }
-
 export const enum RaidDifficulty {
   UNKNOWN,
   NORMAL,
@@ -99,7 +98,6 @@ export const enum KillState {
   FAIL,
   CLEAR,
 }
-
 //TODO: minimize entityState default by marking fields as optional & checking for default in vue
 export interface EntityState {
   lastUpdate: number;
@@ -181,4 +179,5 @@ export type GameTrackerOptions = {
   dontResetOnZoneChange: boolean;
   resetAfterPhaseTransition: boolean;
   splitOnPhaseTransition: boolean;
+  broadcastInterval: number;
 };

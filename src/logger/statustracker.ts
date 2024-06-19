@@ -45,7 +45,7 @@ export interface StatusEffect {
   showType: StatusEffectShowType;
   effectType: StatusEffectType;
   expirationDelay: number;
-  expirationTimer: NodeJS.Timer | undefined;
+  expirationTimer: ReturnType<typeof setTimeout> | undefined;
   expireAt: Date | undefined;
   occurTime: Date;
   timestamp: bigint;
@@ -194,9 +194,9 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       if (statusEffectIds.includes(effect.statusEffectId)) {
         const partyIdOfSource = this.#partyTracker.getPartyIdFromEntityId(effect.sourceId);
         // Dagger and Expose Weakness are for the whole raid
-        if (this.ValidForWholeRaid(effect))  {
+        if (this.ValidForWholeRaid(effect)) {
           // still only count if the source is in a party we know too, because then we are in the same raid
-          return (partyIdOfSource !== undefined);
+          return partyIdOfSource !== undefined;
         }
         if (partyIdOfSource === partyId) return true;
       }
@@ -236,7 +236,12 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
    * @param seSourceEntityId the source entityId that the status effect needs to come from, if all sources should be allowed set to undefined
    * @returns The status effects on targetId that meet the given criteria
    */
-  public GetStatusEffects(targetId: TargetId, et: StatusEffectTargetType, pktTime: Date, seSourceEntityId: bigint | undefined): Array<StatusEffect> {
+  public GetStatusEffects(
+    targetId: TargetId,
+    et: StatusEffectTargetType,
+    pktTime: Date,
+    seSourceEntityId: bigint | undefined
+  ): Array<StatusEffect> {
     if (!this.hasStatusEffectRegistryForPlayer(targetId, et)) return [];
     const registry = this.getStatusEffectRegistryForPlayer(targetId, et);
     if (!this.#isLive) {
@@ -247,7 +252,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
     const allSes = [...registry.values()];
     if (seSourceEntityId !== undefined) {
       return allSes.filter((se, _idx, _a) => {
-        return (se.sourceId === seSourceEntityId);
+        return se.sourceId === seSourceEntityId;
       });
     }
     return allSes;
@@ -271,7 +276,7 @@ export class StatusTracker extends TypedEmitter<StatusTrackerEvents> {
       if (this.ValidForWholeRaid(value)) {
         // check the source is in a party we know too, because if he is he is in the same raid.
         const partyIdofSource = this.#partyTracker.getPartyIdFromEntityId(value.sourceId);
-        return (partyIdofSource !== undefined);
+        return partyIdofSource !== undefined;
       }
       return partyId === this.#partyTracker.getPartyIdFromEntityId(value.sourceId);
     });

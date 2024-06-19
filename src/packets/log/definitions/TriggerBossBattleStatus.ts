@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTTriggerBossBattleStatus } from "../../generated/types";
 export type TriggerBossBattleStatus = {
   step: number;
   unk2_m: boolean;
@@ -12,7 +11,7 @@ export function read(reader: Read, version: number) {
   data.triggerId = reader.u32();
   return data;
 }
-export function write(writer: Write, data: TriggerBossBattleStatus | PKTTriggerBossBattleStatus) {
+export function write(writer: Write, data: TriggerBossBattleStatus) {
   writer.u32(data.step);
   writer.bool(data.unk2_m);
   writer.u32(data.triggerId);

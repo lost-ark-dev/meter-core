@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { AbilityData } from "../../generated/structures/AbilityData";
 export type AbilityDataLog = {
   points: number;
   id: number;
@@ -12,7 +11,7 @@ export function read(reader: Read, version: number) {
   data.level = reader.u8();
   return data;
 }
-export function write(writer: Write, data: AbilityDataLog | AbilityData) {
+export function write(writer: Write, data: AbilityDataLog) {
   writer.u16(data.points);
   writer.u32(data.id);
   writer.u8(data.level);

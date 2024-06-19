@@ -1,9 +1,9 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { M as MeterData, G as GameTrackerOptions, a as GameState } from '../data-b0258b3d.js';
+import { M as MeterData, G as GameTrackerOptions, a as GameState } from '../data-3daa6aa3.js';
 import { Logger } from './logger.js';
 import '../decompressor.js';
 import 'oodle';
-import '../pkt-stream-5aeaa2cc.js';
+import '../pkt-stream.js';
 
 declare class Parser extends TypedEmitter<ParserEvent> {
     #private;

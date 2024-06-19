@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTRaidResult } from "../../generated/types";
 export type RaidResult = {
   raidResult: number;
 };
@@ -12,7 +11,7 @@ export function read(reader: Read, version: number) {
   }
   return data;
 }
-export function write(writer: Write, data: RaidResult | PKTRaidResult) {
+export function write(writer: Write, data: RaidResult) {
   writer.u8(data.raidResult);
 }
 

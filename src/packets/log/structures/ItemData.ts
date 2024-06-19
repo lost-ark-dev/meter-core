@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { ItemData } from "../../generated/structures/ItemData";
 import * as LostArkDateTime from "../../common/LostArkDateTime";
 export type ItemDataLog = {
   serialNumber?: bigint;
@@ -28,7 +27,7 @@ export function read(reader: Read, version: number) {
   }
   return data;
 }
-export function write(writer: Write, data: ItemDataLog | ItemData) {
+export function write(writer: Write, data: ItemDataLog) {
   if (writer.bool(data.slot !== undefined)) {
     writer.u64(data.serialNumber);
     writer.u32(data.id);

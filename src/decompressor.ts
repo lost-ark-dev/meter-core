@@ -4,16 +4,17 @@ import { uncompress as snappyUncompress } from "snappyjs";
 
 export class Decompressor {
   oodle: oodle.Oodle;
-  xorTable: Buffer;
+  xorTable?: Buffer;
 
-  constructor(oodle_state: Buffer, xorTable: Buffer) {
+  constructor(oodle_state: Buffer) {
     this.oodle = new oodle.Oodle(oodle_state);
-    if (xorTable.length != 256) throw new Error("Invalid xorTable length");
-    this.xorTable = xorTable;
   }
 
-  decrypt(data: Buffer, xorShift: number, compression: number, xor: boolean) {
-    if (xor) this.xor(data, xorShift);
+  decrypt(data: Buffer, xorShift: number, compression: number, xor: boolean): Buffer {
+    if (xor) {
+      if (!this.xorTable) throw new Error("Xor key not initialized");
+      this.xor(data, xorShift);
+    }
     let out: Buffer;
     switch (compression) {
       case 0: {
@@ -46,6 +47,6 @@ export class Decompressor {
   }
 
   xor(data: Buffer, seed: number) {
-    for (let i = 0; i < data.length; i++) data[i] ^= this.xorTable[seed++ % 256]!;
+    if (this.xorTable) for (let i = 0; i < data.length; i++) data[i] ^= this.xorTable[seed++ % 256]!;
   }
 }

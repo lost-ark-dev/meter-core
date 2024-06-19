@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTNewTrap } from "../../generated/types";
 import * as TrapData from "../structures/TrapData";
 export type NewTrap = {
   trapData: TrapData.TrapDataLog;
@@ -9,7 +8,7 @@ export function read(reader: Read, version: number) {
   data.trapData = TrapData.read(reader, version);
   return data;
 }
-export function write(writer: Write, data: NewTrap | PKTNewTrap) {
+export function write(writer: Write, data: NewTrap) {
   TrapData.write(writer, data.trapData);
 }
 

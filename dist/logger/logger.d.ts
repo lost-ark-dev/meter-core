@@ -1,7 +1,7 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Decompressor } from '../decompressor.js';
-import { L as LostArkDateTime, V as Vector3F, A as Angle, T as TripodIndex, a as TripodLevel, S as SkillMoveOptionData, b as SkillOptionData, P as PKTStream } from '../pkt-stream-5aeaa2cc.js';
-import { a as GameState } from '../data-b0258b3d.js';
+import { PKTStream } from '../pkt-stream.js';
+import { a as GameState } from '../data-3daa6aa3.js';
 import 'oodle';
 
 declare class Read {
@@ -18,10 +18,12 @@ declare class Read {
     i16(): number;
     u32(): number;
     i32(): number;
+    u48(): number;
+    i48(): number;
     f32(): number;
     u64(): bigint;
     i64(): bigint;
-    string(maxLength: number): string;
+    string(maxLength?: number): string;
     bytes(length?: number, maxLength?: number, multiplier?: number): Buffer;
     array(length: number, callbackfn: (...args: any[]) => any, maxLength?: number): any[];
 }
@@ -40,6 +42,8 @@ declare class Write {
     i16(value?: number): void;
     u32(value?: number): void;
     i32(value?: number): void;
+    u48(value?: number): void;
+    i48(value?: number): void;
     f32(value?: number): void;
     u64(value?: bigint): void;
     i64(value?: bigint): void;
@@ -62,10 +66,10 @@ declare class Write {
      * @param opts.maxLen Max size of array, size is set to 0 if overflow
      * @param opts.lenTypeUsed to specify header size possible values: ["u8", "u16", "u32"]
      */
-    array(value: any[] | undefined, opts: {
-        maxLen: number;
+    array<T>(value: T[] | undefined, opts: {
+        maxLen?: number;
         lenType: "u8" | "u16" | "u32";
-    }, callbackfn: (...args: any[]) => any): void;
+    }, callbackfn: (args: T) => void): void;
 }
 
 type AbilityDataLog = {
@@ -130,6 +134,8 @@ type InitEnv = {
     playerId: bigint;
 };
 
+type LostArkDateTime = Date;
+
 type StatusEffectDataLog = {
     skillLevel: number;
     occurTime: LostArkDateTime;
@@ -174,6 +180,14 @@ type MigrationExecute = {
     serverAddr: string;
     account_CharacterId2: bigint;
 };
+
+type Vector3F = {
+    x?: number;
+    y?: number;
+    z?: number;
+};
+
+type Angle = number;
 
 type NpcDataLog = {
     spawnIndex: number;
@@ -236,6 +250,18 @@ type PCStructLog = {
 
 type NewPC = {
     pcStruct: PCStructLog;
+};
+
+type TripodIndex = {
+    first: number;
+    second: number;
+    third: number;
+};
+
+type TripodLevel = {
+    first: number;
+    second: number;
+    third: number;
 };
 
 type ProjectileLogInfo = {
@@ -350,6 +376,16 @@ type RemoveObject = {
     unpublishedObjects: UnpublishObjectLog[];
 };
 
+type SkillMoveOptionData = {
+    moveTime?: number;
+    standUpTime?: number;
+    downTime?: number;
+    freezeTime?: number;
+    moveHeight?: number;
+    farmostDist?: number;
+    flag40?: Buffer;
+};
+
 type SkillDamageEventLog = {
     modifier: number;
     targetId: bigint;
@@ -387,6 +423,16 @@ type SkillStageNotify = {
     sourceId: bigint;
     skillId: number;
     stage: number;
+};
+
+type SkillOptionData = {
+    layerIndex?: number;
+    startStageIndex?: number;
+    transitIndex?: number;
+    stageStartTime?: number;
+    farmostDistance?: number;
+    tripodIndex?: TripodIndex;
+    tripodLevel?: TripodLevel;
 };
 
 type SkillStartNotify = {
@@ -607,6 +653,49 @@ declare class LogEvent<T> {
     get serialized(): Buffer | undefined;
 }
 
+declare class CloudPKT<T> {
+    #private;
+    constructor(data: Buffer, opcode: number, read: (reader: Read) => T);
+    get parsed(): T | undefined;
+}
+
+type CS_Data = {
+    logId: number;
+    timestamp: number;
+    data: Buffer;
+};
+
+type CS_SyncDmg = {
+    table: {
+        name: string;
+        typeId: number;
+        dealt: number;
+        crit: number;
+        fa: number;
+        ba: number;
+        receivedDps: number;
+        receivedSupp: number;
+        given: number;
+        deadDuration: number;
+    }[];
+    duration: number;
+};
+
+type CS_SyncZone = {
+    isValid: boolean;
+};
+
+declare enum ConnState {
+    OFFLINE = 0,
+    NO_GAME = 1,
+    CONNECTING = 2,
+    AUTHING = 3,
+    IDLE = 4,
+    SENDING = 5,
+    NO_AUTH = 6,
+    ERROR = 7
+}
+
 interface LogStreamEvent {
     AbilityChangeNotify: (pkt: LogEvent<AbilityChangeNotify>) => void;
     ActiveAbilityNotify: (pkt: LogEvent<ActiveAbilityNotify>) => void;
@@ -662,6 +751,9 @@ interface LogStreamEvent {
     NewTrap: (pkt: LogEvent<NewTrap>) => void;
     SkillCancelNotify: (pkt: LogEvent<SkillCancelNotify>) => void;
     logData: (data: Buffer) => void;
+    authState: (state: ConnState) => void;
+    syncDmg: (syncDmg: CS_SyncDmg) => void;
+    syncZone: (syncZone: CS_SyncZone) => void;
     fileEnd: (output: string) => void;
     APP_StatApi: (pkt: LogEvent<APP_StatApi>) => void;
     "*": (name: string, pkt: LogEvent<Object>) => void;
@@ -671,9 +763,13 @@ declare abstract class Logger extends TypedEmitter<LogStreamEvent> {
 }
 declare class LiveLogger extends Logger {
     #private;
+    ip: string | undefined;
     constructor(stream: PKTStream, decompressor: Decompressor, filepath?: string);
-    handlePkt(data: Buffer, opcode: number, compression: number, xor: boolean): void;
+    handlePkt(pkt: CloudPKT<CS_Data>): void;
     appendLog(logEvent: LogEvent<any>): void;
+    onConnect(ip: string): void;
+    updateAuthToken(jwt: string | undefined): void;
+    forceUpdateAuthState(): void;
 }
 declare class ReplayLogger extends Logger {
     readLogByChunk(filepath: string): void;
@@ -686,4 +782,4 @@ type LogFileEntry = {
     date: Date;
 };
 
-export { LiveLogger, LogFileEntry, Logger, ReplayLogger };
+export { ConnState, LiveLogger, LogFileEntry, Logger, ReplayLogger };

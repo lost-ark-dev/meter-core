@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTParalyzationStateNotify } from "../../generated/types";
 export type ParalyzationStateNotify = {
   enable: boolean;
   paralyzationPoint: number;
@@ -20,7 +19,7 @@ export function read(reader: Read, version: number) {
   data.objectId = reader.u64();
   return data;
 }
-export function write(writer: Write, data: ParalyzationStateNotify | PKTParalyzationStateNotify) {
+export function write(writer: Write, data: ParalyzationStateNotify) {
   writer.bool(data.enable);
   writer.u32(data.paralyzationPoint);
   writer.u32(data.decreasePoint);

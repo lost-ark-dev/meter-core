@@ -70,7 +70,7 @@ export class PartyTracker {
     if (!chracterId) return;
     this.characterIdToPartyId.delete(chracterId);
     const objectId = this.#pcIdMapper.getEntityId(chracterId);
-    if (objectId) this.characterIdToPartyId.delete(objectId);
+    if (objectId) this.entityIdToPartyId.delete(objectId);
   }
 
   public isCharacterInParty(characterId: bigint): boolean {
@@ -111,8 +111,8 @@ export class PartyTracker {
   }
 
   private getRaidInstanceId(partyId: number): number | undefined {
-    for (const data of this.raidInstanceToPartyInstances) {
-      if (data[1].has(partyId)) return data[0];
+    for (const [raidInstanceId, partyInstances] of this.raidInstanceToPartyInstances) {
+      if (partyInstances.has(partyId)) return raidInstanceId;
     }
     return undefined;
   }
@@ -133,7 +133,7 @@ export class PartyTracker {
       this.remove(parsed.partyInstanceId, parsed.memberDatas[0].name);
       return;
     }
-    this.removePartyMappings(parsed.partyInstanceId);
+    //this.removePartyMappings(parsed.partyInstanceId); //We don't cleanup parties here, there was already a leak anw
     for (const pm of parsed.memberDatas) {
       if (pm.characterId === localPlayer.characterId) {
         this.setOwnName(pm.name);
@@ -156,5 +156,36 @@ export class PartyTracker {
       this.add(parsed.raidInstanceId, parsed.partyInstanceId, pm.characterId, entityId, pm.name);
     }
     return;
+  }
+  clear(localPlayer: Player) {
+    //Complete entry
+    this.#pcIdMapper.addMapping(localPlayer.characterId, localPlayer.entityId);
+    this.completeEntry(localPlayer.characterId, localPlayer.entityId);
+
+    let partyIds: Set<number> | undefined;
+    let raidId: number | undefined;
+    //Get raids related to localplayer
+    if (localPlayer.characterId) {
+      const partyId = this.getPartyIdFromCharacterId(localPlayer.characterId);
+      if (partyId) {
+        raidId = this.getRaidInstanceId(partyId);
+        partyIds = raidId ? this.raidInstanceToPartyInstances.get(raidId) ?? new Set([partyId]) : new Set([partyId]);
+      }
+    }
+
+    //Clear everything that doesn't involve localplayer's party/raid
+    this.characterIdToPartyId = new Map(
+      [...this.characterIdToPartyId].filter(([charId, partyId]) => partyIds?.has(partyId))
+    );
+    this.entityIdToPartyId = new Map([...this.entityIdToPartyId].filter(([entId, partyId]) => partyIds?.has(partyId)));
+    this.raidInstanceToPartyInstances = new Map(
+      [...this.raidInstanceToPartyInstances].filter(([raid, party]) => raid == raidId)
+    );
+    this.ownName = localPlayer.name;
+    this.characterNameToCharacterId = new Map(
+      [...this.characterNameToCharacterId].filter(([name, charId]) => this.characterIdToPartyId?.has(charId))
+    );
+
+    this.#pcIdMapper.clear(Array.from(this.characterIdToPartyId.keys()));
   }
 }

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { SkillDamageAbnormalMoveEvent } from "../../generated/structures/SkillDamageAbnormalMoveEvent";
 import * as Vector3F from "../../common/Vector3F";
 import * as SkillMoveOptionData from "../../common/SkillMoveOptionData";
 import * as SkillDamageEvent from "./SkillDamageEvent";
@@ -18,7 +17,7 @@ export function read(reader: Read, version: number) {
   data.skillDamageEvent = SkillDamageEvent.read(reader, version);
   return data;
 }
-export function write(writer: Write, data: SkillDamageAbnormalMoveEventLog | SkillDamageAbnormalMoveEvent) {
+export function write(writer: Write, data: SkillDamageAbnormalMoveEventLog) {
   SkillMoveOptionData.write(writer, data.skillMoveOptionData);
   Vector3F.write(writer, data.destination);
   Vector3F.write(writer, data.position);

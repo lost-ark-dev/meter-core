@@ -8,7 +8,6 @@ import { Parser } from "./logger/parser";
 import path from "path";
 import { LogEvent } from "./logger/logEvent";
 import { damagetype, hitflag, itemstoragetype, triggersignaltype } from "./packets/generated/enums";
-import * as reads from "./packets/generated/reads";
 import { logId } from "./packets/log/logIds";
 import { logMapping } from "./packets/log/logMapping";
 import * as Vector3F from "./packets/common/Vector3F";
@@ -18,9 +17,8 @@ import { inspect } from "util";
 inspect.defaultOptions.depth = null; //Use to console log full objects for debug
 
 const oodle_state = readFileSync("./meter-data/oodle_state.bin");
-const xorTable = readFileSync("./meter-data/xor.bin");
 
-const decompressor = new Decompressor(oodle_state, xorTable);
+const decompressor = new Decompressor(oodle_state);
 const stream = new PKTStream(decompressor);
 
 const capture = new PktCaptureAll(PktCaptureMode.MODE_PCAP, 6040);
@@ -43,9 +41,7 @@ meterData.processSkillBuffEffectData(JSON.parse(readFileSync("meter-data/databas
 
 function logEvent(name: string, pkt: LogEvent<any>) {
   //console.log(name, pkt.time, pkt.parsed);
-  console.log(
-    `${name} - ${+pkt.time} - ${JSON.stringify(pkt.parsed, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`
-  );
+  //console.log(name, pkt.time);
 }
 /*
 console.log(
@@ -61,13 +57,16 @@ console.log(
   )
 );*/
 
-const testLive = false;
+const testLive = true;
 if (testLive) {
   const logger = new LiveLogger(stream, decompressor, path.resolve("../logs/test.raw"));
 
   const parser = new Parser(logger, meterData, "test_client", {
     isLive: true,
     resetAfterPhaseTransition: true,
+  });
+  capture.on("connect", (ip) => {
+    logger.onConnect(ip);
   });
   logger.on("*", logEvent);
 } else {
@@ -90,7 +89,7 @@ if (testLive) {
     //console.log(parser.encounters);
   });
 }
-
+/*
 const opcodes: { [key: number]: string } = {};
 try {
   readFileSync("../dump/opcodes.map", "utf-8")
@@ -131,5 +130,7 @@ for (const server of [6010, 6020, 6030, 6040]) {
       console.error(e);
     }
   });
+  
 }
+*/
 console.log("Logging");

@@ -1,5 +1,4 @@
 import type { Read, Write } from "../../stream";
-import type { PKTSkillStageNotify } from "../../generated/types";
 export type SkillStageNotify = {
   sourceId: bigint;
   skillId: number;
@@ -12,7 +11,7 @@ export function read(reader: Read, version: number) {
   data.stage = reader.u8();
   return data;
 }
-export function write(writer: Write, data: SkillStageNotify | PKTSkillStageNotify) {
+export function write(writer: Write, data: SkillStageNotify) {
   writer.u64(data.sourceId);
   writer.u32(data.skillId);
   writer.u8(data.stage);

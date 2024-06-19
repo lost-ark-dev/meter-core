@@ -34,7 +34,10 @@ export class EntityTracker {
       stance: 0,
       stats: new Map(),
       skills: new Map(),
-      items: {},
+      items: {
+        lifeToolList: new Map(),
+        equipList: new Map(),
+      },
     };
   }
   processNewPC(pkt: LogEvent<NewPC>): Player | undefined {
@@ -50,7 +53,10 @@ export class EntityTracker {
       stance: 0,
       stats: this.#data.getStatPairMap(parsed.pcStruct.statPair),
       skills: new Map(),
-      items: {},
+      items: {
+        lifeToolList: new Map(),
+        equipList: new Map(),
+      },
     };
     this.entities.set(player.entityId, player);
     const oldEntityId = this.#pcIdMapper.getEntityId(player.characterId);
@@ -65,17 +71,13 @@ export class EntityTracker {
     //Items
     player.itemSet = this.getPlayerSetOptions(parsed.pcStruct.equipItemDataList);
 
-    const equipList: PlayerItemData[] = [];
     parsed.pcStruct.equipItemDataList.forEach((item) => {
-      if (item.id !== undefined && item.slot !== undefined) equipList.push({ id: item.id, slot: item.slot });
+      if (item.id !== undefined && item.slot !== undefined) player.items.equipList.set(item.slot, item.id);
     });
-    player.items.equipList = equipList;
 
-    const lifeToolList: PlayerItemData[] = [];
     parsed.pcStruct.equipLifeToolDataList.forEach((item) => {
-      if (item.id !== undefined && item.slot !== undefined) lifeToolList.push({ id: item.id, slot: item.slot });
+      if (item.id !== undefined && item.slot !== undefined) player.items.lifeToolList.set(item.slot, item.id);
     });
-    player.items.lifeToolList = lifeToolList;
     return player;
   }
   processInitEnv(pkt: LogEvent<InitEnv>) {
@@ -85,8 +87,6 @@ export class EntityTracker {
     if (this.localPlayer.entityId !== 0n) this.#partyTracker.changeEntityId(this.localPlayer.entityId, parsed.playerId);
 
     this.entities.clear(); //TODO: here we clear entities, this might be uncompatible with keeping previous encounter visible
-
-    //Restore localplayer
     const player: Player = {
       entityId: parsed.playerId,
       entityType: EntityType.Player,
@@ -101,30 +101,47 @@ export class EntityTracker {
     };
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
-    this.#pcIdMapper.clear();
+    this.#partyTracker.clear(player);
     this.#statusTracker.Clear(pkt.time);
-    if (player.characterId !== 0n) this.#pcIdMapper.addMapping(player.characterId, player.entityId);
-    if (this.localPlayer && this.localPlayer.characterId && this.localPlayer.characterId > 0n)
-      this.#partyTracker.completeEntry(this.localPlayer.characterId, parsed.playerId);
   }
   processInitPC(pkt: LogEvent<InitPC>): Player | undefined {
     const parsed = pkt.parsed;
     if (!parsed) return;
 
     this.entities.clear(); //TODO: here we clear entities, this might be uncompatible with keeping previous encounter visible
-
-    const player: Player = {
-      entityId: parsed.playerId,
-      entityType: EntityType.Player,
-      name: parsed.name,
-      class: parsed.classId,
-      gearLevel: parsed.gearLevel,
-      characterId: parsed.characterId,
-      stance: 0,
-      stats: this.#data.getStatPairMap(parsed.statPair),
-      skills: new Map(),
-      items: parsed.characterId === this.localPlayer.characterId ? this.localPlayer.items : {},
-    };
+    let player: Player;
+    if (this.localPlayer.characterId === parsed.characterId) {
+      // Restore part of localPlayer (that we haven't updated) if charId hasn't changed
+      player = {
+        entityId: parsed.playerId,
+        entityType: EntityType.Player,
+        name: parsed.name,
+        class: parsed.classId,
+        gearLevel: parsed.gearLevel,
+        characterId: parsed.characterId,
+        stance: this.localPlayer.stance,
+        stats: this.#data.getStatPairMap(parsed.statPair),
+        skills: this.localPlayer.skills,
+        itemSet: this.localPlayer.itemSet,
+        items: this.localPlayer.items,
+      };
+    } else {
+      player = {
+        entityId: parsed.playerId,
+        entityType: EntityType.Player,
+        name: parsed.name,
+        class: parsed.classId,
+        gearLevel: parsed.gearLevel,
+        characterId: parsed.characterId,
+        stance: 0,
+        stats: this.#data.getStatPairMap(parsed.statPair),
+        skills: new Map(),
+        items: {
+          lifeToolList: new Map(),
+          equipList: new Map(),
+        },
+      };
+    }
     this.localPlayer = player;
     this.entities.set(player.entityId, player);
     this.#pcIdMapper.addMapping(player.characterId, player.entityId);
@@ -299,7 +316,10 @@ export class EntityTracker {
           stance: player.stance,
           stats: player.stats,
           skills: new Map(),
-          items: {},
+          items: {
+            lifeToolList: new Map(),
+            equipList: new Map(),
+          },
         };
       } else if (entity.entityType === EntityType.Unknown) {
         newEntity = {
@@ -312,7 +332,10 @@ export class EntityTracker {
           stance: 0,
           stats: new Map(),
           skills: new Map(),
-          items: {},
+          items: {
+            lifeToolList: new Map(),
+            equipList: new Map(),
+          },
         };
       } else return entity;
 
@@ -358,16 +381,13 @@ export type Player = Entity & {
   characterId: bigint;
   stance: number;
   skills: Map<number /* skillid */, PlayerSkillData>;
-  itemSet?: PassiveOption[]; // TODO: store PassiveOption instead, and reprocess all items on change ?
+  itemSet?: PassiveOption[] | undefined; // TODO: store PassiveOption instead, and reprocess all items on change ?
   items: {
-    lifeToolList?: PlayerItemData[];
-    equipList?: PlayerItemData[];
+    lifeToolList: PlayerItemData;
+    equipList: PlayerItemData;
   };
 };
-export type PlayerItemData = {
-  id: number;
-  slot: number;
-};
+export type PlayerItemData = Map<number /*slot*/, number /*id*/>;
 
 export type Npc = Entity & {
   entityType: EntityType.Npc | EntityType.Summon | EntityType.Esther;

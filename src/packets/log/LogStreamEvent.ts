@@ -1,4 +1,6 @@
+import { ConnState } from "../../logger/cloudConnection";
 import type { LogEvent } from "../../logger/logEvent";
+import { CS_SyncDmg, CS_SyncZone } from "../cloud/types";
 import type * as types from "./types";
 export interface LogStreamEvent {
   AbilityChangeNotify: (pkt: LogEvent<types.AbilityChangeNotify>) => void;
@@ -56,6 +58,9 @@ export interface LogStreamEvent {
   SkillCancelNotify: (pkt: LogEvent<types.SkillCancelNotify>) => void;
 
   logData: (data: Buffer) => void;
+  authState: (state: ConnState) => void;
+  syncDmg: (syncDmg: CS_SyncDmg) => void;
+  syncZone: (syncZone: CS_SyncZone) => void;
   fileEnd: (output: string) => void;
 
   APP_StatApi: (pkt: LogEvent<types.APP_StatApi>) => void;

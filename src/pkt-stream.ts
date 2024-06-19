@@ -1,9 +1,11 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import type { Decompressor } from "./decompressor";
-import { mapping } from "./packets/generated/mapping";
-import type { PKTStreamEvents } from "./packets/generated/PKTStreamEvents";
+import { LogStreamEvent } from "./packets/log/LogStreamEvent";
 
-export class PKTStream extends TypedEmitter<PKTStreamEvents> {
+interface PKTStreamEvent {
+  "*": (data: Buffer, opcode: number, compression: number, xor: boolean) => void;
+}
+export class PKTStream extends TypedEmitter<PKTStreamEvent> {
   #decompressor: Decompressor;
 
   constructor(decompressor: Decompressor) {
@@ -24,14 +26,6 @@ export class PKTStream extends TypedEmitter<PKTStreamEvents> {
       const data = buf.subarray(8);
       const opcode = buf.readUInt16LE(4);
 
-      const pkt = mapping.get(opcode);
-      if (pkt) {
-        const [name, read] = pkt;
-        this.emit(
-          name as keyof PKTStreamEvents,
-          new PKT(Buffer.from(data), opcode, compression, Boolean(xor), this.#decompressor, read)
-        );
-      }
       this.emit("*", data, opcode, compression, Boolean(xor));
     } catch (e) {
       return false;
